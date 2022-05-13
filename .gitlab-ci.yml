@@ -20,7 +20,7 @@ Linting:
     - pre-commit run --all-files
   only:
     refs:
-      - master
+      - main
       - merge_request
 
 pages:
@@ -41,4 +41,4 @@ pages:
     paths:
       - public
   only:
-    - master
+    - main
