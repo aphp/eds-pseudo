@@ -1,5 +1,10 @@
 # Quickstart
 
+## Deployment
+
+This project merely trains the pseudonymisation pipeline, and packages it as a pip-installable package
+using standard spaCy operations.
+
 ## Requirements
 
 To use this repository, you will need to supply:
