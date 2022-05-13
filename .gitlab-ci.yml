@@ -1,0 +1,44 @@
+image: harbor.eds.aphp.fr/public/python:3.8-slim
+
+stages:
+  - test
+  - pages
+
+Linting:
+  stage: test
+  cache:
+    - key:
+        files:
+          - .pre-commit-config.yaml
+      paths:
+        - ~/.pre-commit
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends git
+    - pip install pre-commit
+  script:
+    - pre-commit run --all-files
+  only:
+    refs:
+      - master
+      - merge_request
+
+pages:
+  stage: pages
+  cache:
+    - key:
+        files:
+          - poetry.lock
+      paths:
+        - .venv
+  before_script:
+    - pip install poetry
+    - poetry config virtualenvs.in-project true
+    - poetry install
+  script:
+    - poetry run mkdocs build --site-dir public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

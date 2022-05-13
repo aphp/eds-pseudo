@@ -1,0 +1,43 @@
+# spaCy data
+corpus
+training
+packages
+/assets
+project.lock
+
+# Env/IDE
+.venv
+.vscode
+
+# Cache dirs
+__pycache__
+.ipynb_checkpoints
+
+# Data
+*.ipynb
+*.csv
+*.pkl
+*.jsonl
+*.html
+*.log
+*.xml
+
+# Environments
+*.tar.gz
+
+# Ignore IntelliJ IDEA
+.idea/
+*.iml
+
+# Documentation
+_build/
+
+# Python
+*.egg-info
+build
+logs
+.hypothesis
+.coverage*
+
+# Deployment
+configs/deployment.cfg
