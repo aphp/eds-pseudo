@@ -26,7 +26,7 @@ We created a single workflow that:
 
 At AP-HP, we use Slurm to orchestrate machine-learning experiments.
 
-!!! note "EDS Specificities"
+!!! aphp "EDS Specificities"
 
     Because of the way our platform is configured, we need to provide and use a conda environment to train the pipeline using Slurm.
 
