@@ -25,7 +25,6 @@ nav:
   - index.md
   - quickstart.md
   - annotation-guide.md
-  - Code Reference: reference/
   - changelog.md
 
 extra_css:
@@ -44,20 +43,7 @@ plugins:
       bib_file: "docs/references.bib"
   - gen-files:
       scripts:
-        - docs/scripts/generate_reference.py
         - docs/scripts/generate_development.py
-  - literate-nav:
-      nav_file: SUMMARY.md
-  - mkdocstrings:
-      handlers:
-        python:
-          selection:
-            docstring_style: numpy
-          rendering:
-            docstring_section_style: spacy
-            heading_level: 2
-            members_order: source
-            show_root_toc_entry: false
 
 markdown_extensions:
   - admonition
