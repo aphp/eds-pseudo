@@ -26,11 +26,15 @@ We created a single workflow that:
 
 At AP-HP, we use Slurm to orchestrate machine-learning experiments.
 
+```shell title="slurm/train.sh"
+--8<-- "slurm/train.sh"
+```
+
 !!! aphp "EDS Specificities"
 
     Because of the way our platform is configured, we need to provide and use a conda environment to train the pipeline using Slurm.
 
-    Said environment uses `poetry.lock` file to ensure reproducibility.
+    Said environment still uses Poetry, and we pin the version of the `cudatoolkit` to ensure reproducibility.
 
 ## Deployment
 
