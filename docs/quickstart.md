@@ -9,8 +9,8 @@ using standard spaCy operations.
 
 To use this repository, you will need to supply:
 
-- a labelled dataset
-- a HuggingFace transformers model, or use a publicly available model like `camembert-base`
+- A labelled dataset
+- A HuggingFace transformers model, or use a publicly available model like `camembert-base`
 
 In any case, you will need to modify the configuration to reflect these changes.
 
@@ -19,10 +19,10 @@ In any case, you will need to modify the configuration to reflect these changes.
 EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).
 We created a single workflow that:
 
-- partitions the data between train, valid, and test
-- converts the datasets to spaCy format
-- train the pipeline
-- evaluates the pipeline using the test set
+- Partitions the data between train, valid, and test
+- Converts the datasets to spaCy format
+- Trains the pipeline
+- Evaluates the pipeline using the test set
 
 At AP-HP, we use Slurm to orchestrate machine-learning experiments.
 

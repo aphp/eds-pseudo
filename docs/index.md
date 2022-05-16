@@ -8,15 +8,15 @@ pipeline to extract identifying entities.
 EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).
 We created a single workflow that:
 
-- partitions the data between train, valid, and test
-- converts the datasets to spaCy format
-- train the pipeline
-- evaluates the pipeline using the test set
+- Partitions the data between train, valid, and test
+- Converts the datasets to spaCy format
+- Trains the pipeline
+- Evaluates the pipeline using the test set
 
 To use it, you will need to supply:
 
-- a labelled dataset
-- a HuggingFace transformers model, or use `camembert-base`
+- A labelled dataset
+- A HuggingFace transformers model, or use `camembert-base`
 
 In any case, you will need to modify the configuration to reflect these changes.
 
