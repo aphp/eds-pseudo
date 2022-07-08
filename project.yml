@@ -30,7 +30,6 @@ vars:
   name: "pseudonymisation"
   lang: "fr"
   version: "0.1.0"
-  dataset: "data.jsonl"
   train: "train.jsonl"
   dev: "dev.jsonl"
   test: "test.jsonl"
@@ -44,20 +43,16 @@ env:
 # These are the directories that the project needs. The project CLI will make
 # sure that they always exist.
 directories:
-  ["assets", "corpus", "configs", "training", "scripts", "packages", "output"]
+  ["data", "corpus", "configs", "training", "scripts", "packages", "output"]
 
 # Workflows are sequences of commands (see below) executed in order. You can
 # run them via "spacy project run [workflow]". If a commands's inputs/outputs
 # haven't changed, it won't be re-run.
 workflows:
   all:
-    - partition
     - convert
     - train
     - evaluate
-  prepare-data:
-    - partition
-    - convert
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -65,29 +60,16 @@ workflows:
 # shown when executing "spacy project run [optional command] [path] --help".
 commands:
 
-  - name: "partition"
-    help: "Split data between train, dev and test data. The development set is taken from the train split."
-    script:
-      - "python scripts/partition.py --input-path assets/${vars.dataset} --output-train assets/${vars.train} --output-dev assets/${vars.dev} --output-test assets/${vars.test} --fraction ${vars.fraction} --seed ${vars.seed}"
-
-    deps:
-      - "assets/${vars.dataset}"
-      - "scripts/partition.py"
-    outputs:
-      - "assets/${vars.train}"
-      - "assets/${vars.dev}"
-      - "assets/${vars.test}"
-
   - name: "convert"
     help: "Convert the data to spaCy's binary format"
     script:
-      - "python scripts/convert.py --lang ${vars.lang} --input-path assets/${vars.train} --output-path corpus/train.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path assets/${vars.dev} --output-path corpus/dev.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path assets/${vars.test} --output-path corpus/test.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.train} --output-path corpus/train.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.dev} --output-path corpus/dev.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.test} --output-path corpus/test.spacy"
     deps:
-      - "assets/${vars.train}"
-      - "assets/${vars.dev}"
-      - "assets/${vars.test}"
+      - "data/${vars.train}"
+      - "data/${vars.dev}"
+      - "data/${vars.test}"
       - "scripts/convert.py"
     outputs:
       - "corpus/train.spacy"
@@ -104,7 +86,7 @@ commands:
   - name: "train"
     help: "Train the NER model"
     script:
-      - "python -m spacy train configs/config.cfg --output training/ --paths.train corpus/train.spacy --paths.dev corpus/dev.spacy --gpu-id ${vars.gpu_id}"
+      - "python -m spacy train configs/config.cfg --output training/ --paths.train corpus/train.spacy --paths.dev corpus/dev.spacy --nlp.lang ${vars.lang} --gpu-id ${vars.gpu_id}"
     deps:
       - "configs/config.cfg"
       - "corpus/train.spacy"
@@ -130,12 +112,3 @@ commands:
       - "training/model-best"
     outputs_no_cache:
       - "packages/${vars.lang}_${vars.name}-${vars.version}/dist/${vars.lang}_${vars.name}-${vars.version}.tar.gz"
-
-  - name: "visualize-model"
-    help: "Visualize the model's output interactively using Streamlit"
-    script:
-      - 'streamlit run scripts/visualize_model.py training/model-best "Le patient M. Durand habite à Paris."'
-    deps:
-      - "scripts/visualize_model.py"
-      - "training/model-best"
-    no_skip: true

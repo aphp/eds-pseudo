@@ -8,7 +8,10 @@ from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 from spacy.util import filter_spans
 
-Doc.set_extension("note_id", default=None)
+if not Doc.has_extension("structured_data"):
+    Doc.set_extension("structured_data", default=dict())
+if not Doc.has_extension("note_id"):
+    Doc.set_extension("note_id", default=None)
 
 
 def add_entities(doc: Doc, entities: List[Dict[str, Union[int, str]]]):
@@ -56,17 +59,19 @@ def convert(
     ),
 ) -> None:
     nlp = get_nlp(lang)
-    db = DocBin()
+    db = DocBin(store_user_data=True)
 
     for annot in srsly.read_jsonl(input_path):
-        text, note_id, entities = (
+        text, note_id, entities, context = (
             annot["note_text"],
             annot["note_id"],
             annot["entities"],
+            annot["context"],
         )
 
         doc = nlp(text)
         doc._.note_id = note_id
+        doc._.structured_data = context
 
         add_entities(doc, entities)
 
