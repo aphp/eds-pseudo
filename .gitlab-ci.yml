@@ -3,6 +3,7 @@ image: harbor.eds.aphp.fr/public/python:3.8-slim
 stages:
   - test
   - pages
+  - package
 
 Linting:
   stage: test
@@ -42,3 +43,14 @@ pages:
       - public
   only:
     - main
+
+Package:
+  stage: package
+  before_script:
+    - pip install poetry
+    - poetry config repositories.gitlab ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+    - poetry config http-basic.gitlab gitlab-ci-token ${CI_JOB_TOKEN}
+  script:
+    - poetry publish --build -r gitlab
+  only:
+    - tags
