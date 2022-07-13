@@ -45,6 +45,9 @@ plugins:
       scripts:
         - docs/scripts/generate_development.py
 
+watch:
+  - changelog.md
+
 markdown_extensions:
   - admonition
   - pymdownx.superfences
