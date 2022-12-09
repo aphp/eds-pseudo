@@ -18,7 +18,7 @@ include = ["eds_pseudonymisation/resources/*.csv.gz"]
 "evaluate-pseudo" = "eds_pseudonymisation.evaluate:evaluate_cli"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<3.11"
+python = ">3.7.6,<4.0,!=3.8.1"
 spacy = "^3.2.4"
 spacy-transformers = "^1.1.5"
 thinc = "^8.0.13"
@@ -51,31 +51,23 @@ ray = {extras = ["serve"], version = "^1.11.0"}
 pandas = "^1.3.0"
 pyarrow = "^7.0.0"
 fsspec = "^2022.3.0"
-fastapi = "^0.75.1"
-# dvclive = "^0.10.0"
-
-black = "^22.3.0"
-flake8 = "^4.0.1"
-jupytext = "^1.13.8"
+black = "22.6.0"
+flake8 = ">=3.0"
 pre-commit = "^2.18.1"
 pytest = "^7.1.1"
 pytest-cov = "^3.0.0"
+mike = "^1.1.2"
+mkdocs-bibtex = "^2.0.3"
+mkdocs-gen-files = "^0.3.4"
+mkdocs-literate-nav = "^0.4.1"
+mkdocs-material = "^8.2.8"
+mkdocstrings = "^0.18.1"
+mkdocstrings-python = "^0.6.6"
+streamlit = "^1.8.1"
 mypy = "^0.950"
-
-# [tool.poetry.group.docs]
-# optional = true
-#
-# [tool.poetry.group.docs.dependencies]
-# mike = "^1.1.2"
-# mkdocs-bibtex = "^2.0.3"
-# mkdocs-charts-plugin = "^0.0.8"
-# mkdocs-gen-files = "^0.3.4"
-# mkdocs-literate-nav = "^0.4.1"
-# mkdocs-material = "^8.2.8"
-# mkdocs-section-index = "^0.3.4"
-# mkdocstrings = "^0.18.1"
-# mkdocstrings-python = "^0.6.6"
-datasets = "^2.4.0"
+mkdocs-glightbox = "^0.1.6"
+mkdocs-autorefs = "^0.4.1"
+coverage = "^6.5.0"
 
 [tool.poetry.extras]
 cuda = ["cupy"]
