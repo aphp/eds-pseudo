@@ -30,9 +30,9 @@ vars:
   name: "pseudonymisation"
   lang: "fr"
   version: "0.1.0"
-  train: "train.jsonl"
-  dev: "dev.jsonl"
-  test: "test.jsonl"
+  train: "dataset/train"
+  dev: "dataset/dev"
+  test: "dataset/test"
   seed: 0
   fraction: 200
   gpu_id: 0
