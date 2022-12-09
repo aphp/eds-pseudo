@@ -1,17 +1,17 @@
 # Overview
 
-EDS-Pseudonymisation is a spaCy project dedicated to the creation of a Named Entity Recognition (NER)
-pipeline to extract identifying entities.
+EDS-Pseudonymisation is a spaCy-based project used at APHP to extract and replace identifying entities
+in medical documents.
 
 ## Getting started
 
 EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).
 We created a single workflow that:
 
-- Partitions the data between train, valid, and test
 - Converts the datasets to spaCy format
 - Trains the pipeline
 - Evaluates the pipeline using the test set
+- Packages the resulting model to make it pip-installable
 
 To use it, you will need to supply:
 
@@ -23,7 +23,7 @@ In any case, you will need to modify the configuration to reflect these changes.
 ## Entities
 
 | Label            | Description                                                   |
-| ---------------- | ------------------------------------------------------------- |
+|------------------|---------------------------------------------------------------|
 | `ADRESSE`        | Street address, eg `33 boulevard de Picpus`                   |
 | `DATE`           | Any absolute date other than a birthdate                      |
 | `DATE_NAISSANCE` | Birthdate                                                     |

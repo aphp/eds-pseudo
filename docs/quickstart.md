@@ -2,8 +2,7 @@
 
 ## Deployment
 
-This project merely trains the pseudonymisation pipeline, and packages it as a pip-installable package
-using standard spaCy operations.
+This project trains our pseudonymisation pipeline, and make it pip-installable.
 
 ## Requirements
 
@@ -14,30 +13,54 @@ To use this repository, you will need to supply:
 
 In any case, you will need to modify the configuration to reflect these changes.
 
-## Training the Pipeline
+## Training a model
 
 EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).
 We created a single workflow that:
 
-- Partitions the data between train, valid, and test
 - Converts the datasets to spaCy format
 - Trains the pipeline
 - Evaluates the pipeline using the test set
+- Packages the resulting model to make it pip-installable
 
-At AP-HP, we use Slurm to orchestrate machine-learning experiments.
+To add a new dataset, run
 
-```shell title="slurm/train.sh"
---8<-- "slurm/train.sh"
+```bash
+dvc import-url url/or/path/to/your/dataset data/dataset
 ```
 
-!!! aphp "EDS Specificities"
+To (re-)train a model and package it, just run:
 
-    Because of the way our platform is configured, we need to provide and use a conda environment to train the pipeline using Slurm.
+```bash
+dvc repro
+```
 
-    Said environment still uses Poetry, and we pin the version of the `cudatoolkit` to ensure reproducibility.
+You should now be able to install and publish it:
 
-## Deployment
+```bash
+pip install dist/eds_pseudonymisation-0.2.0-*
+```
 
-This project merely trains the pseudonymisation pipeline,
-and packages it as a pip-installable package
-using standard spaCy operations.
+## Use it
+
+To use it, execute
+
+```python
+import eds_pseudonymisation
+
+nlp = eds_pseudonymisation.load()
+doc = nlp(
+    """En 1815, M. Charles-François-Bienvenu
+Myriel était évêque de Digne. C’était un vieillard
+d’environ soixante-quinze ans ; il occupait le
+siège de Digne depuis 1806. """
+)
+for ent in doc.ents:
+    print(ent, ent.label)
+
+# 1815 DATE
+# Charles-François-Bienvenu NOM
+# Myriel PRENOM
+# Digne VILLE
+# 1806 DATE
+```

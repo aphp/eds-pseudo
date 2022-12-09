@@ -25,6 +25,8 @@ nav:
   - index.md
   - quickstart.md
   - annotation-guide.md
+  - reproducibility.md
+  - results.md
   - changelog.md
 
 extra_css:
