@@ -13,6 +13,14 @@ To use this repository, you will need to supply:
 
 In any case, you will need to modify the configuration to reflect these changes.
 
+## Installation
+
+Install the requirements by running the following command at the root of the repo
+
+```bash
+poetry install
+```
+
 ## Training a model
 
 EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).

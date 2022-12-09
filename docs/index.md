@@ -38,4 +38,20 @@ In any case, you will need to modify the configuration to reflect these changes.
 | `VILLE`          | Any city                                                      |
 | `ZIP`            | Any zip code                                                  |
 
+
+### Commands
+
+| Command           | Description                                                |
+|-------------------|------------------------------------------------------------|
+| `convert`         | Convert the data to spaCy's binary format                  |
+| `train`           | Train the NER model                                        |
+| `evaluate`        | Evaluate the model and export metrics                      |
+| `package`         | Package the trained model as a pip package                 |
+| `visualize-model` | Visualize the model's output interactively using Streamlit |
+
+Run the command with
+```bash
+spacy project run [command] [options]
+```
+
 Take a look at the [annotation guide](annotation-guide.md) for more detail.
