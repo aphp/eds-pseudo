@@ -111,7 +111,7 @@ commands:
   - name: "package"
     help: "Package the trained model as a pip package"
     script:
-      - "python -m spacy package training/model-best packages --name ${vars.name} --version ${vars.version} --force"
+      - "python scripts/package.py training/model-best packages --name ${vars.name} --version ${vars.version} --code eds_pseudonymisation --build wheel --force"
     deps:
       - "training/model-best"
     outputs_no_cache:
