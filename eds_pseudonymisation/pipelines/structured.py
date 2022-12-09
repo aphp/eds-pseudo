@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Dict, List
+from string import punctuation
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from edsnlp.matchers.phrase import EDSPhraseMatcher
 from edsnlp.matchers.regex import RegexMatcher
@@ -12,9 +13,34 @@ if not Doc.has_extension("structured_data"):
     Doc.set_extension("structured_data", default=dict())
 
 
-class Matcher(Enum):
+class Matcher(str, Enum):
     regex = "regex"
     phrase = "phrase"
+
+
+def pseudo_sort_key(span: Span) -> Tuple[int, int]:
+    """
+    Returns the sort key for filtering spans.
+    The key differs from the default sort key because we attribute more
+    importance to patterns that come from structured data such as the patient name
+    or address patterns when they conflict with more general patterns.
+
+    Parameters
+    ----------
+    span : Span
+        Span to sort.
+    Returns
+    -------
+    key : Tuple(int, int)
+        Sort key.
+    """
+    if isinstance(span, tuple):
+        span = span[0]
+    return (
+        (1 if span._.source == "structured" else 0),
+        span.end - span.start,
+        -span.start,
+    )
 
 
 @Language.factory(
@@ -64,8 +90,14 @@ class StructuredDataMatcher(BaseComponent):
             if matcher == Matcher.phrase
             else self.regex_matcher_factory
         )
+        self.punct_remover = str.maketrans(punctuation, " " * len(punctuation))
 
         self.set_extensions()
+
+    def set_extensions(self):
+        if not Span.has_extension("source"):
+            Span.set_extension("source", default=None)
+        super().set_extensions()
 
     def phrase_matcher_factory(
         self,
@@ -76,7 +108,15 @@ class StructuredDataMatcher(BaseComponent):
             attr=self.attr,
             ignore_excluded=self.ignore_excluded,
         )
-        matcher.build_patterns(nlp=self.nlp, terms=structured_data)
+        matcher.build_patterns(
+            nlp=self.nlp,
+            terms={
+                k: set(v)
+                | set(pat.title() for pat in v)
+                | set(pat.upper() for pat in v)
+                for k, v in structured_data.items()
+            },
+        )
         return matcher
 
     def regex_matcher_factory(
@@ -106,11 +146,22 @@ class StructuredDataMatcher(BaseComponent):
         """
 
         structured_data = doc._.structured_data
+        if "EMAIL" in structured_data:
+            structured_data["MAIL"] = structured_data.pop("EMAIL")
 
         if not structured_data:
             return []
 
-        matcher = self.matcher_factory(structured_data=structured_data)
+        matcher = self.matcher_factory(
+            structured_data={
+                key: tuple(
+                    v
+                    for v in values
+                    if len(v.translate(self.punct_remover).strip()) > 2
+                )
+                for key, values in structured_data.items()
+            }
+        )
         matches = matcher(doc, as_spans=True)
 
         return list(matches)
@@ -132,11 +183,19 @@ class StructuredDataMatcher(BaseComponent):
         matches = self.process(doc)
 
         for span in matches:
+            span._.source = "structured"
+            if span.label_ == "NOM_NAISS":
+                span.label_ = "NOM"
             if span.label_ not in doc.spans:
                 doc.spans[span.label_] = []
             doc.spans[span.label_].append(span)
 
-        ents, discarded = filter_spans(list(doc.ents) + matches, return_discarded=True)
+        ents, discarded = filter_spans(
+            matches + list(doc.ents),
+            return_discarded=True,
+            sort_key=pseudo_sort_key,
+        )
+        self.last_ents = ents
 
         doc.ents = ents
 

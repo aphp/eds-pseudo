@@ -1,9 +1,9 @@
 import pandas as pd
 
-from eds_pseudonymisation import BASE_DIR
+from .. import BASE_DIR
 
 
-def get_cities() -> pd.DataFrame:
+def get_hospitals() -> pd.DataFrame:
     """
     Get the cities DataFrame from the resources.
 
@@ -12,4 +12,4 @@ def get_cities() -> pd.DataFrame:
     pd.DataFrame
         DataFrame containing French cities.
     """
-    return pd.read_csv(BASE_DIR / "resources" / "cities.csv.gz")
+    return pd.read_csv(BASE_DIR / "resources" / "hospitals.csv")['HOPITAL']
