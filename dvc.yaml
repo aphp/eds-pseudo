@@ -1,0 +1,16 @@
+stages:
+  all:
+    deps:
+      - data/dataset
+      - eds_pseudonymisation
+      - scripts/convert.py
+    # to allow cfg param files see https://github.com/iterative/dvc/issues/7122
+    params:
+      - configs/config.cfg
+    cmd: python -m spacy project run all
+    outs:
+      - training/model-best
+      - corpus/output.spacy
+    metrics:
+      - training/test_metrics.json:
+          cache: false

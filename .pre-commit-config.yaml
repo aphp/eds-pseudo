@@ -1,5 +1,6 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+exclude: ^.*[.]json$
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
@@ -14,6 +15,7 @@ repos:
       - id: check-symlinks
       - id: check-docstring-first
       - id: check-added-large-files
+        exclude: ^docs/
       - id: detect-private-key
       - id: requirements-txt-fixer
   - repo: https://github.com/pycqa/isort

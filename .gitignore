@@ -41,3 +41,6 @@ logs
 
 # Deployment
 configs/deployment.cfg
+
+# DVC
+.dvc/
