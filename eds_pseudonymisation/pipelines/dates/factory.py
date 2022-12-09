@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from spacy.language import Language
 
@@ -9,6 +9,7 @@ DEFAULT_CONFIG = dict(
     absolute=None,
     false_positive=None,
     attr="LOWER",
+    scorer={"@scorers": "spacy.ner_scorer.v1"},
 )
 
 
@@ -19,6 +20,7 @@ def create_component(
     absolute: Optional[List[str]],
     false_positive: Optional[List[str]],
     attr: str,
+    scorer: Optional[Callable],
 ):
 
     if absolute is None:
@@ -31,9 +33,11 @@ def create_component(
         absolute=absolute,
         relative=[],
         duration=[],
+        detect_time=False,
         false_positive=false_positive,
         on_ents_only=False,
         detect_periods=False,
         as_ents=True,
         attr=attr,
+        scorer=scorer,
     )

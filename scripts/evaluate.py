@@ -1,25 +1,35 @@
-from spacy.cli.evaluate import *
+import re
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import srsly
+from spacy import util
+from spacy.cli._util import Arg, Opt, import_code, setup_gpu
+from spacy.cli.evaluate import handle_scores_per_type, render_parses
 from spacy.tokens import DocBin
 from thinc.api import fix_random_seed
+from typer import Typer
 from wasabi import Printer
 
-from .corpus_reader import PseudoCorpus
+from eds_pseudonymisation.corpus_reader import PseudoCorpus
+
+app = Typer()
 
 
-@app.command("evaluate-pseudo")
+# fmt: off
+@app.command("evaluate")
 def evaluate_cli(
-    # fmt: off
     model: str = Arg(..., help="Model name or path"),
-    data_path: Path = Arg(..., help="Location of binary evaluation data in .spacy format", exists=True),
-    output: Optional[Path] = Opt(None, "--output", "-o", help="Output JSON file for metrics", dir_okay=False),
-    docbin: Optional[Path] = Opt(None, "--docbin", help="Output Doc Bin path", dir_okay=False),
-    code_path: Optional[Path] = Opt(None, "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
-    use_gpu: int = Opt(-1, "--gpu-id", "-g", help="GPU ID or -1 for CPU"),
-    gold_preproc: bool = Opt(False, "--gold-preproc", "-G", help="Use gold preprocessing"),
-    displacy_path: Optional[Path] = Opt(None, "--displacy-path", "-dp", help="Directory to output rendered parses as HTML", exists=True, file_okay=False),
-    displacy_limit: int = Opt(25, "--displacy-limit", "-dl", help="Limit of parses to render as HTML"),
-    # fmt: on
+    data_path: Path = Arg(..., help="Location of binary evaluation data in .spacy format", exists=True),  # noqa: E501
+    output: Optional[Path] = Opt(None, "--output", "-o", help="Output JSON file for metrics", dir_okay=False),  # noqa: E501
+    docbin: Optional[Path] = Opt(None, "--docbin", help="Output Doc Bin path", dir_okay=False),  # noqa: E501
+    code_path: Optional[Path] = Opt(None, "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),  # noqa: E501
+    use_gpu: int = Opt(-1, "--gpu-id", "-g", help="GPU ID or -1 for CPU"),  # noqa: E501
+    gold_preproc: bool = Opt(False, "--gold-preproc", "-G", help="Use gold preprocessing"),  # noqa: E501
+    displacy_path: Optional[Path] = Opt(None, "--displacy-path", "-dp", help="Directory to output rendered parses as HTML", exists=True, file_okay=False),  # noqa: E501
+    displacy_limit: int = Opt(25, "--displacy-limit", "-dl", help="Limit of parses to render as HTML"),  # noqa: E501
 ):
+    # fmt: on
     """
     Modified from spaCy default evaluate CLI command to:
     - use our custom PseudoCorpus (to load structured data into the doc)
@@ -75,14 +85,17 @@ def evaluate(
     nlp = util.load_model(model)
 
     dev_dataset = [
-        eg for eg in corpus(nlp) if getattr(eg.reference._, "split", "test") == "test"
+        eg
+        for eg in corpus(nlp)  # if getattr(eg.reference._, "split", "test") == "test"
     ]
     print(f"Evaluating {len(dev_dataset)} docs")
 
     if docbin is not None:
         output_db = DocBin(store_user_data=True)
         for doc in nlp.pipe(DocBin().from_disk(data_path).get_docs(nlp.vocab)):
-            doc.user_data = {k: v for k, v in doc.user_data.items() if 'trf_data' not in k}
+            doc.user_data = {
+                k: v for k, v in doc.user_data.items() if "trf_data" not in k
+            }
             output_db.add(doc)
         output_db.to_disk(docbin)
 
@@ -144,3 +157,7 @@ def evaluate(
         srsly.write_json(output_path, data)
         msg.good(f"Saved results to {output_path}")
     return data
+
+
+if __name__ == "__main__":
+    app()

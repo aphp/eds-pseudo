@@ -98,16 +98,6 @@ commands:
       - "corpus/output.spacy"
       - "training/test_metrics.json"
 
-  - name: "infer"
-    help: "Infer the model on test documents"
-    script:
-      - "python -m spacy evaluate-pseudo training/model-best corpus/test.spacy --output training/test_metrics.json --gpu-id ${vars.gpu_id}"
-    deps:
-      - "corpus/dev.spacy"
-      - "training/model-best"
-    outputs:
-      - "training/test_metrics.json"
-
   - name: "package"
     help: "Package the trained model as a pip package"
     script:

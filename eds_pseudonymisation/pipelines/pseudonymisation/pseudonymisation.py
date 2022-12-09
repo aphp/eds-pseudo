@@ -7,8 +7,8 @@ from spacy.language import Language
 from spacy.matcher import PhraseMatcher
 from spacy.tokens import Doc
 
-from .patterns import common_medical_terms, patterns, person_patterns
 from ...utils.resources import get_hospitals
+from .patterns import common_medical_terms, patterns, person_patterns
 
 DEFAULT_CONFIG = dict(
     attr="NORM",
@@ -40,7 +40,8 @@ class Pseudonymisation:
         # We add Hospitals
         hospitals = get_hospitals()
         self.phrase_matcher.add(
-            key="HOPITAL", docs=list(nlp.pipe(list(set(hospitals))))
+            key="HOPITAL",
+            docs=[nlp.make_doc(name) for name in dict.fromkeys(hospitals)],
         )
 
         # We add first names

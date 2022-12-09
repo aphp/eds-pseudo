@@ -1,6 +1,6 @@
 from enum import Enum
 from string import punctuation
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 from edsnlp.matchers.phrase import EDSPhraseMatcher
 from edsnlp.matchers.regex import RegexMatcher
@@ -49,6 +49,7 @@ def pseudo_sort_key(span: Span) -> Tuple[int, int]:
         matcher=Matcher.phrase,
         attr="NORM",
         ignore_excluded=False,
+        scorer={"@scorers": "spacy.ner_scorer.v1"},
     ),
 )
 class StructuredDataMatcher(BaseComponent):
@@ -78,6 +79,7 @@ class StructuredDataMatcher(BaseComponent):
         matcher: Matcher,
         attr: str,
         ignore_excluded: bool,
+        scorer: Optional[Callable],
     ):
 
         self.nlp = nlp
@@ -93,6 +95,11 @@ class StructuredDataMatcher(BaseComponent):
         self.punct_remover = str.maketrans(punctuation, " " * len(punctuation))
 
         self.set_extensions()
+
+        self.scorer = scorer
+
+    def score(self, examples, **kwargs):
+        return self.scorer(examples, **kwargs)
 
     def set_extensions(self):
         if not Span.has_extension("source"):

@@ -5,5 +5,5 @@ from spacy.language import Language
 
 @fixture
 def nlp() -> Language:
-    model = spacy.blank("fr")
+    model = spacy.blank("eds")
     return model
