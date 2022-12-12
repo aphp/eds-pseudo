@@ -1,4 +1,15 @@
-<!-- SPACY PROJECT: AUTO-GENERATED DOCS START (do not remove) -->
+<a href="https://aphp.github.io/eds-pseudo/" target="_blank">
+    <img src="https://img.shields.io/badge/docs-passed-brightgreen" alt="Documentation">
+</a>
+<a href="https://github.com/psf/black" target="_blank">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+</a>
+<a href="https://python-poetry.org" target="_blank">
+    <img src="https://img.shields.io/badge/reproducibility-poetry-blue" alt="Poetry">
+</a>
+<a href="https://dvc.org" target="_blank">
+    <img src="https://img.shields.io/badge/reproducibility-dvc-blue" alt="DVC">
+</a>
 
 # EDS-Pseudonymisation
 
