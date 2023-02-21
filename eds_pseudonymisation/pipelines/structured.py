@@ -9,8 +9,8 @@ from edsnlp.utils.filter import filter_spans
 from spacy.language import Language
 from spacy.tokens import Doc, Span
 
-if not Doc.has_extension("structured_data"):
-    Doc.set_extension("structured_data", default=dict())
+if not Doc.has_extension("context"):
+    Doc.set_extension("context", default=dict())
 
 
 class Matcher(str, Enum):
@@ -108,7 +108,7 @@ class StructuredDataMatcher(BaseComponent):
 
     def phrase_matcher_factory(
         self,
-        structured_data: Dict[str, List[str]],
+        context: Dict[str, List[str]],
     ) -> EDSPhraseMatcher:
         matcher = EDSPhraseMatcher(
             self.nlp.vocab,
@@ -121,20 +121,20 @@ class StructuredDataMatcher(BaseComponent):
                 k: set(v)
                 | set(pat.title() for pat in v)
                 | set(pat.upper() for pat in v)
-                for k, v in structured_data.items()
+                for k, v in context.items()
             },
         )
         return matcher
 
     def regex_matcher_factory(
         self,
-        structured_data: Dict[str, List[str]],
+        context: Dict[str, List[str]],
     ) -> RegexMatcher:
         matcher = RegexMatcher(
             attr=self.attr,
             ignore_excluded=self.ignore_excluded,
         )
-        matcher.build_patterns(regex=structured_data)
+        matcher.build_patterns(regex=context)
         return matcher
 
     def process(self, doc: Doc) -> List[Span]:
@@ -152,21 +152,21 @@ class StructuredDataMatcher(BaseComponent):
             List of Spans returned by the matchers.
         """
 
-        structured_data = doc._.structured_data
-        if "EMAIL" in structured_data:
-            structured_data["MAIL"] = structured_data.pop("EMAIL")
+        context = doc._.context
+        if "EMAIL" in context:
+            context["MAIL"] = context.pop("EMAIL")
 
-        if not structured_data:
+        if not context:
             return []
 
         matcher = self.matcher_factory(
-            structured_data={
+            context={
                 key: tuple(
                     v
                     for v in values
                     if len(v.translate(self.punct_remover).strip()) > 2
                 )
-                for key, values in structured_data.items()
+                for key, values in context.items()
             }
         )
         matches = matcher(doc, as_spans=True)

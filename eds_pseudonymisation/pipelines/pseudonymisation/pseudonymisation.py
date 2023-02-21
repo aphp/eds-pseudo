@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 from edsnlp.matchers.regex import RegexMatcher
 from edsnlp.utils.filter import filter_spans
@@ -13,6 +13,7 @@ from .patterns import common_medical_terms, patterns, person_patterns
 DEFAULT_CONFIG = dict(
     attr="NORM",
     scorer={"@scorers": "spacy.ner_scorer.v1"},
+    pattern_keys=[*patterns, "PERSON", "HOPITAL"]
 )
 
 
@@ -24,6 +25,7 @@ class Pseudonymisation:
         name: str,
         attr: str,
         scorer: Optional[Callable],
+        pattern_keys: Sequence[str]
     ):
 
         self.scorer = scorer
@@ -31,18 +33,23 @@ class Pseudonymisation:
         self.phrase_matcher = PhraseMatcher(vocab=nlp.vocab, attr=attr)
 
         self.regex_matcher.build_patterns(
-            {**patterns}
+            {k: v for k, v in patterns.items() if k in pattern_keys}
         )  # , 'ADRESSE': address_patterns})
+        for key in pattern_keys:
+            if key != "PERSON" and key != "HOPITAL":
+                assert key in patterns, "Missing pattern: {}".format(key)
 
         self.person_matcher = RegexMatcher(attr="TEXT")
-        self.person_matcher.build_patterns({"PERSON": person_patterns})
+        if "PERSON" in pattern_keys:
+            self.person_matcher.build_patterns({"PERSON": person_patterns})
 
         # We add Hospitals
-        hospitals = get_hospitals()
-        self.phrase_matcher.add(
-            key="HOPITAL",
-            docs=[nlp.make_doc(name) for name in dict.fromkeys(hospitals)],
-        )
+        if "HOPITAL" in pattern_keys:
+            hospitals = get_hospitals()
+            self.phrase_matcher.add(
+                key="HOPITAL",
+                docs=[nlp.make_doc(name) for name in dict.fromkeys(hospitals)],
+            )
 
         # We add first names
         # first_names = get_first_names()

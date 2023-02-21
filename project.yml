@@ -29,13 +29,16 @@ description: |
 vars:
   name: "pseudonymisation"
   lang: "eds"
-  version: "0.1.0"
-  train: "dataset/train"
-  dev: "dataset/dev"
-  test: "dataset/test"
+  version: "0.2.0"
+  train: "dataset/train.jsonl"
+  dev: "dataset/dev.jsonl"
+  test: "dataset/test.jsonl"
+  full: "dataset/full.jsonl"
+  corpus: "corpus"
+  training: "training"
   seed: 0
   fraction: 200
-  gpu_id: -1
+  gpu_id: 0
 
 env:
   registry_token: GITLAB_REGISTRY_TOKEN
@@ -53,56 +56,80 @@ workflows:
     - convert
     - train
     - evaluate
+  xp:
+    - convert
+    - train
+    - evaluate
+    - infer
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
 # via "spacy project run [command] [path]". The help message is optional and
 # shown when executing "spacy project run [optional command] [path] --help".
 commands:
-
   - name: "convert"
     help: "Convert the data to spaCy's binary format"
     script:
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.train} --output-path corpus/train.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.dev} --output-path corpus/dev.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.test} --output-path corpus/test.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.train} --output-path ${vars.corpus}/train.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.dev} --output-path ${vars.corpus}/dev.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.test} --output-path ${vars.corpus}/test.spacy"
+      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.full} --output-path ${vars.corpus}/full.spacy"
     deps:
       - "data/${vars.train}"
       - "data/${vars.dev}"
       - "data/${vars.test}"
+      - "data/${vars.full}"
       - "scripts/convert.py"
     outputs:
-      - "corpus/train.spacy"
-      - "corpus/dev.spacy"
-      - "corpus/test.spacy"
+      - "${vars.corpus}/train.spacy"
+      - "${vars.corpus}/dev.spacy"
+      - "${vars.corpus}/test.spacy"
+      - "${vars.corpus}/full.spacy"
+
+  - name: "create-config"
+    help: "Create a new config with an NER pipeline component"
+    script:
+      - "python -m spacy init config --lang ${vars.lang} --pipeline ner configs/config.cfg --force --gpu"
+    outputs:
+      - "configs/config.cfg"
 
   - name: "train"
     help: "Train the NER model"
     script:
-      - "python -m spacy train configs/config.cfg --output training/ --paths.train corpus/train.spacy --paths.dev corpus/dev.spacy --nlp.lang ${vars.lang} --gpu-id ${vars.gpu_id}"
+      - "python -m spacy train configs/config.cfg --output ${vars.training} --paths.train ${vars.corpus}/train.spacy --paths.dev ${vars.corpus}/dev.spacy --nlp.lang ${vars.lang} --gpu-id ${vars.gpu_id}"
     deps:
       - "configs/config.cfg"
-      - "corpus/train.spacy"
-      - "corpus/dev.spacy"
+      - "${vars.corpus}/train.spacy"
+      - "${vars.corpus}/dev.spacy"
     outputs:
-      - "training/model-best"
+      - "${vars.training}/model-best"
 
   - name: "evaluate"
     help: "Evaluate the model and export metrics"
     script:
-      - "python scripts/evaluate.py training/model-best corpus/test.spacy --output training/test_metrics.json --docbin corpus/output.spacy --gpu-id ${vars.gpu_id}"
+      - "python scripts/evaluate.py ${vars.training}/model-best ${vars.corpus}/test.spacy --output ${vars.training}/test_metrics.json --docbin ${vars.corpus}/output.spacy --gpu-id ${vars.gpu_id}"
     deps:
-      - "corpus/test.spacy"
-      - "training/model-best"
+      - "${vars.corpus}/test.spacy"
+      - "${vars.training}/model-best"
     outputs:
-      - "corpus/output.spacy"
-      - "training/test_metrics.json"
+      - "${vars.corpus}/output.spacy"
+      - "${vars.training}/test_metrics.json"
+
+  - name: "infer"
+    help: "Infer the model on test documents"
+    script:
+      - "python scripts/infer.py --model ${vars.training}/model-best --data ${vars.corpus}/full.spacy --output ${vars.corpus}/output.spacy"
+    deps:
+      - "${vars.corpus}/full.spacy"
+      - "${vars.training}/model-best"
+    outputs:
+      - "${vars.corpus}/output.spacy"
 
   - name: "package"
     help: "Package the trained model as a pip package"
     script:
-      - "python scripts/package.py training/model-best packages --name ${vars.name} --version ${vars.version} --code eds_pseudonymisation --build wheel --force"
+      - "python -m spacy package ${vars.training}/model-best packages --name ${vars.name} --version ${vars.version} --force"
     deps:
-      - "training/model-best"
+      - "${vars.training}/model-best"
     outputs_no_cache:
       - "packages/${vars.lang}_${vars.name}-${vars.version}/dist/${vars.lang}_${vars.name}-${vars.version}.tar.gz"

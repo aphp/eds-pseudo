@@ -12,10 +12,7 @@ include = ["eds_pseudonymisation/resources/*.csv.gz"]
 "clean-entities" = "eds_pseudonymisation.pipelines.clean_entities:CleanEntities"
 
 [tool.poetry.plugins."spacy_readers"]
-"eds-pseudonymisation.Corpus.v1" = "eds_pseudonymisation.corpus_reader:create_docbin_reader"
-
-[tool.poetry.plugins."spacy_cli"]
-"evaluate-pseudo" = "eds_pseudonymisation.evaluate:evaluate_cli"
+"eds-pseudonymisation.Corpus.v1" = "eds_pseudonymisation.corpus_reader:PseudoCorpus"
 
 [tool.poetry.dependencies]
 python = ">3.7.6,<4.0,!=3.8.1"

@@ -11,10 +11,14 @@ from spacy.util import filter_spans
 
 from edsnlp.connectors.brat import BratConnector
 
-if not Doc.has_extension("structured_data"):
-    Doc.set_extension("structured_data", default=dict())
+if not Doc.has_extension("context"):
+    Doc.set_extension("context", default=dict())
 if not Doc.has_extension("note_id"):
     Doc.set_extension("note_id", default=None)
+if not Doc.has_extension("note_datetime"):
+    Doc.set_extension("note_datetime", default=None)
+if not Doc.has_extension("note_class_source_value"):
+    Doc.set_extension("note_class_source_value", default=None)
 if not Doc.has_extension("split"):
     Doc.set_extension("split", default=None)
 
@@ -56,9 +60,11 @@ def convert_jsonl(
     db = DocBin(store_user_data=True)
 
     for annot in srsly.read_jsonl(input_path):
-        text, note_id, entities, context, split = (
+        text, note_id, note_datetime, note_class_source_value, entities, context, split = (
             annot["note_text"],
             annot["note_id"],
+            annot["note_datetime"],
+            annot["note_class_source_value"],
             annot.get("entities", []),
             annot.get("context", {}),
             annot.get("split", None),
@@ -66,7 +72,9 @@ def convert_jsonl(
 
         doc = nlp(text)
         doc._.note_id = note_id
-        doc._.structured_data = context
+        # doc._.note_datetime = note_datetime
+        doc._.note_class_source_value = note_class_source_value
+        doc._.context = context
         doc._.split = split
 
         add_entities(doc, entities)
