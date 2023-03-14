@@ -1,6 +1,6 @@
 site_name: EDS-Pseudo
 
-repo_url: https://gitlab.eds.aphp.fr/equipedatascience/eds-pseudonymisation
+repo_url: https://github.com/aphp/eds-pseudo
 # repo_name: algorithms/pseudonymisation
 
 theme:
