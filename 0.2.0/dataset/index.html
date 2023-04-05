@@ -1,0 +1,814 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../assets/logo/eds-pseudo-blue.svg">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+    
+    
+      
+        <title>Dataset - EDS-Pseudonymisation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.975780f9.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../assets/termynal/termynal.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dataset" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="EDS-Pseudonymisation" class="md-header__button md-logo" aria-label="EDS-Pseudonymisation" data-md-component="logo">
+      
+  <img src="../assets/logo/eds-pseudo-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EDS-Pseudonymisation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Dataset
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+            </label>
+          
+        
+          
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.eds.aphp.fr/equipedatascience/eds-pseudonymisation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Gitlab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="EDS-Pseudonymisation" class="md-nav__button md-logo" aria-label="EDS-Pseudonymisation" data-md-component="logo">
+      
+  <img src="../assets/logo/eds-pseudo-white.svg" alt="logo">
+
+    </a>
+    EDS-Pseudonymisation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.eds.aphp.fr/equipedatascience/eds-pseudonymisation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Gitlab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        Quickstart
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reproducibility/" class="md-nav__link">
+        Reproducibility
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Dataset
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Dataset
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-selection" class="md-nav__link">
+    Data Selection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#annotated-entities" class="md-nav__link">
+    Annotated Entities
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    Statistics
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#software" class="md-nav__link">
+    Software
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../results/" class="md-nav__link">
+        Results
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-selection" class="md-nav__link">
+    Data Selection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#annotated-entities" class="md-nav__link">
+    Annotated Entities
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    Statistics
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#software" class="md-nav__link">
+    Software
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="dataset">Dataset</h1>
+<div class="admonition warning">
+<p class="admonition-title">Disclaimer</p>
+<p>We do not provide the dataset due to privacy and regulatory constraints. You will however find the description of the dataset below. We also release the code for the rule-based annotation system.</p>
+</div>
+<h2 id="data-selection">Data Selection</h2>
+<p>We annotated around 4000 documents, selected according to the distribution of AP-HP's
+Clinical Data Warehouse (CDW), to obtain a sample that is representative of the actual
+documents present within the CDW.</p>
+<p>Training data are selected among notes that were edited after August 2017, in order to
+skew the model towards more recent clinical notes. The test set, however, is sampled
+without any time constraints, to make sure the model performs well overall.</p>
+<p>To ensure the robustness of the model, training and test sets documents were
+generated from two different PDF extraction methods:</p>
+<ul>
+<li>the legacy method, based on <a href="https://pdfbox.apache.org/">PDFBox</a> with a fixed mask</li>
+<li>our new method <a href="https://github.com/aphp/edspdf">EDS-PDF</a> with an adaptative (machine-learned) mask</li>
+</ul>
+<h2 id="annotated-entities">Annotated Entities</h2>
+<p>We annotated clinical documents with the following entities :</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ADRESSE</code></td>
+<td>Street address, eg <code>33 boulevard de Picpus</code></td>
+</tr>
+<tr>
+<td><code>DATE</code></td>
+<td>Any absolute date other than a birthdate</td>
+</tr>
+<tr>
+<td><code>DATE_NAISSANCE</code></td>
+<td>Birthdate</td>
+</tr>
+<tr>
+<td><code>HOPITAL</code></td>
+<td>Hospital name, eg <code>Hôpital Rothschild</code></td>
+</tr>
+<tr>
+<td><code>IPP</code></td>
+<td>Internal AP-HP identifier for patients, displayed as a number</td>
+</tr>
+<tr>
+<td><code>MAIL</code></td>
+<td>Email address</td>
+</tr>
+<tr>
+<td><code>NDA</code></td>
+<td>Internal AP-HP identifier for visits, displayed as a number</td>
+</tr>
+<tr>
+<td><code>NOM</code></td>
+<td>Any last name (patients, doctors, third parties)</td>
+</tr>
+<tr>
+<td><code>PRENOM</code></td>
+<td>Any first name (patients, doctors, etc)</td>
+</tr>
+<tr>
+<td><code>SECU</code></td>
+<td>Social security number</td>
+</tr>
+<tr>
+<td><code>TEL</code></td>
+<td>Any phone number</td>
+</tr>
+<tr>
+<td><code>VILLE</code></td>
+<td>Any city</td>
+</tr>
+<tr>
+<td><code>ZIP</code></td>
+<td>Any zip code</td>
+</tr>
+</tbody>
+</table>
+<h2 id="statistics">Statistics</h2>
+<p>To inspect the statistics for the latest version of our dataset, please refer to the
+<a href="/eds-pseudo/latest/dataset">latest release</a>.</p>
+<!--
+
+## Statistics
+
+The following table presents the counts of annotated entities per split and per label.
+
+<style type="text/css">
+#T_09cec_ .col0 {
+  border-left-style: solid;
+}
+#T_09cec_ .col2 {
+  border-left-style: solid;
+}
+#T_09cec_ .col4 {
+  border-left-style: solid;
+}
+</style>
+<table id="T_09cec_" class="dataframe">
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th class="col_heading level0 col0" colspan="2">train</th>
+      <th class="col_heading level0 col2" colspan="2">dev</th>
+      <th class="col_heading level0 col4" colspan="2">test</th>
+    </tr>
+    <tr>
+      <th class="blank level1" >&nbsp;</th>
+      <th class="col_heading level1 col0" >edspdf</th>
+      <th class="col_heading level1 col1" >pdfbox</th>
+      <th class="col_heading level1 col2" >edspdf</th>
+      <th class="col_heading level1 col3" >pdfbox</th>
+      <th class="col_heading level1 col4" >edspdf</th>
+      <th class="col_heading level1 col5" >pdfbox</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_09cec_level0_row0" class="row_heading level0 row0" >DATE</th>
+      <td id="T_09cec_row0_col0" class="data row0 col0" >14711</td>
+      <td id="T_09cec_row0_col1" class="data row0 col1" >2360</td>
+      <td id="T_09cec_row0_col2" class="data row0 col2" >878</td>
+      <td id="T_09cec_row0_col3" class="data row0 col3" >113</td>
+      <td id="T_09cec_row0_col4" class="data row0 col4" >1973</td>
+      <td id="T_09cec_row0_col5" class="data row0 col5" >2831</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row1" class="row_heading level0 row1" >LASTNAME</th>
+      <td id="T_09cec_row1_col0" class="data row1 col0" >4910</td>
+      <td id="T_09cec_row1_col1" class="data row1 col1" >4299</td>
+      <td id="T_09cec_row1_col2" class="data row1 col2" >292</td>
+      <td id="T_09cec_row1_col3" class="data row1 col3" >236</td>
+      <td id="T_09cec_row1_col4" class="data row1 col4" >625</td>
+      <td id="T_09cec_row1_col5" class="data row1 col5" >4150</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row2" class="row_heading level0 row2" >FIRSTNAME</th>
+      <td id="T_09cec_row2_col0" class="data row2 col0" >3468</td>
+      <td id="T_09cec_row2_col1" class="data row2 col1" >3826</td>
+      <td id="T_09cec_row2_col2" class="data row2 col2" >215</td>
+      <td id="T_09cec_row2_col3" class="data row2 col3" >216</td>
+      <td id="T_09cec_row2_col4" class="data row2 col4" >478</td>
+      <td id="T_09cec_row2_col5" class="data row2 col5" >3739</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row3" class="row_heading level0 row3" >HOPITAL</th>
+      <td id="T_09cec_row3_col0" class="data row3 col0" >1451</td>
+      <td id="T_09cec_row3_col1" class="data row3 col1" >758</td>
+      <td id="T_09cec_row3_col2" class="data row3 col2" >87</td>
+      <td id="T_09cec_row3_col3" class="data row3 col3" >47</td>
+      <td id="T_09cec_row3_col4" class="data row3 col4" >162</td>
+      <td id="T_09cec_row3_col5" class="data row3 col5" >796</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row4" class="row_heading level0 row4" >PHONE</th>
+      <td id="T_09cec_row4_col0" class="data row4 col0" >397</td>
+      <td id="T_09cec_row4_col1" class="data row4 col1" >1589</td>
+      <td id="T_09cec_row4_col2" class="data row4 col2" >23</td>
+      <td id="T_09cec_row4_col3" class="data row4 col3" >148</td>
+      <td id="T_09cec_row4_col4" class="data row4 col4" >77</td>
+      <td id="T_09cec_row4_col5" class="data row4 col5" >1851</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row5" class="row_heading level0 row5" >BIRTHDATE</th>
+      <td id="T_09cec_row5_col0" class="data row5 col0" >916</td>
+      <td id="T_09cec_row5_col1" class="data row5 col1" >519</td>
+      <td id="T_09cec_row5_col2" class="data row5 col2" >52</td>
+      <td id="T_09cec_row5_col3" class="data row5 col3" >31</td>
+      <td id="T_09cec_row5_col4" class="data row5 col4" >87</td>
+      <td id="T_09cec_row5_col5" class="data row5 col5" >484</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row6" class="row_heading level0 row6" >PATIENT ID</th>
+      <td id="T_09cec_row6_col0" class="data row6 col0" >121</td>
+      <td id="T_09cec_row6_col1" class="data row6 col1" >339</td>
+      <td id="T_09cec_row6_col2" class="data row6 col2" >8</td>
+      <td id="T_09cec_row6_col3" class="data row6 col3" >18</td>
+      <td id="T_09cec_row6_col4" class="data row6 col4" >8</td>
+      <td id="T_09cec_row6_col5" class="data row6 col5" >392</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row7" class="row_heading level0 row7" >CITY</th>
+      <td id="T_09cec_row7_col0" class="data row7 col0" >592</td>
+      <td id="T_09cec_row7_col1" class="data row7 col1" >742</td>
+      <td id="T_09cec_row7_col2" class="data row7 col2" >27</td>
+      <td id="T_09cec_row7_col3" class="data row7 col3" >47</td>
+      <td id="T_09cec_row7_col4" class="data row7 col4" >44</td>
+      <td id="T_09cec_row7_col5" class="data row7 col5" >810</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row8" class="row_heading level0 row8" >VISIT ID</th>
+      <td id="T_09cec_row8_col0" class="data row8 col0" >49</td>
+      <td id="T_09cec_row8_col1" class="data row8 col1" >283</td>
+      <td id="T_09cec_row8_col2" class="data row8 col2" >7</td>
+      <td id="T_09cec_row8_col3" class="data row8 col3" >17</td>
+      <td id="T_09cec_row8_col4" class="data row8 col4" >6</td>
+      <td id="T_09cec_row8_col5" class="data row8 col5" >282</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row9" class="row_heading level0 row9" >ADDRESS</th>
+      <td id="T_09cec_row9_col0" class="data row9 col0" >212</td>
+      <td id="T_09cec_row9_col1" class="data row9 col1" >543</td>
+      <td id="T_09cec_row9_col2" class="data row9 col2" >10</td>
+      <td id="T_09cec_row9_col3" class="data row9 col3" >35</td>
+      <td id="T_09cec_row9_col4" class="data row9 col4" >12</td>
+      <td id="T_09cec_row9_col5" class="data row9 col5" >625</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row10" class="row_heading level0 row10" >EMAIL</th>
+      <td id="T_09cec_row10_col0" class="data row10 col0" >20</td>
+      <td id="T_09cec_row10_col1" class="data row10 col1" >182</td>
+      <td id="T_09cec_row10_col2" class="data row10 col2" >0</td>
+      <td id="T_09cec_row10_col3" class="data row10 col3" >17</td>
+      <td id="T_09cec_row10_col4" class="data row10 col4" >1</td>
+      <td id="T_09cec_row10_col5" class="data row10 col5" >166</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row11" class="row_heading level0 row11" >ZIP</th>
+      <td id="T_09cec_row11_col0" class="data row11 col0" >215</td>
+      <td id="T_09cec_row11_col1" class="data row11 col1" >552</td>
+      <td id="T_09cec_row11_col2" class="data row11 col2" >10</td>
+      <td id="T_09cec_row11_col3" class="data row11 col3" >35</td>
+      <td id="T_09cec_row11_col4" class="data row11 col4" >14</td>
+      <td id="T_09cec_row11_col5" class="data row11 col5" >635</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row12" class="row_heading level0 row12" >NSS</th>
+      <td id="T_09cec_row12_col0" class="data row12 col0" >73</td>
+      <td id="T_09cec_row12_col1" class="data row12 col1" >79</td>
+      <td id="T_09cec_row12_col2" class="data row12 col2" >6</td>
+      <td id="T_09cec_row12_col3" class="data row12 col3" >7</td>
+      <td id="T_09cec_row12_col4" class="data row12 col4" >4</td>
+      <td id="T_09cec_row12_col5" class="data row12 col5" >32</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row13" class="row_heading level0 row13" >ENTS</th>
+      <td id="T_09cec_row13_col0" class="data row13 col0" >27135</td>
+      <td id="T_09cec_row13_col1" class="data row13 col1" >16071</td>
+      <td id="T_09cec_row13_col2" class="data row13 col2" >1615</td>
+      <td id="T_09cec_row13_col3" class="data row13 col3" >967</td>
+      <td id="T_09cec_row13_col4" class="data row13 col4" >3491</td>
+      <td id="T_09cec_row13_col5" class="data row13 col5" >16793</td>
+    </tr>
+    <tr>
+      <th id="T_09cec_level0_row14" class="row_heading level0 row14" >DOCS</th>
+      <td id="T_09cec_row14_col0" class="data row14 col0" >3025</td>
+      <td id="T_09cec_row14_col1" class="data row14 col1" >348</td>
+      <td id="T_09cec_row14_col2" class="data row14 col2" >200</td>
+      <td id="T_09cec_row14_col3" class="data row14 col3" >22</td>
+      <td id="T_09cec_row14_col4" class="data row14 col4" >348</td>
+      <td id="T_09cec_row14_col5" class="data row14 col5" >348</td>
+    </tr>
+  </tbody>
+</table>
+
+-->
+
+<h2 id="software">Software</h2>
+<p>The software tools used to annotate the documents with personal identification entities were:</p>
+<ul>
+<li><a href="https://labelstud.io/">LabelStudio</a> for the first annotation campaign</li>
+<li><a href="https://github.com/percevalw/metanno">Metanno</a> for the second annotation campaign
+but any annotation software will do.</li>
+</ul>
+<p>The <code>convert</code> step takes as input either a jsonlines file (<code>.jsonl</code>) or a folder
+containing Standoff files (<code>.ann</code>) from an annotation with <a href="https://brat.nlplab.org/">Brat</a>.</p>
+<p>Feel free to <a href="https://github.com/aphp/eds-pseudo/pulls">submit a pull request</a> if these
+formats do not suit you!</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../reproducibility/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Reproducibility" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Reproducibility
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../results/" class="md-footer__link md-footer__link--next" aria-label="Next: Results" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Results
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tracking", "navigation.instant", "content.code.annotate"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      
+        <script src="../js/mkdocs-charts-plugin.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+      
+        <script src="../assets/termynal/termynal.js"></script>
+      
+    
+    
+  </body>
+</html>
