@@ -308,9 +308,68 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Results
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Results
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-results" class="md-nav__link">
+    General results
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-language-model" class="md-nav__link">
+    Impact of the language model
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-pdf-extraction-step" class="md-nav__link">
+    Impact of the PDF extraction step
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-number-of-training-examples" class="md-nav__link">
+    Impact of the number of training examples
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-missing-document-types" class="md-nav__link">
+    Impact of the missing document types
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -351,6 +410,49 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-results" class="md-nav__link">
+    General results
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-language-model" class="md-nav__link">
+    Impact of the language model
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-pdf-extraction-step" class="md-nav__link">
+    Impact of the PDF extraction step
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-number-of-training-examples" class="md-nav__link">
+    Impact of the number of training examples
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-the-missing-document-types" class="md-nav__link">
+    Impact of the missing document types
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -365,15 +467,9 @@
 
 
 <h1 id="results">Results</h1>
-<p>Our article is available on <a href="https://arxiv.org/pdf/2303.13451.pdf">arXiv</a>.</p>
-<p>To inspect the results for the latest version of our system, please refer to the
-<a href="/eds-pseudo/latest/results">latest release</a> page.</p>
-<!--
-
-You will find below some of the results presented in the article, as well as interactive charts.
-
-## General results
-
+<p>Our article is available on <a href="https://arxiv.org/pdf/2303.13451.pdf">arXiv</a>.
+You will find below some of the results presented in the article, as well as interactive charts.</p>
+<h2 id="general-results">General results</h2>
 <style type="text/css">
 #T_59e38_ .col1 {
   border-left-style: solid;
@@ -658,16 +754,12 @@ You will find below some of the results presented in the article, as well as int
   </tbody>
 </table>
 
-*If you have trouble seeing the chart, please refresh the page.*
-
-<vegachart style='width: 100%'  class="vegalite">{
+<p><em>If you have trouble seeing the chart, please refresh the page.</em></p>
+<p><vegachart style='width: 100%'  class="vegalite">{
   "schema-url": "assets/figures/label_scores.json"
-}</vegachart>
-
----
-
-## Impact of the language model
-
+}</vegachart></p>
+<hr />
+<h2 id="impact-of-the-language-model">Impact of the language model</h2>
 <style type="text/css">
 #T_7b589_ .col1 {
   border-left-style: solid;
@@ -952,17 +1044,12 @@ You will find below some of the results presented in the article, as well as int
   </tbody>
 </table>
 
-
-*If you have trouble seeing the chart, please refresh the page.*
-
-<vegachart style='width: 100%'  class="vegalite">{
+<p><em>If you have trouble seeing the chart, please refresh the page.</em></p>
+<p><vegachart style='width: 100%'  class="vegalite">{
   "schema-url": "assets/figures/bert_ablation.json"
-}</vegachart>
-
----
-
-## Impact of the PDF extraction step
-
+}</vegachart></p>
+<hr />
+<h2 id="impact-of-the-pdf-extraction-step">Impact of the PDF extraction step</h2>
 <style type="text/css">
 </style>
 <table id="T_93e56_" class="dataframe">
@@ -996,26 +1083,17 @@ You will find below some of the results presented in the article, as well as int
   </tbody>
 </table>
 
-
----
-
-## Impact of the number of training examples
-
-*If you have trouble seeing the chart, please refresh the page.*
-
-<vegachart style='width: 100%'  class="vegalite">{
+<hr />
+<h2 id="impact-of-the-number-of-training-examples">Impact of the number of training examples</h2>
+<p><em>If you have trouble seeing the chart, please refresh the page.</em></p>
+<p><vegachart style='width: 100%'  class="vegalite">{
   "schema-url": "assets/figures/limit_ablation.json"
-}</vegachart>
-
-## Impact of the missing document types
-
-*If you have trouble seeing the chart, please refresh the page.*
-
-<vegachart style='width: 100%'  class="vegalite">{
+}</vegachart></p>
+<h2 id="impact-of-the-missing-document-types">Impact of the missing document types</h2>
+<p><em>If you have trouble seeing the chart, please refresh the page.</em></p>
+<p><vegachart style='width: 100%'  class="vegalite">{
   "schema-url": "assets/figures/doc_type_ablation.json"
-}</vegachart>
-
--->
+}</vegachart></p>
 
 
 
