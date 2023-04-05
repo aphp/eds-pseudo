@@ -2610,6 +2610,22 @@ requests = ">=2.8.1"
 validators = ">=0.19.0"
 
 [[package]]
+name = "mkdocs-charts-plugin"
+version = "0.0.8"
+description = "MkDocs plugin to add charts from data"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "mkdocs-charts-plugin-0.0.8.tar.gz", hash = "sha256:d4d0288caefb656a864a04efb49f2f7dd891f9221d722d8e3926a176a8f23eed"},
+    {file = "mkdocs_charts_plugin-0.0.8-py3-none-any.whl", hash = "sha256:1dd21dbe4cdf369043d2593f7b9eed46eeeff9534352c0abd2b6a87b12a32869"},
+]
+
+[package.dependencies]
+mkdocs = ">=1.1"
+pymdown-extensions = ">=9.2"
+
+[[package]]
 name = "mkdocs-gen-files"
 version = "0.3.5"
 description = "MkDocs plugin to programmatically generate documentation pages during the build"
@@ -5585,4 +5601,4 @@ cuda92 = ["cupy-cuda92"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.7.6,<3.12,!=3.8.1"
-content-hash = "bbd2cbada023ab47fbe49e7e08a9b2470a2f32176f573c676f835d0686352d91"
+content-hash = "6459b02455a229c409a552ce5df7a45aeb3e35af6e052f15c10bd45d93788ffe"

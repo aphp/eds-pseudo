@@ -7,7 +7,7 @@ We use [Poetry](https://github.com/poetry/poetry) to validate the constraints ge
 
 This file can be reused to reinstall a previous environment by running
 ```bash
-poetry install
+poetry install --with docs
 ```
 
 ## Versioning
@@ -25,3 +25,45 @@ dvc repro
 ```
 
 For more information about DVC, make sure to visit their [documentation](https://dvc.org).
+
+## Article experiments
+
+To reproduce the results of our article, run the `experiments.py` script to queue the experiments with DVC:
+
+```bash
+python experiments.py
+```
+
+Then, run the experiments:
+
+```bash
+dvc exp run --queue --run-all
+```
+
+??? tip "Tip for Slurm environments"
+
+    If your computing resources are managed with Slurm, you can run `dvc exp queue-worker` from Slurm jobs instead of the last command to parallelize the experiments across multiple nodes.
+
+    ```bash title="my_slurm_job.sh"
+    # SBATCH ...
+
+    dvc-worker-$SLURM_JOB_ID -v
+    ```
+
+    ```bash
+    sbatch my_slurm_job.sh  # first job
+    sbatch my_slurm_job.sh  # launch as many jobs at once as needed
+    ```
+
+To reproduce (some) of the figures of our article, run the `analysis.py` script to
+generate the charts and tables in the `docs/assets/figures` folder.
+
+```bash
+python analysis.py
+```
+
+and visualize them by serving the documentation
+
+```bash
+mkdocs serve
+```
