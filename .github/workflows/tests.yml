@@ -87,7 +87,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install
+          poetry install --only docs
 
       - name: Build documentation
         run: |

@@ -1,17 +1,15 @@
-import itertools
+import argparse
 import subprocess
 
-import argparse
-
 parser = argparse.ArgumentParser("experiments")
-parser.add_argument("idx", help="Process index", nargs='?', type=int, default=None)
+parser.add_argument("idx", help="Process index", nargs="?", type=int, default=None)
 args = parser.parse_args()
 process_idx = args.idx
 
 # Automated grid search experiments
 seeds = [42, 43, 44, 45, 46]
 limits = [10, 30, 60, 100, 150, 250, 500, 700, 1000, 1300, 1700, 2000, 2500, 3000, 0]
-#limits = [80, 100, 120, 1000, 1500, 2300, 2900]
+# limits = [80, 100, 120, 1000, 1500, 2300, 2900]
 bert_names = [
     "/export/home/pwajsburt/data/models/embedding-whole-word/checkpoint-250000/",
     "/export/home/share/datascientists/models/camembert-base",
@@ -19,10 +17,10 @@ bert_names = [
 ]
 doc_ablations = [
     "'doc._.note_class_source_value != \"CR-ACTE-DIAG-AUTRE\"'",
-    #"'doc._.note_class_source_value != \"CR-ANAPATH\"'",
-    #"'doc._.note_class_source_value != \"CR-IMAGE\"'",
-    #"'doc._.note_class_source_value != \"CR-OPER\"'",
-    #"'doc._.note_class_source_value != \"RCP\"'",
+    # "'doc._.note_class_source_value != \"CR-ANAPATH\"'",
+    # "'doc._.note_class_source_value != \"CR-IMAGE\"'",
+    # "'doc._.note_class_source_value != \"CR-OPER\"'",
+    # "'doc._.note_class_source_value != \"RCP\"'",
 ]
 
 # Iterate over all combinations of hyperparameter values.
@@ -34,7 +32,7 @@ for seed in seeds:
             "dvc",
             "exp",
             "run",
-            #"--queue",
+            # "--queue",
             "--temp",
             "-S",
             f"configs/config.cfg:system.seed={seed}",
@@ -45,7 +43,7 @@ for seed in seeds:
             print("Running", " ".join(xp))
             subprocess.run(xp)
         i += 1
-        
+
 #    for bert_name in bert_names:
 #        xp = [
 #            "dvc",
