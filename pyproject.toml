@@ -73,6 +73,7 @@ mkdocstrings = "^0.18.1"
 mkdocstrings-python = "^0.6.6"
 mkdocs-glightbox = "^0.1.6"
 mkdocs-autorefs = "^0.4.1"
+mkdocs-charts-plugin = "^0.0.8"
 
 [tool.poetry.extras]
 cuda = ["cupy"]
@@ -125,6 +126,27 @@ testpaths = [
 
 [tool.mypy]
 plugins = "pydantic.mypy"
+
+[tool.ruff]
+fix = true
+exclude = [
+    ".git",
+    "__pycache__",
+    "__init__.py",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "build",
+]
+ignore = []
+line-length = 88
+select = [
+    "E",
+    "F",
+    "W",
+    "I001"
+]
+fixable = ["E", "F", "W", "I"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "pypandoc<1.8.0"]

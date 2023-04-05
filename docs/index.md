@@ -53,5 +53,3 @@ Run the command with
 ```bash
 spacy project run [command] [options]
 ```
-
-Take a look at the [annotation guide](annotation-guide.md) for more detail.

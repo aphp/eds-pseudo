@@ -1,4 +1,4 @@
-site_name: EDS-Pseudonymisation
+site_name: EDS-Pseudo
 
 repo_url: https://gitlab.eds.aphp.fr/equipedatascience/eds-pseudonymisation
 # repo_name: algorithms/pseudonymisation
@@ -24,10 +24,14 @@ theme:
 nav:
   - index.md
   - quickstart.md
-  - annotation-guide.md
   - reproducibility.md
+  - dataset.md
   - results.md
   - changelog.md
+
+extra:
+  version:
+    provider: mike
 
 extra_css:
   - assets/stylesheets/extra.css
@@ -41,18 +45,25 @@ extra_javascript:
 
 plugins:
   - search
+  - charts:
+      use_data_path: false
   - bibtex:
       bib_file: "docs/references.bib"
   - gen-files:
       scripts:
         - docs/scripts/generate_development.py
+  - mike
 
 watch:
   - changelog.md
 
 markdown_extensions:
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.snippets
@@ -62,6 +73,7 @@ markdown_extensions:
   - md_in_html
   - attr_list
   - pymdownx.details
+  - pymdownx.snippets
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.emoji:

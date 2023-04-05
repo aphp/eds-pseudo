@@ -128,8 +128,8 @@ commands:
   - name: "package"
     help: "Package the trained model as a pip package"
     script:
-      - "python -m spacy package ${vars.training}/model-best packages --name ${vars.name} --version ${vars.version} --force"
+      - "python scripts/package.py ${vars.training}/model-best packages --name ${vars.name} --version ${vars.version} --force --build wheel --code eds_pseudonymisation"
     deps:
       - "${vars.training}/model-best"
     outputs_no_cache:
-      - "packages/${vars.lang}_${vars.name}-${vars.version}/dist/${vars.lang}_${vars.name}-${vars.version}.tar.gz"
+      - "packages/${vars.lang}_${vars.name}-${vars.version}/dist/${vars.lang}_${vars.name}-${vars.version}.whl"

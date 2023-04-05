@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.0 - 2023-05-04
+
+Many fixes along the publication of our [article](https://arxiv.org/pdf/2303.13451.pdf):
+
+- Tests for the rule-based components
+- Code documentation and cleaning
+- Experiment and analysis scripts
+- Charts and tables in the Results page of our documentation
+
 ## v0.1.0 - 2022-05-13
 
 Inception ! :tada:

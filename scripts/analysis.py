@@ -1,29 +1,32 @@
+# ruff: noqa: E501
+
+import logging
 import os
 import re
 from collections import Counter
-from functools import reduce, partial
+from functools import partial, reduce
+from itertools import product
 from multiprocessing import Pool
-from typing import Any, Dict, Iterable, TypeVar, Union, List, Optional, Set
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Set, TypeVar, Union
 
 import altair as alt
 import dvc.api
 import numpy as np
 import pandas as pd
+import scipy.stats
 import spacy
 import spacy.tokens
 import spacy.training
 from dvc.repo import Repo
 from dvc.repo.experiments.show import show as experiments_show
 from edsnlp.utils.filter import filter_spans
-from tqdm import tqdm
-from itertools import product
-from pathlib import Path
 from pandas.api.types import is_numeric_dtype
-import scipy.stats
-
-# Evaluation utils
-
 from spacy.tokens import Doc
+from tqdm import tqdm
+
+logging.basicConfig(level=logging.INFO)
+
 
 if not Doc.has_extension("context"):
     Doc.set_extension("context", default=dict())
@@ -531,9 +534,7 @@ def score_experiments(
         .merge(split_df)
     )
 
-    print("FULL", len(full))
     test_ids = set(d._.note_id for d in full if split in d._.split)
-    print("TEST IDS", len(test_ids))
     rb_only_preds = sorted(
         [
             fix_entities(d)
@@ -688,7 +689,7 @@ def score_experiment(
 
         return results
     except Exception:
-        print(f"Could not score experiment: {rev}")
+        logging.error(f"Could not score experiment: {rev}")
         # import traceback
         # traceback.print_exc()
         return None
@@ -717,6 +718,8 @@ def load_experiments(
         - params.*: The parameters of the experiment
         - commit: The commit of the experiment
     """
+    logging.info("Loading experiments")
+
     with Repo.open(repo_path) as repo:
         data = experiments_show(repo=repo, all_commits=True)
 
@@ -755,6 +758,7 @@ def load_experiments(
     )
     experiments["rev"] = experiments["rev"].fillna("workspace")
     experiments = cast_categories(experiments)
+    logging.info("Found {} experiments".format(len(experiments)))
     return experiments
 
 
@@ -1067,6 +1071,8 @@ def select_displayed_data(x, index, columns=()):
 
 
 def plot_doc_type_ablation(results, experiments, return_data=False):
+    logging.info("Plotting document type ablation experiments")
+
     ablation_experiments = experiments.copy()
     ablation_experiments = ablation_experiments[
         ~ablation_experiments.filter_expr.isna()
@@ -1155,6 +1161,8 @@ def plot_doc_type_ablation(results, experiments, return_data=False):
 
 
 def plot_bert_ablation(results, experiments):
+    logging.info("Plotting BERT ablation experiments")
+
     experiments["limit"].max()
 
     plot_data = select_displayed_data(
@@ -1253,6 +1261,8 @@ def add_altair_selectors(defaults, plot_data):
 
 
 def plot_labels(results, experiments):
+    logging.info("Plotting results by labels")
+
     max_limit = experiments["limit"].max()
     min_limit = experiments["limit"].min()
 
@@ -1343,6 +1353,8 @@ def plot_iaa_pairs(docs_df: pd.DataFrame, labels_mapping: Dict[str, str]):
     -------
     altair.Chart
     """
+    logging.info("Plotting IAA pairs")
+
     scores = []
     annotators = docs_df.annotator.drop_duplicates()
     for ann1, ann2 in tqdm(product(annotators, annotators)):
@@ -1432,6 +1444,8 @@ def plot_micro_iaa(docs_df: pd.DataFrame, labels_mapping: Dict[str, str]):
     -------
     alt.Chart
     """
+    logging.info("Plotting micro-averaged IAA")
+
     scores = []
     docs_df.annotator.drop_duplicates()
     cross_annotations = pd.merge(docs_df, docs_df, on=["note_id", "subsplit"]).query(
@@ -1491,7 +1505,9 @@ def make_ml_vs_rb_table(
     results: pd.DataFrame,
     experiments: pd.DataFrame,
 ):
-    table = results.drop(columns=["tp", "pred_count", "gold_count"])
+    logging.info("Building comparison table of ML vs rule-based")
+
+    table = results
     table = table.merge(
         pd.concat(
             [
@@ -1558,47 +1574,70 @@ def make_ml_vs_rb_table(
         ]
     ]
     table = table.applymap(lambda x: "{:.1f}".format(float(x)))
-    return table
+    table = table.reset_index()
+    table.columns = pd.MultiIndex.from_tuples(table.columns)
+    styled = (
+        table.style.set_table_styles(
+            {
+                ("Precision", "RB"): [
+                    {"props": "border-left-style: solid", "selector": ""}
+                ],
+                ("Recall", "RB"): [
+                    {"props": "border-left-style: solid", "selector": ""}
+                ],
+                ("F1", "RB"): [{"props": "border-left-style: solid", "selector": ""}],
+                ("Redact", "RB"): [
+                    {"props": "border-left-style: solid", "selector": ""}
+                ],
+                ("Full redact", "RB"): [
+                    {"props": "border-left-style: solid", "selector": ""}
+                ],
+            }
+        )
+        .hide_index()
+        .set_table_attributes('class="dataframe"')
+    )
+    return styled
 
 
 def make_pdf_comparison_table(
     results: pd.DataFrame,
     experiments: pd.DataFrame,
 ):
-    pdf_results = results.drop(columns=["tp", "pred_count", "gold_count"])
-    pdf_results = pdf_results.merge(
+    logging.info("Building comparison table of PDF extraction methods")
+
+    table = results.merge(
         pd.concat(
             [
                 experiments.query("limit == limit.max() and filter_expr.isna()"),
-                # pd.DataFrame([{"rev": "rb", "bert": "rb", "params/system/seed": 0}])
             ]
         ).reset_index(drop=True),
         on="rev",
     )
-    pdf_results = pdf_results.query("note_class_source_value == 'ALL'")
-    pdf_results = pdf_results.query("alignment == 'token'")
-    pdf_results = pdf_results.query("mode == 'ml'")
-    pdf_results = pdf_results.query("label == 'ALL'")
-    pdf_results = pdf_results.query("split == 'test/pdfbox' or split == 'test/edspdf'")
-    pdf_results = pdf_results.query("bert == 'finetuned-raw'")
-    pdf_results = pdf_results.eval("precision = precision * 100")
-    pdf_results = pdf_results.eval("recall = recall * 100")
-    pdf_results = pdf_results.eval("f1 = f1 * 100")
-    pdf_results = pdf_results.eval("full = full * 100")
-    pdf_results = pdf_results.eval("redact = redact * 100")
-    pdf_results = pdf_results.eval("redact_full = redact_full * 100")
-    pdf_results = pdf_results.astype(object).fillna(" ")
-    pdf_results["PDF extractor"] = pdf_results["split"].apply(
+    table = table.query("note_class_source_value == 'ALL'")
+    table = table.query("alignment == 'token'")
+    table = table.query("mode == 'ml'")
+    table = table.query("label == 'ALL'")
+    table = table.query("split == 'test/pdfbox' or split == 'test/edspdf'")
+    table = table.query("bert == 'finetuned-raw'")
+    table = table.eval("precision = precision * 100")
+    table = table.eval("recall = recall * 100")
+    table = table.eval("f1 = f1 * 100")
+    table = table.eval("full = full * 100")
+    table = table.eval("redact = redact * 100")
+    table = table.eval("redact_full = redact_full * 100")
+    table = table.astype(object).fillna(" ")
+    table["PDF extractor"] = table["split"].apply(
         lambda x: {
             "test/edspdf": "edspdf",
             "test/pdfbox": "pdfbox",
         }[x]
     )
-    pdf_results = pdf_results.groupby(["PDF extractor"])[
+    table = table.groupby(["PDF extractor"])[
         ["precision", "recall", "f1", "redact", "redact_full"]
     ]
-    pdf_results = pdf_results.agg(ValueList)
-    pdf_results = pdf_results.rename(
+    table = table.agg(ValueList)
+    table = table.rename(
         {
             "redact_full": "Full redact",
             "precision": "P",
@@ -1608,8 +1647,104 @@ def make_pdf_comparison_table(
         },
         axis=1,
     )
-    pdf_results.loc[["edspdf", "pdfbox"], :]
-    return pdf_results
+    table.loc[["edspdf", "pdfbox"], :]
+
+    table = table.reset_index()
+    styled = table.style.hide_index().set_table_attributes('class="dataframe"')
+    return styled
+
+
+def make_bert_ablation_table(results: pd.DataFrame, experiments: pd.DataFrame):
+    logging.info("Building comparison table between pretrained embeddings")
+    table = results.merge(
+        pd.concat(
+            [
+                experiments.query(
+                    f"limit == {experiments.limit.max()} and filter_expr.isna()"
+                ),
+            ]
+        ).reset_index(drop=True),
+        on="rev",
+    )
+    table = table.query("note_class_source_value == 'ALL'")
+    table = table.query("alignment == 'exact'")
+    table = table.query("mode == 'ml'")
+    table = table.query("label == 'ALL'")
+    table = table.query(
+        "split == 'test/pdfbox' or split == 'test/edspdf' or split == 'test'"
+    )
+    table = table.eval("precision = precision * 100")
+    table = table.eval("recall = recall * 100")
+    table = table.eval("f1 = f1 * 100")
+    table = table.eval("full = full * 100")
+    table = table.eval("redact = redact * 100")
+    table = table.eval("redact_full = redact_full * 100")
+    table = table.astype(object).fillna(" ")
+    # index=["alignment", "bert", "label", "split"],
+    # columns=["precision", "recall", "f1", "full", "redact", "redact_full", "rev"],
+    table["Transformer"] = table["bert"].apply(
+        lambda x: {
+            "camembert-base": "camembert base",
+            "finetuned-raw": "finetuned raw",
+            "scratch-pseudo": "scratch pseudo",
+        }[x]
+    )
+    table["PDF extractor"] = table["split"].apply(
+        lambda x: {
+            "test/edspdf": "edspdf",
+            "test/pdfbox": "pdfbox",
+            "test": "all",
+        }[x]
+    )
+    table = table.groupby(["PDF extractor", "Transformer"])[
+        ["precision", "recall", "f1", "redact", "redact_full"]
+    ]
+    table = table.agg(ValueList)
+    table = table.rename(
+        {
+            "redact_full": "Full redact",
+            "precision": "P",
+            "recall": "R",
+            "f1": "F1",
+            "redact": "Redact",
+        },
+        axis=1,
+    )
+    table = table.loc["all"].loc[
+        ("finetuned raw", "camembert base", "scratch pseudo"), :
+    ]
+    table = table.reset_index()
+    styled = table.style.hide_index().set_table_attributes('class="dataframe"')
+    return styled
+
+
+def make_corpus_stats_table(*split_paths, LABEL_MAPPING={}):
+    logging.info("Building corpus statistics table")
+    table = (
+        pd.concat(
+            [
+                get_corpus_stats(path, labels_mapping=LABEL_MAPPING)
+                for path in split_paths
+            ],
+            axis=1,
+        )
+        .fillna(0)
+        .astype(int)
+    )
+    table = table.copy()
+    table.columns = pd.MultiIndex.from_tuples(
+        [tuple(col.split("/")) for col in table.columns]
+    )
+    styled = table.style.set_table_styles(
+        {
+            ("train", "edspdf"): [
+                {"props": "border-left-style: solid", "selector": ""}
+            ],
+            ("dev", "edspdf"): [{"props": "border-left-style: solid", "selector": ""}],
+            ("test", "edspdf"): [{"props": "border-left-style: solid", "selector": ""}],
+        }
+    ).set_table_attributes('class="dataframe"')
+    return styled
 
 
 def main(
@@ -1617,10 +1752,26 @@ def main(
     metadata_filepath="data/metadata.jsonl",
     xp_output_filepath="corpus/output.spacy",
     gold_filepath="corpus/full.spacy",
+    train_filepath="corpus/train.spacy",
     rb_only_filepath="corpus/output-rb-full.spacy",
     rb_to_merge_filepath="corpus/output-rb-best.spacy",
 ):
     os.chdir(repo_path)
+
+    LABEL_MAPPING = {
+        "DATE": "DATE",
+        "NOM": "LASTNAME",
+        "PRENOM": "FIRSTNAME",
+        "MAIL": "EMAIL",
+        "NDA": "VISIT ID",
+        "TEL": "PHONE",
+        "DATE_NAISSANCE": "BIRTHDATE",
+        "VILLE": "CITY",
+        "ZIP": "ZIP",
+        "ADRESSE": "ADDRESS",
+        "IPP": "PATIENT ID",
+        "SECU": "NSS",
+    }
 
     experiments = load_experiments(
         repo_path,
@@ -1631,56 +1782,73 @@ def main(
         },
     ).query("rev != 'workspace'")
 
-    results = pd.concat(
-        [
-            score_experiments(
-                experiments=experiments,
-                xp_output_filepath=xp_output_filepath,
-                rb_only_filepath=rb_only_filepath,
-                rb_to_merge_filepath=rb_to_merge_filepath,
-                metadata_filepath=metadata_filepath,
-                gold_filepath=gold_filepath,
-                labels_mapping={
-                    "DATE": "DATE",
-                    "NOM": "LASTNAME",
-                    "PRENOM": "FIRSTNAME",
-                    "MAIL": "EMAIL",
-                    "NDA": "VISIT ID",
-                    "TEL": "PHONE",
-                    "DATE_NAISSANCE": "BIRTHDATE",
-                    "VILLE": "CITY",
-                    "ZIP": "ZIP",
-                    "ADRESSE": "ADDRESS",
-                    "IPP": "PATIENT ID",
-                    "SECU": "NSS",
-                },
-            ).assign(split=split)
-            for split in ("test/edspdf",)  # "test/pdfbox", "test")
-        ]
-    ).drop(columns=["tp", "pred_count", "gold_count"])
+    try:
+        results = pd.read_parquet("results.pq")
+        logging.info("Re-using already computed results table")
+    except Exception:
+        logging.info("Computing results table, this can take a while")
+        results = pd.concat(
+            [
+                score_experiments(
+                    experiments=experiments,
+                    xp_output_filepath=xp_output_filepath,
+                    rb_only_filepath=rb_only_filepath,
+                    rb_to_merge_filepath=rb_to_merge_filepath,
+                    metadata_filepath=metadata_filepath,
+                    gold_filepath=gold_filepath,
+                    labels_mapping=LABEL_MAPPING,
+                ).assign(split=split)
+                for split in ("test/edspdf", "test/pdfbox", "test")
+            ]
+        ).drop(columns=["tp", "pred_count", "gold_count"])
+        results.to_parquet("results.pq")
+
+    corpus_stats_table = make_corpus_stats_table(
+        train_filepath, gold_filepath, LABEL_MAPPING=LABEL_MAPPING
+    )
+    Path("docs/assets/figures/corpus_stats_table.html").write_text(
+        corpus_stats_table.to_html()
+    )
 
     bert_chart = plot_bert_ablation(
         results.query("note_class_source_value == 'ALL'"),
         experiments.query("filter_expr.isna() and limit == limit.max()"),
     )
-    bert_chart.save("docs/assets/figures/bert-ablation.json")
+    bert_chart.save("docs/assets/figures/bert_ablation.json")
 
     limit_chart = plot_limit_ablation(
         results.query("note_class_source_value == 'ALL' and label == 'ALL'"),
         experiments.query("filter_expr.isna()"),
     )
-    limit_chart.save("docs/assets/figures/limit-ablation.json")
+    limit_chart.save("docs/assets/figures/limit_ablation.json")
 
     label_chart = plot_labels(
         results.query("note_class_source_value == 'ALL'"),
         experiments.query(
-            f"`limit` == {experiments.limit.max()} and bert == 'finetuned-raw' and filter_expr.isna()"  # noqa: E501
+            f"`limit` == {experiments.limit.max()} and "
+            f"bert == 'finetuned-raw' and filter_expr.isna()"
         ),
     )
-    label_chart.save("docs/assets/figures/label-scores.json")
+    label_chart.save("docs/assets/figures/label_scores.json")
+
+    doc_type_chart = plot_doc_type_ablation(
+        results.query("label == 'ALL'"),
+        experiments.query("limit == limit.max()"),
+    )
+    doc_type_chart.save("docs/assets/figures/doc_type_ablation.json")
+
+    pdf_comparison_table = make_pdf_comparison_table(results, experiments)
+    Path("docs/assets/figures/pdf_comparison_table.html").write_text(
+        pdf_comparison_table.to_html()
+    )
 
     ml_vs_rb_table = make_ml_vs_rb_table(results, experiments)
-    print(ml_vs_rb_table)
+    Path("docs/assets/figures/ml_vs_rb_table.html").write_text(ml_vs_rb_table.to_html())
+
+    bert_ablation_table = make_bert_ablation_table(results, experiments)
+    Path("docs/assets/figures/bert_ablation_table.html").write_text(
+        bert_ablation_table.to_html()
+    )
 
 
 if __name__ == "__main__":
