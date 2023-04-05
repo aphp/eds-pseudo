@@ -16,7 +16,7 @@ include = ["eds_pseudonymisation/resources/*.csv.gz"]
 "eds-pseudonymisation.Corpus.v1" = "eds_pseudonymisation.corpus_reader:PseudoCorpus"
 
 [tool.poetry.dependencies]
-python = ">3.7.6,<4.0,!=3.8.1"
+python = ">3.7.6,<3.12,!=3.8.1"
 spacy = "^3.2.4"
 spacy-transformers = "^1.1.5"
 thinc = "^8.0.13"
@@ -40,6 +40,10 @@ cupy-cuda116 = {version = "^10.6.0", optional = true}
 cupy-cuda117 = {version = "^10.6.0", optional = true}
 thinc-apple-ops = {version = "^0.1.0", optional = true}
 torch = ">=1.0"
+scipy = [
+    {version = "^1.10.1", markers="python_version >= '3.8'"},
+    {version = "^1.6.1", markers="python_version < '3.8'"},
+]
 
 [tool.poetry.group.dev.dependencies]
 dvc = {version = "^2.37.0", markers="python_version >= '3.8'"}
