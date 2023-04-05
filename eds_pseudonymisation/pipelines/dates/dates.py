@@ -52,9 +52,6 @@ class PseudonymisationDates(Dates):
         )
         self.scorer = scorer
 
-    def score(self, examples, **kwargs):
-        return self.scorer(examples, **kwargs)
-
     def parse(self, dates: List[Tuple[Span, Dict[str, str]]]) -> List[Span]:
         """
         Parse dates using the groupdict returned by the matcher.

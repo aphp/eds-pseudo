@@ -1,34 +1,33 @@
+# ruff: noqa: E501
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import srsly
 import typer
-from spacy import displacy, util
-from spacy.cli._util import Arg, Opt, app, import_code, setup_gpu
-from spacy.cli.evaluate import *
-from spacy.scorer import Scorer
-from spacy.tokens import Doc, DocBin
-from spacy.training import Corpus
+from spacy import util
+from spacy.cli._util import Arg, Opt, import_code, setup_gpu
+from spacy.cli.evaluate import handle_scores_per_type, render_parses
+from spacy.tokens import DocBin
 from thinc.api import fix_random_seed
 from wasabi import Printer
 
 from eds_pseudonymisation.corpus_reader import PseudoCorpus
 
 
+# fmt: off
 def evaluate_cli(
-    # fmt: off
-    model: str = Arg(..., help="Model name or path"),
-    data_path: Path = Arg(..., help="Location of binary evaluation data in .spacy format", exists=True),
-    output: Optional[Path] = Opt(None, "--output", "-o", help="Output JSON file for metrics", dir_okay=False),
-    docbin: Optional[Path] = Opt(None, "--docbin", help="Output Doc Bin path", dir_okay=False),
-    code_path: Optional[Path] = Opt(None, "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
-    use_gpu: int = Opt(-1, "--gpu-id", "-g", help="GPU ID or -1 for CPU"),
-    gold_preproc: bool = Opt(False, "--gold-preproc", "-G", help="Use gold preprocessing"),
-    displacy_path: Optional[Path] = Opt(None, "--displacy-path", "-dp", help="Directory to output rendered parses as HTML", exists=True, file_okay=False),
-    displacy_limit: int = Opt(25, "--displacy-limit", "-dl", help="Limit of parses to render as HTML"),
-    # fmt: on
+      model: str = Arg(..., help="Model name or path"),
+      data_path: Path = Arg(..., help="Location of binary evaluation data in .spacy format", exists=True),
+      output: Optional[Path] = Opt(None, "--output", "-o", help="Output JSON file for metrics", dir_okay=False),
+      docbin: Optional[Path] = Opt(None, "--docbin", help="Output Doc Bin path", dir_okay=False),
+      code_path: Optional[Path] = Opt(None, "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
+      use_gpu: int = Opt(-1, "--gpu-id", "-g", help="GPU ID or -1 for CPU"),
+      gold_preproc: bool = Opt(False, "--gold-preproc", "-G", help="Use gold preprocessing"),
+      displacy_path: Optional[Path] = Opt(None, "--displacy-path", "-dp", help="Directory to output rendered parses as HTML", exists=True, file_okay=False),
+      displacy_limit: int = Opt(25, "--displacy-limit", "-dl", help="Limit of parses to render as HTML"),
 ):
+    # fmt: on
     """
     Evaluate a trained pipeline. Expects a loadable spaCy pipeline and evaluation
     data in the binary .spacy format. The --gold-preproc option sets up the
@@ -55,16 +54,16 @@ def evaluate_cli(
 
 
 def evaluate(
-    model: str,
-    data_path: Path,
-    output: Optional[Path] = None,
-    docbin: Optional[Path] = None,
-    use_gpu: int = -1,
-    gold_preproc: bool = False,
-    displacy_path: Optional[Path] = None,
-    displacy_limit: int = 25,
-    silent: bool = True,
-    spans_key: str = "sc",
+      model: str,
+      data_path: Path,
+      output: Optional[Path] = None,
+      docbin: Optional[Path] = None,
+      use_gpu: int = -1,
+      gold_preproc: bool = False,
+      displacy_path: Optional[Path] = None,
+      displacy_limit: int = 25,
+      silent: bool = True,
+      spans_key: str = "sc",
 ) -> Dict[str, Any]:
     msg = Printer(no_print=silent, pretty=not silent)
     fix_random_seed()
@@ -84,14 +83,19 @@ def evaluate(
     # nlp.remove_pipe("structured")
 
     dev_dataset = [
-        eg for eg in corpus(nlp)# if getattr(eg.reference._, "split", "test") == "test"
+        eg
+        for eg in corpus(nlp)  # if getattr(eg.reference._, "split", "test") == "test"
     ]
     print(f"Evaluating {len(dev_dataset)} docs")
 
     if docbin is not None:
         output_db = DocBin(store_user_data=True)
         for doc in nlp.pipe(DocBin().from_disk(data_path).get_docs(nlp.vocab)):
-            doc.user_data = {k: v for k, v in doc.user_data.items() if 'note_id' in k or 'context' in k or 'split' in k}
+            doc.user_data = {
+                k: v
+                for k, v in doc.user_data.items()
+                if "note_id" in k or "context" in k or "split" in k
+            }
             output_db.add(doc)
         output_db.to_disk(docbin)
 
@@ -126,7 +130,7 @@ def evaluate(
                 if key == "speed":
                     results[metric] = f"{scores[key]:.0f}"
                 else:
-                    results[metric] = f"{scores[key]*100:.2f}"
+                    results[metric] = f"{scores[key] * 100:.2f}"
             else:
                 results[metric] = "-"
             data[re.sub(r"[\s/]", "_", key.lower())] = scores[key]

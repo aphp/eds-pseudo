@@ -98,9 +98,6 @@ class StructuredDataMatcher(BaseComponent):
 
         self.scorer = scorer
 
-    def score(self, examples, **kwargs):
-        return self.scorer(examples, **kwargs)
-
     def set_extensions(self):
         if not Span.has_extension("source"):
             Span.set_extension("source", default=None)

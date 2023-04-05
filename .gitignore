@@ -5,42 +5,80 @@ packages
 /assets
 project.lock
 
-# Env/IDE
-.venv
+# Python
+__pycache__/
+
+# DS Store
+.DS_Store
+
+.idea
 .vscode
 
-# Cache dirs
-__pycache__
+.venv
+
+# C extensions
+*.so
+*.dylib
+*.cpp
+
+# Distribution / packaging
+setup.py
+poetry.lock
+init
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Docs
+docs/changelog.md
+docs/contributing.md
+docs/roadmap.md
+docs/reference
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
+
+# IPython Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # Data
-*.ipynb
 *.csv
+*.xls
+*.xlsx
 *.pkl
-*.jsonl
+*.jpg
+*.png
 *.html
-*.log
-*.xml
+*.pickle
+*.joblib
+*.pdf
+data/
 
-# Environments
-*.tar.gz
-
-# Ignore IntelliJ IDEA
-.idea/
-*.iml
-
-# Documentation
-_build/
-
-# Python
-*.egg-info
-build
-logs
-.hypothesis
-.coverage*
-
-# Deployment
-configs/deployment.cfg
+# MkDocs output
+site/
 
 # DVC
-.dvc/
+.dvc

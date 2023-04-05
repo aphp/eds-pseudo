@@ -11,17 +11,17 @@ stages:
       - scripts/infer.py
     params:
       - configs/config.cfg:
-    cmd: 
-        - cat configs/config.cfg
-        - python -m spacy project run xp
+    cmd:
+      - cat configs/config.cfg
+      - python -m spacy project run xp
     outs:
-    #  - training/model-best
+      # - training/model-best
       - corpus/output.spacy
     metrics:
       - training/test_metrics.json:
           cache: false
-    #   - training/train_metrics.json:
-    #       cache: false
-    # plots:
-    #   - training/train_metrics/scalars:
-    #       cache: false
+      #     - training/train_metrics.json:
+      #         cache: false
+      #   plots:
+      #     - training/train_metrics/scalars:
+      #         cache: false
