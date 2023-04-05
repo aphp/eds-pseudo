@@ -1,17 +1,28 @@
+# ruff: noqa: E501
+from edsnlp.utils.examples import parse_example
+
 examples = [
-    "mail : test@example.com",
-    "Le patient vit au \n71 rue Magelan, Paris 750012",
+    # fmt: off
+    'mail : <ent label="MAIL">test@example.com</ent>',
+    'M. <ent label="PRENOM">Gaston</ent> <ent label="NOM">LAGAFFE</ent>, né le <ent label="DATE_NAISSANCE">06/02/1993</ent>, est suivit par le Dr. <ent label="NOM">Dupont</ent>',
+    'Veuillez contacter le <ent label="TEL">06 01 02 03 04</ent>',
+    'Consultation\nNumero d\'examen: <ent label="NDA">123456789</ent>\nLe patient est venu ce jour pour consultation.',
+    'Consultation\n<ent label="SECU">253072B07300123</ent>\nLe patient est venu ce jour pour consultation.',
+    'Le patient est venu ce jour pour consultation.',
+    # fmt: on
 ]
 
 
 def test_pseudonymisation(nlp):
-    nlp.add_pipe("eds.remove-lowercase")
-    nlp.add_pipe("eds.accents")
-    nlp.add_pipe("pseudonymisation-dates")
-    nlp.add_pipe("pseudonymisation-rules")
-    nlp.add_pipe("pseudonymisation-addresses")
-    nlp.add_pipe("structured-data-matcher")
-
     for example in examples:
-        doc = nlp(example)
-        assert doc.ents
+        text, expected_entities = parse_example(example=example)
+        doc = nlp(text)
+        expected_ents = [
+            doc.char_span(
+                ent.start_char,
+                ent.end_char,
+                label=next(m.value for m in ent.modifiers if m.key == "label"),
+            )
+            for ent in expected_entities
+        ]
+        assert set(doc.ents) == set(expected_ents)

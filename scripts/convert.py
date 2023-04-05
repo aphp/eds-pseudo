@@ -5,11 +5,10 @@ from typing import Dict, List, Union
 import spacy
 import srsly
 import typer
+from edsnlp.connectors.brat import BratConnector
 from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 from spacy.util import filter_spans
-
-from edsnlp.connectors.brat import BratConnector
 
 if not Doc.has_extension("context"):
     Doc.set_extension("context", default=dict())
@@ -54,16 +53,15 @@ def get_nlp(lang: str) -> Language:
 
 
 def convert_jsonl(
-      nlp: spacy.Language,
-      input_path: Path,
+    nlp: spacy.Language,
+    input_path: Path,
 ) -> spacy.tokens.DocBin:
     db = DocBin(store_user_data=True)
 
     for annot in srsly.read_jsonl(input_path):
-        text, note_id, note_datetime, note_class_source_value, entities, context, split = (
+        (text, note_id, note_class_source_value, entities, context, split,) = (
             annot["note_text"],
             annot["note_id"],
-            annot["note_datetime"],
             annot["note_class_source_value"],
             annot.get("entities", []),
             annot.get("context", {}),
@@ -85,8 +83,8 @@ def convert_jsonl(
 
 
 def convert_brat(
-      nlp: spacy.Language,
-      input_path: Path,
+    nlp: spacy.Language,
+    input_path: Path,
 ) -> spacy.tokens.DocBin:
     db = DocBin(store_user_data=True)
 
@@ -98,18 +96,18 @@ def convert_brat(
 
 
 def convert(
-      lang: str = typer.Option(
-          "fr",
-          help="Language to use",
-      ),
-      input_path: Path = typer.Option(
-          ...,
-          help="Path to the JSONL file",
-      ),
-      output_path: Path = typer.Option(
-          ...,
-          help="Path to the output spacy DocBin",
-      ),
+    lang: str = typer.Option(
+        "fr",
+        help="Language to use",
+    ),
+    input_path: Path = typer.Option(
+        ...,
+        help="Path to the JSONL file",
+    ),
+    output_path: Path = typer.Option(
+        ...,
+        help="Path to the output spacy DocBin",
+    ),
 ) -> None:
     nlp = get_nlp(lang)
 
