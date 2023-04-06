@@ -1,6 +1,6 @@
-<a href="https://aphp.github.io/eds-pseudo/" target="_blank">
-    <img src="https://img.shields.io/badge/docs-passed-brightgreen" alt="Documentation">
-</a>
+![Tests](https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square)
+[![Documentation](https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square)](https://aphp.github.io/eds-pseudo/latest/)
+[![Codecov](https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square)](https://codecov.io/gh/aphp/eds-pseudo)
 <a href="https://github.com/psf/black" target="_blank">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
 </a>
