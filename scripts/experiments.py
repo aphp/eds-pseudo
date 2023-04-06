@@ -23,7 +23,6 @@ doc_ablations = [
 ]
 
 # Iterate over all combinations of hyperparameter values.
-i = 0
 for seed in seeds:
     # Iterate over all combinations of hyperparameter values.
     for expr in doc_ablations:
@@ -31,17 +30,15 @@ for seed in seeds:
             "dvc",
             "exp",
             "run",
-            # "--queue",
-            "--temp",
+            "--queue",
             "-S",
             f"configs/config.cfg:system.seed={seed}",
             "-S",
             f"configs/config.cfg:corpora.train.filter_expr={expr}",
         ]
-        if process_idx is None or i % process_idx == 0:
+        if process_idx is None:
             print("Running", " ".join(xp))
             subprocess.run(xp)
-        i += 1
 
     for bert_name in bert_names:
         xp = [
@@ -49,16 +46,14 @@ for seed in seeds:
             "exp",
             "run",
             "--queue",
-            # "--temp",
             "-S",
             f"configs/config.cfg:system.seed={seed}",
             "-S",
             f"configs/config.cfg:paths.bert={bert_name}",
         ]
-        if process_idx is None or i % process_idx == 0:
+        if process_idx is None:
             print("Running", " ".join(xp))
             subprocess.run(xp)
-        i += 1
 
     ## Iterate over all combinations of hyperparameter values.
     for limit in limits:
@@ -70,13 +65,11 @@ for seed in seeds:
             "exp",
             "run",
             "--queue",
-            # "--temp",
             "-S",
             f"configs/config.cfg:system.seed={seed}",
             "-S",
             f"configs/config.cfg:corpora.train.limit={limit}",
         ]
-        if process_idx is None or i % process_idx == 0:
+        if process_idx is None:
             print("Running", " ".join(xp))
             subprocess.run(xp)
-        i += 1
