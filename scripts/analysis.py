@@ -1786,7 +1786,7 @@ def main(
         results = pd.read_parquet("results.pq")
         logging.info("Re-using already computed results table")
     except Exception:
-        logging.info("Computing results table, this can take a while")
+        logging.info("Computing results table, this can take a while...")
         results = pd.concat(
             [
                 score_experiments(

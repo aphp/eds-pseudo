@@ -17,9 +17,13 @@ In any case, you will need to modify the configuration to reflect these changes.
 
 Install the requirements by running the following command at the root of the repo
 
+<div class="termy">
+
 ```bash
 poetry install
 ```
+
+</div>
 
 ## Training a model
 
@@ -33,15 +37,23 @@ We created a single workflow that:
 
 To add a new dataset, run
 
+<div class="termy">
+
 ```bash
 dvc import-url url/or/path/to/your/dataset data/dataset
 ```
 
+</div>
+
 To (re-)train a model and package it, just run:
+
+<div class="termy">
 
 ```bash
 dvc repro
 ```
+
+</div>
 
 You should now be able to install and publish it:
 
