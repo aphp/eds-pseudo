@@ -31,6 +31,20 @@ This project aims at detecting identifying entities at AP-HP's Clinical Data War
 | `VILLE`          | Any city                                                      |
 | `ZIP`            | Any zip code                                                  |
 
+## Publication
+
+Please find our arXiv preprint at the following link: https://arxiv.org/pdf/2303.13451.pdf.
+
+If you use EDS-Pseudo, please cite us as below:
+
+```
+@article{tannier2023development,
+  title={Development and validation of a natural language processing algorithm to pseudonymize documents in the context of a clinical data warehouse},
+  author={Tannier, Xavier and Wajsb{\"u}rt, Perceval and Calliger, Alice and Dura, Basile and Mouchet, Alexandre and Hilka, Martin and Bey, Romain},
+  journal={arXiv preprint arXiv:2303.13451},
+  year={2023}
+}
+```
 
 ## Documentation
 
