@@ -38,7 +38,7 @@ vars:
   training: "training"
   seed: 0
   fraction: 200
-  gpu_id: 0
+  gpu_id: -1
 
 env:
   registry_token: GITLAB_REGISTRY_TOKEN
