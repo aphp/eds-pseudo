@@ -9,8 +9,7 @@ stages:
       - eds_pseudonymisation
       - scripts/convert.py
       - scripts/infer.py
-    params:
-      - configs/config.cfg:
+      - configs/config.cfg
     cmd:
       - cat configs/config.cfg
       - python -m spacy project run xp

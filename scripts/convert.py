@@ -62,7 +62,7 @@ def convert_jsonl(
         (text, note_id, note_class_source_value, entities, context, split,) = (
             annot["note_text"],
             annot["note_id"],
-            annot["note_class_source_value"],
+            annot.get("note_class_source_value", None),
             annot.get("entities", []),
             annot.get("context", {}),
             annot.get("split", None),

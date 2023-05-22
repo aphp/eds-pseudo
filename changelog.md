@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### What's changed
+
+Some fixes to enable training the model:
+- committed the missing script `infer.py`
+- changed config default bert model to `camembert-base`
+- put `config.cfg` as a dependency, not params
+- default to cpu training
+- allow for missing metadata (i.e. omop's `note_class_source_value`)
+
 ## v0.2.0 - 2023-05-04
 
 Many fixes along the publication of our [article](https://arxiv.org/pdf/2303.13451.pdf):
