@@ -68,7 +68,21 @@ To use it, execute
 ```python
 import eds_pseudonymisation
 
+# Load the machine learning model
 nlp = eds_pseudonymisation.load()
+
+# Add optional rule-based components
+nlp.add_pipe("eds.remove-lowercase", name="remove-lowercase")
+nlp.add_pipe("eds.accents", name="accents")
+nlp.add_pipe(
+    "pseudonymisation-rules",
+    name="pseudonymisation-rules",
+    config={"pattern_keys": ["TEL", "MAIL", "SECU"]},
+)
+nlp.add_pipe("pseudonymisation-addresses", name="pseudonymisation-addresses")
+nlp.add_pipe("structured-data-matcher", name="structured-data-matcher")
+
+# Apply it to a text
 doc = nlp(
     """En 1815, M. Charles-François-Bienvenu
 Myriel était évêque de Digne. C’était un vieillard

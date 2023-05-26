@@ -5021,6 +5021,18 @@ docs = ["setuptools-rust", "sphinx", "sphinx-rtd-theme"]
 testing = ["black (==22.3)", "datasets", "numpy", "pytest", "requests"]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+description = "Python Library for Tom's Obvious, Minimal Language"
+category = "dev"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
+    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -5601,4 +5613,4 @@ cuda92 = ["cupy-cuda92"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.7.6,<3.12,!=3.8.1"
-content-hash = "6459b02455a229c409a552ce5df7a45aeb3e35af6e052f15c10bd45d93788ffe"
+content-hash = "9f2b59bdec727b1247f4e80d0cf612ccb5213022fc67b90eae1584a91db44d09"
