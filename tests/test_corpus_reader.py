@@ -24,11 +24,11 @@ def test_corpus_reader(tmp_path):
     doc1._.split = "train"
 
     doc2 = nlp("Le patient est né le 02/03/2000. Il est hospitalisé depuis 2 jours.")
-    doc2.ents = [doc2.char_span(21, 31, label="DATE_NAISSANCE")]
-    doc2.spans["DATE_NAISSANCE"] = list(doc2.ents)
+    doc2.ents = [doc2.char_span(21, 31, label="BIRTHDATE")]
+    doc2.spans["BIRTHDATE"] = list(doc2.ents)
     doc2._.note_id = "doc-2"
     doc2._.note_class_source_value = "URGENCE"
-    doc2._.context = {"DATE_NAISSANCE": "02/03/2000"}
+    doc2._.context = {"BIRTHDATE": "02/03/2000"}
     doc2._.split = "train"
 
     # Long document, only one sentence

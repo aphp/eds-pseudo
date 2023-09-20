@@ -3,11 +3,10 @@ from edsnlp.utils.examples import parse_example
 
 examples = [
     # fmt: off
-    'mail : <ent label="MAIL">test@example.com</ent>',
-    'M. <ent label="PRENOM">Gaston</ent> <ent label="NOM">LAGAFFE</ent>, né le <ent label="DATE_NAISSANCE">06/02/1993</ent>, est suivit par le Dr. <ent label="NOM">Dupont</ent>',
-    'Veuillez contacter le <ent label="TEL">06 01 02 03 04</ent>',
-    'Consultation\nNumero d\'examen: <ent label="NDA">123456789</ent>\nLe patient est venu ce jour pour consultation.',
-    'Consultation\n<ent label="SECU">253072B07300123</ent>\nLe patient est venu ce jour pour consultation.',
+    'mail : <ent label="EMAIL">test@example.com</ent>',
+    'M. <ent label="FIRSTNAME">Gaston</ent> <ent label="LASTNAME">LAGAFFE</ent>, né le <ent label="BIRTHDATE">06/02/1993</ent>, est suivit par le Dr. <ent label="LASTNAME">Dupont</ent>',
+    'Veuillez contacter le <ent label="PHONE">06 01 02 03 04</ent>',
+    'Consultation\n<ent label="SSN">253072B07300123</ent>\nLe patient est venu ce jour pour consultation.',
     'Le patient est venu ce jour pour consultation.',
     # fmt: on
 ]

@@ -62,7 +62,7 @@ class Pseudonymisation:
                     doc.char_span(
                         begin,
                         begin + len(first_name),
-                        "PRENOM",
+                        "FIRSTNAME",
                         alignment_mode="expand",
                     ),
                 )
@@ -71,7 +71,7 @@ class Pseudonymisation:
                 matches.insert(
                     0,
                     doc.char_span(
-                        begin, begin + len(last_name), "NOM", alignment_mode="expand"
+                        begin, begin + len(last_name), "LASTNAME", alignment_mode="expand"
                     ),
                 )
 

@@ -35,8 +35,8 @@ street_name_piece = r"(?:(?:(?P<STREET_PIECE>[A-Z][A-Za-zéèà]{1,})|(?P<LOWER_
 street_name_piece_upper = (
     r"(?:(?:(?P<STREET_PIECE>[A-Z][A-Z]+)|[A-Z]\.|DE|DU|LA|LE|LES|DES|D|L)\b|D')"
 )
-city_name = r"(?P<VILLE>(?:(?:[A-Z][A-Z]+|sur|en|Paris)[-]?)+(?<![-])(?:[ ]*(?i:CEDEX)[ ]*\d{{2}})?)\b"
-city_name_with_spaces = r"(?P<VILLE>(?:(?:[A-Z][A-Z]+|sur|en|Paris)[- ]?)+(?<![- ])(?:[ ]*(?i:CEDEX)[ ]*\d{{2}})?)\b"
+city_name = r"(?P<CITY>(?:(?:[A-Z][A-Z]+|sur|en|Paris)[-]?)+(?<![-])(?:[ ]*(?i:CEDEX)[ ]*\d{{2}})?)\b"
+city_name_with_spaces = r"(?P<CITY>(?:(?:[A-Z][A-Z]+|sur|en|Paris)[- ]?)+(?<![- ])(?:[ ]*(?i:CEDEX)[ ]*\d{{2}})?)\b"
 address_patterns = [
     # RELAXED REGEX (requires a combination of NUMBER STREET CITY AND ZIP CODE)
     # See process() fn code
@@ -55,14 +55,14 @@ address_patterns = [
     (?<=(?P<TRIGGER>Ville[ ]?:)){opt_newline}
 )
 (?=
-    (?i:(?:[ ]*[à,.-])?{opt_newline}\(?(?P<ZIP>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)\)?)
+    (?i:(?:[ ]*[à,.-])?{opt_newline}\(?(?P<ZIP_CODE>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)\)?)
     {opt_newline}(?:{city_name})
     |
-    (?i:(?:[ ]*[à,.-])?{opt_newline}\(?(?P<ZIP>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)?\)?)
+    (?i:(?:[ ]*[à,.-])?{opt_newline}\(?(?P<ZIP_CODE>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)?\)?)
     (?:{city_name})
     |
     (?:(?:[ ]*[à,.-])?[ ]*{city_name})?
-    (?i:{opt_newline}\(?(?P<ZIP>(?:\d{{2}}[ ]*?\d{{3}})\)?|(?:[1-9]|1[0-9]|20)[èe]m?e?)?)
+    (?i:{opt_newline}\(?(?P<ZIP_CODE>(?:\d{{2}}[ ]*?\d{{3}})\)?|(?:[1-9]|1[0-9]|20)[èe]m?e?)?)
 )
 """,
     # FULL REGEX (requires NUMBER STREET CITY AND ZIP CODE) but more flexible on street and city
@@ -76,11 +76,11 @@ address_patterns = [
         (?P<REGEX_2>)
 )
 (?=
-    (?i:(?:[ ]*[à,.-]|[ ]*\n?)?[ ]*\(?(?P<ZIP>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)\)?[ ]+)
+    (?i:(?:[ ]*[à,.-]|[ ]*\n?)?[ ]*\(?(?P<ZIP_CODE>(?:\d{{2}}[ ]*?\d{{3}})|(?:[1-9]|1[0-9]|20)[èe]m?e?)\)?[ ]+)
     (?:{city_name_with_spaces})
     |
     (?:(?:[ ]*[à,.-]|[ ]*\n?)?\s*{city_name_with_spaces})
-    (?i:[ ]+\(?(?P<ZIP>(?:\d{{2}}[ ]*?\d{{3}})\)?|(?:[1-9]|1[0-9]|20)[èe]m?e?))
+    (?i:[ ]+\(?(?P<ZIP_CODE>(?:\d{{2}}[ ]*?\d{{3}})\)?|(?:[1-9]|1[0-9]|20)[èe]m?e?))
 )
 """,
 ]

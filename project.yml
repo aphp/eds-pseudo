@@ -30,15 +30,23 @@ vars:
   name: "pseudonymisation"
   lang: "eds"
   version: "0.2.0"
-  train: "dataset/train.jsonl"
-  dev: "dataset/dev.jsonl"
-  test: "dataset/test.jsonl"
-  full: "dataset/full.jsonl"
+  data_folder: "data"
+  if-dirs-exist: "fail"
+  dev-percentage: 0.1667
+  test-percentage: 0
+  train_xml: "data/train/xml"
+  train_txt: "data/train/txt"
+  dev_xml: "data/dev/xml"
+  dev_txt: "data/dev/txt"
+  test_xml: "data/test/xml"
+  test_txt: "data/test/txt"
+  full_xml: "data/full/xml"
+  full_txt: "data/full/txt"
   corpus: "corpus"
   training: "training"
   seed: 0
   fraction: 200
-  gpu_id: -1
+  gpu_id: 0
 
 env:
   registry_token: GITLAB_REGISTRY_TOKEN
@@ -53,6 +61,7 @@ directories:
 # haven't changed, it won't be re-run.
 workflows:
   all:
+    - split-dataset
     - convert
     - train
     - evaluate
@@ -67,19 +76,38 @@ workflows:
 # via "spacy project run [command] [path]". The help message is optional and
 # shown when executing "spacy project run [optional command] [path] --help".
 commands:
-  - name: "convert"
-    help: "Convert the data to spaCy's binary format"
+  - name: "split-dataset"
+    help: "split the full dataset into train, dev and test sets, with the specified percentage of the full dataset"
     script:
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.train} --output-path ${vars.corpus}/train.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.dev} --output-path ${vars.corpus}/dev.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.test} --output-path ${vars.corpus}/test.spacy"
-      - "python scripts/convert.py --lang ${vars.lang} --input-path data/${vars.full} --output-path ${vars.corpus}/full.spacy"
+      - "python scripts/split_dataset.py --data-folder ${vars.data_folder} --dev-percentage ${vars.dev-percentage} --test-percentage ${vars.test-percentage} --if-dirs-exist ${vars.if-dirs-exist}"
     deps:
-      - "data/${vars.train}"
-      - "data/${vars.dev}"
-      - "data/${vars.test}"
-      - "data/${vars.full}"
-      - "scripts/convert.py"
+      - "${vars.full_xml}"
+      - "${vars.full_txt}"
+    outputs:
+      - "${vars.train_xml}"
+      - "${vars.dev_xml}"
+      - "${vars.test_xml}"
+      - "${vars.train_txt}"
+      - "${vars.dev_txt}"
+      - "${vars.test_txt}"
+
+  - name: "convert"
+    help: "Convert the data to spaCy's binary format with all the needed tag format from the xml file obtained with inception and the plain text"
+    script:
+      - "python scripts/convert.py --lang ${vars.lang} --xml-path ${vars.train_xml} --txt-path ${vars.train_txt} --output-path ${vars.corpus}/train.spacy --split 'train' "
+      - "python scripts/convert.py --lang ${vars.lang} --xml-path ${vars.dev_xml} --txt-path ${vars.dev_txt} --output-path ${vars.corpus}/dev.spacy --split 'dev' "
+      - "python scripts/convert.py --lang ${vars.lang} --xml-path ${vars.test_xml} --txt-path ${vars.test_txt} --output-path ${vars.corpus}/test.spacy --split 'test' "
+      - "python scripts/convert.py --lang ${vars.lang} --xml-path ${vars.full_xml} --txt-path ${vars.full_txt} --output-path ${vars.corpus}/full.spacy --split 'full' "
+
+    deps:
+      - "${vars.train_xml}"
+      - "${vars.dev_xml}"
+      - "${vars.test_xml}"
+      - "${vars.full_xml}"
+      - "${vars.train_txt}"
+      - "${vars.dev_txt}"
+      - "${vars.test_txt}"
+      - "${vars.full_txt}"
     outputs:
       - "${vars.corpus}/train.spacy"
       - "${vars.corpus}/dev.spacy"

@@ -10,6 +10,7 @@ phone_pattern = (
     r"((?:(?:\+|00)33\s?[.]\s?(?:\(0\)\s?[.]\s?)?|0)[1-9](?:(?:[.]\d{2}){4}|\d{2}(?:[.]\d{3}){2})(?![\d])"
     r"|(?:(?:\+|00)33\s?[-]\s?(?:\(0\)\s?[-]\s?)?|0)[1-9](?:(?:[-]\d{2}){4}|\d{2}(?:[-]\d{3}){2})(?![\d])"
     r"|(?:(?:\+|00)33\s?[-]\s?(?:\(0\)\s)?|0)[1-9](?:(?:[ ]?\d{2}){4}|\d{2}(?:[ ]?\d{3}){2})(?![\d]))"
+    r"|(?:(?:\+|00)33[\s.-]{0,3}(?:\(0\)[\s.-]{0,3})?|0)[1-9](?:(?:[\s.-]?\d{2}){4}|\d{2}(?:[\s.-]?\d{3}){2})"
     r"\b(?![ .-]{,3}\d)"
     r")"
 )
@@ -116,9 +117,9 @@ common_medical_terms = {
 }
 
 patterns = dict(
-    IPP=ipp_pattern,
-    MAIL=mail_pattern,
-    TEL=phone_pattern,
+    PATIENT_ID=ipp_pattern,
+    EMAIL=mail_pattern,
+    PHONE=phone_pattern,
     NDA=nda_pattern,
-    SECU=nss_pattern,
+    SSN=nss_pattern,
 )

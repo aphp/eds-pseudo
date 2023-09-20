@@ -25,7 +25,8 @@ class PseudonymisationAddresses:
 
         self.scorer = scorer
         self.regex_matcher = RegexMatcher(attr=attr)
-        self.regex_matcher.build_patterns({"ADRESSE": address_patterns})
+        self.regex_matcher.build_patterns({"STREET_ADDRESS": address_patterns})
+
 
     def process(self, doc: Doc) -> Doc:
 
@@ -38,14 +39,14 @@ class PseudonymisationAddresses:
             if gd.get("UPPER_STREET") is not None and gd.get("NUMERO") is not None:
                 filtered_matches.append((span, gd))
             elif (
-                gd.get("ZIP") is not None
-                and gd.get("VILLE") is not None
+                gd.get("ZIP_CODE") is not None
+                and gd.get("CITY") is not None
                 and gd.get("NUMERO") is not None
             ):
                 filtered_matches.append((span, gd))
             elif (
-                gd.get("ZIP") is not None
-                or gd.get("VILLE") is not None
+                gd.get("ZIP_CODE") is not None
+                or gd.get("CITY") is not None
                 or gd.get("TRIGGER") is not None
             ) and (
                 gd.get("STREET_PIECE") is not None
@@ -60,14 +61,14 @@ class PseudonymisationAddresses:
 
         for span, gd in filtered_matches:
             addresses.append(span)
-            if "ZIP" in gd:
-                zip_codes.append(gd["ZIP"])
-            if "VILLE" in gd:
-                cities.append(gd["VILLE"])
+            if "ZIP_CODE" in gd:
+                zip_codes.append(gd["ZIP_CODE"])
+            if "CITY" in gd:
+                cities.append(gd["CITY"])
 
-        doc.spans["ADRESSE"] = addresses
-        doc.spans["VILLE"] = cities
-        doc.spans["ZIP"] = zip_codes
+        doc.spans["STREET_ADDRESS"] = addresses
+        doc.spans["CITY"] = cities
+        doc.spans["ZIP_CODE"] = zip_codes
         doc.ents = filter_spans((*doc.ents, *addresses, *cities, *zip_codes))
 
     def __call__(self, doc: Doc) -> Doc:

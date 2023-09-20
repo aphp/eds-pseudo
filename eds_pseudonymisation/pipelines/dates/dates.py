@@ -100,7 +100,7 @@ class PseudonymisationDates(Dates):
         for date in self.parse(self.process(doc)):
             snippet = doc[max(0, date.start - 5) : date.end + 5].text
             if re.search(r"\b(né|n[ée]e|naissance)\b", snippet, flags=re.IGNORECASE):
-                date.label_ = "DATE_NAISSANCE"
+                date.label_ = "BIRTHDATE"
                 birth_date = date._.date
             else:
                 date.label_ = "DATE"
@@ -108,8 +108,7 @@ class PseudonymisationDates(Dates):
 
         for date in dates:
             if date._.date == birth_date:
-                date.label_ = "DATE_NAISSANCE"
-
+                date.label_ = "BIRTHDATE"
         ents = filter_spans(list(doc.ents) + dates, return_discarded=False)
 
         doc.ents = ents

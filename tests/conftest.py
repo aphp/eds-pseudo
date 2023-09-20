@@ -18,7 +18,7 @@ def nlp(blank_nlp) -> Language:
     blank_nlp.add_pipe(
         "pseudonymisation-rules",
         name="pseudonymisation-rules",
-        config={"pattern_keys": ["TEL", "MAIL", "SECU", "PERSON", "NDA"]},
+        config={"pattern_keys": ["PHONE", "EMAIL", "SSN", "PERSON"]},
     )
     blank_nlp.add_pipe("pseudonymisation-addresses", name="pseudonymisation-addresses")
     blank_nlp.add_pipe("structured-data-matcher", name="structured-data-matcher")

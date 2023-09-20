@@ -9,6 +9,7 @@ from edsnlp.connectors.brat import BratConnector
 from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 from spacy.util import filter_spans
+import xml.etree.ElementTree as ET
 
 if not Doc.has_extension("context"):
     Doc.set_extension("context", default=dict())
@@ -45,6 +46,41 @@ def add_entities(doc: Doc, entities: List[Dict[str, Union[int, str]]]):
     doc.ents = filter_spans(ents)
 
 
+def create_doc_from_xml_and_txt(
+    nlp: spacy.Language,
+    file_xml_path: str,
+    file_txt_path: str
+) -> spacy.tokens.Doc:
+    """Returns the Doc object corresponding to the annotated document.
+
+                Args:
+                    nlp: The spacy Language we use, here it is "eds"
+                    file_xml_path: Path to the Inception annotations in xml format
+                    file_txt_path: Path to the text file
+    """
+    tree = ET.parse(file_xml_path)
+    root = tree.getroot()
+    with open(file_txt_path, "r") as file:
+        txt = file.read()
+    doc = nlp(txt)
+    entities = []
+    for children in root:
+        for child in children.iter('webanno.custom.Span'):
+            if 'Span' in child.attrib:
+                key = 'Span'
+            elif 'Label' in child.attrib:
+                key = 'Label'
+            else:
+                raise ValueError('No Span or Label indicated for this annotation in', file_xml_path)
+            entity = dict()
+            entity['start'] = int(child.attrib['begin'])
+            entity['end'] = int(child.attrib['end'])
+            entity['label'] = child.attrib[key]
+            entities.append(entity)
+    add_entities(doc, entities)
+    return doc
+
+
 def get_nlp(lang: str) -> Language:
     nlp = spacy.blank(lang)
     nlp.add_pipe("sentencizer")
@@ -52,46 +88,38 @@ def get_nlp(lang: str) -> Language:
     return nlp
 
 
-def convert_jsonl(
+def convert_inception_xml(
     nlp: spacy.Language,
-    input_path: Path,
+    xml_path: Path,
+    txt_path: Path,
+    split: str
 ) -> spacy.tokens.DocBin:
+    """Returns the spacy DocBin containing the Doc object corresponding to each document.
+
+            Args:
+                nlp: The spacy Language we use, here it is "eds"
+                xml_path: Path to the directory containing the Inception annotations in xml format
+                txt_path: Path to the directory containing the text files
+                split: Split of the data to use
+
+            Returns:
+                The spacy DocBin containing the Doc object corresponding to each document.
+    """
     db = DocBin(store_user_data=True)
-
-    for annot in srsly.read_jsonl(input_path):
-        (text, note_id, note_class_source_value, entities, context, split,) = (
-            annot["note_text"],
-            annot["note_id"],
-            annot.get("note_class_source_value", None),
-            annot.get("entities", []),
-            annot.get("context", {}),
-            annot.get("split", None),
-        )
-
-        doc = nlp(text)
-        doc._.note_id = note_id
-        # doc._.note_datetime = note_datetime
-        doc._.note_class_source_value = note_class_source_value
-        doc._.context = context
-        doc._.split = split
-
-        add_entities(doc, entities)
-
-        db.add(doc)
-
-    return db
-
-
-def convert_brat(
-    nlp: spacy.Language,
-    input_path: Path,
-) -> spacy.tokens.DocBin:
-    db = DocBin(store_user_data=True)
-
-    connector = BratConnector(input_path)
-    for doc in connector.brat2docs(nlp):
-        db.add(doc)
-
+    for filename_txt in os.listdir(txt_path):
+        filename_xml = filename_txt.split('.txt')[0] + '.xml'
+        file_path_xml = os.path.join(xml_path, filename_xml)
+        file_path_txt = os.path.join(txt_path, filename_txt)
+        if os.path.isfile(file_path_xml):
+            if os.path.isfile(file_path_txt):
+                doc=create_doc_from_xml_and_txt(nlp, file_path_xml, file_path_txt)
+                doc._.note_id = filename_txt.split('.txt')[0]
+                # doc._.note_datetime = note_datetime
+                #the files are named in a format like this: ORBIS.xxxxxx.CLASS.xxxxx.txt
+                doc._.note_class_source_value = filename_txt.split('.')[2]
+                doc._.context = ""
+                doc._.split = split
+                db.add(doc)
     return db
 
 
@@ -100,21 +128,25 @@ def convert(
         "fr",
         help="Language to use",
     ),
-    input_path: Path = typer.Option(
+    xml_path: Path = typer.Option(
         ...,
-        help="Path to the JSONL file",
+        help="Directory to the xml files",
+    ),
+    txt_path: Path = typer.Option(
+        ...,
+        help="Directory to the txt files",
     ),
     output_path: Path = typer.Option(
         ...,
         help="Path to the output spacy DocBin",
     ),
+    split: str = typer.Option(
+        ...,
+        help="split of the data to use"),
 ) -> None:
     nlp = get_nlp(lang)
 
-    if os.path.isdir(input_path):
-        db = convert_brat(nlp, input_path)
-    else:
-        db = convert_jsonl(nlp, input_path)
+    db = convert_inception_xml(nlp, xml_path, txt_path, split)
 
     typer.echo(f"The saved dataset contains {len(db)} documents.")
     db.to_disk(output_path)
