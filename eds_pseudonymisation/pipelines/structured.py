@@ -1,65 +1,28 @@
-from enum import Enum
 from string import punctuation
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List
 
+from edsnlp import registry
+from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.phrase import EDSPhraseMatcher
 from edsnlp.matchers.regex import RegexMatcher
-from edsnlp.pipelines.base import BaseComponent
-from edsnlp.utils.filter import filter_spans
-from spacy.language import Language
+from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
 from spacy.tokens import Doc, Span
+from typing_extensions import Literal
 
 if not Doc.has_extension("context"):
     Doc.set_extension("context", default=dict())
 
 
-class Matcher(str, Enum):
-    regex = "regex"
-    phrase = "phrase"
-
-
-def pseudo_sort_key(span: Span) -> Tuple[int, int]:
+@registry.factory.register("eds_pseudo.context")
+class ContextMatcher(BaseNERComponent):
     """
-    Returns the sort key for filtering spans.
-    The key differs from the default sort key because we attribute more
-    importance to patterns that come from structured data such as the patient name
-    or address patterns when they conflict with more general patterns.
-
-    Parameters
-    ----------
-    span : Span
-        Span to sort.
-    Returns
-    -------
-    key : Tuple(int, int)
-        Sort key.
-    """
-    if isinstance(span, tuple):
-        span = span[0]
-    return (
-        (1 if span._.source == "structured" else 0),
-        span.end - span.start,
-        -span.start,
-    )
-
-
-@Language.factory(
-    "structured-data-matcher",
-    default_config=dict(
-        matcher=Matcher.phrase,
-        attr="NORM",
-        ignore_excluded=False,
-        scorer={"@scorers": "spacy.ner_scorer.v1"},
-    ),
-)
-class StructuredDataMatcher(BaseComponent):
-    """
-    Provides a generic matcher component.
+    Provides a component for matching terms retrieved from the patient context, such as
+    the patient name or address.
 
     Parameters
     ----------
     nlp : Language
-        The spaCy object.
+        The pipeline object
     name: str
         Name of the component, not used.
     matcher : Matcher
@@ -74,29 +37,24 @@ class StructuredDataMatcher(BaseComponent):
 
     def __init__(
         self,
-        nlp: Language,
-        name: str,
-        matcher: Matcher,
-        attr: str,
-        ignore_excluded: bool,
-        scorer: Optional[Callable],
+        nlp: PipelineProtocol = None,
+        name: str = None,
+        *,
+        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
+        matcher: Literal["regex", "phrase"] = "phrase",
+        attr: str = "NORM",
+        ignore_excluded: bool = False,
     ):
-
-        self.nlp = nlp
+        super().__init__(nlp, name, span_setter=span_setter)
 
         self.attr = attr
         self.ignore_excluded = ignore_excluded
-
         self.matcher_factory = (
             self.phrase_matcher_factory
-            if matcher == Matcher.phrase
+            if matcher == "phrase"
             else self.regex_matcher_factory
         )
         self.punct_remover = str.maketrans(punctuation, " " * len(punctuation))
-
-        self.set_extensions()
-
-        self.scorer = scorer
 
     def set_extensions(self):
         if not Span.has_extension("source"):
@@ -156,16 +114,11 @@ class StructuredDataMatcher(BaseComponent):
         if not context:
             return []
 
-        matcher = self.matcher_factory(
-            context={
-                key: tuple(
-                    v
-                    for v in values
-                    if len(v.translate(self.punct_remover).strip()) > 2
-                )
-                for key, values in context.items()
-            }
-        )
+        context_patterns: Dict[str, List[str]] = {
+            key: [v for v in values if len(v.translate(self.punct_remover).strip()) > 2]
+            for key, values in context.items()
+        }
+        matcher = self.matcher_factory(context_patterns)
         matches = matcher(doc, as_spans=True)
 
         return list(matches)
@@ -184,27 +137,12 @@ class StructuredDataMatcher(BaseComponent):
         doc:
             spaCy Doc object, annotated for extracted terms.
         """
+        assert doc.vocab is self.nlp.vocab
         matches = self.process(doc)
 
         for span in matches:
             span._.source = "structured"
             if span.label_ == "NOM_NAISS":
                 span.label_ = "NOM"
-            if span.label_ not in doc.spans:
-                doc.spans[span.label_] = []
-            doc.spans[span.label_].append(span)
 
-        ents, discarded = filter_spans(
-            matches + list(doc.ents),
-            return_discarded=True,
-            sort_key=pseudo_sort_key,
-        )
-        self.last_ents = ents
-
-        doc.ents = ents
-
-        if "discarded" not in doc.spans:
-            doc.spans["discarded"] = []
-        doc.spans["discarded"].extend(discarded)
-
-        return doc
+        return self.set_spans(doc, matches)

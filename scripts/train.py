@@ -1,30 +1,50 @@
 import itertools
 import json
 import math
+import os
 import random
+import time
 from collections import defaultdict
 from itertools import chain, repeat
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import spacy
 import torch
 from accelerate import Accelerator
-from confit import Cli
+from confit import Cli, validate_arguments
+from confit.utils.random import set_seed
 from edsnlp.core.pipeline import Pipeline
 from edsnlp.core.registry import registry
 from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
+from edsnlp.scorers import Scorer
 from edsnlp.utils.collections import batchify
 from edsnlp.utils.filter import filter_spans
-from edsnlp.utils.random import set_seed
 from rich_logger import RichTablePrinter
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 app = Cli(pretty_exceptions_show_locals=False)
 
 BASE_DIR = Path(__file__).parent.parent
+LOGGER_FIELDS = {
+    "step": {},
+    "(.*_)?loss": {
+        "goal": "lower_is_better",
+        "format": "{:.2e}",
+        "goal_wait": 2,
+    },
+    "token_ner_hybrid/ents_(.*)": {
+        "goal": "higher_is_better",
+        "format": "{:.2%}",
+        "goal_wait": 1,
+        "name": r"tok_hyb_\1",
+    },
+    "lr": {"format": "{:.2e}"},
+    "speed/wps": {"format": "{:.2f}", "name": "wps"},
+    "labels": {"format": "{:.2f}"},
+}
 
 
 class LengthSortedBatchSampler:
@@ -58,43 +78,12 @@ class LengthSortedBatchSampler:
             yield from buffer
 
 
-@registry.misc.register("deft_span_getter")
-def make_span_getter():
-    def span_getter(doclike: Union[Doc, Span]) -> List[Span]:
-        """
-        Get the spans of a span group that are contained inside a doclike object.
-        Parameters
-        ----------
-        doclike : Union[Doc, Span]
-            Doclike object to act as a mask.
-        group : str
-            Group name from which to get the spans.
-        Returns
-        -------
-        List[Span]
-            List of spans.
-        """
-        if isinstance(doclike, Doc):
-            return doclike.ents
-            # return [
-            #     ent
-            #     for group in doclike.doc.spans
-            #     for ent in doclike.spans.get(group, ())
-            # ]
-        else:
-            return doclike.ents
-            # return [
-            #     span
-            #     for group in doclike.doc.spans
-            #     for span in doclike.doc.spans.get(group, ())
-            #     if span.start >= doclike.start and span.end <= doclike.end
-            # ]
-
-    return span_getter
-
-
-@registry.misc.register("brat_dataset")
-def pseudo_dataset(path, limit: Optional[int] = None, span_getter=make_span_getter()):
+@registry.misc.register("pseudo-dataset")
+def pseudo_dataset(
+    path,
+    limit: Optional[int] = None,
+    max_length: int = 0,
+):
     def load(nlp) -> List[Doc]:
         # Load the jsonl data from path
         raw_data = []
@@ -110,10 +99,57 @@ def pseudo_dataset(path, limit: Optional[int] = None, span_getter=make_span_gett
         normalizer = nlp.get_pipe("normalizer")
         sentencizer = nlp.get_pipe("sentencizer")
 
+        def subset_doc(doc, start, end):
+            # TODO: review user_data copy strategy
+            new_doc = doc[start:end].as_doc(copy_user_data=True)
+            new_doc.user_data.update(doc.user_data)
+
+            for name, group in doc.spans.items():
+                new_doc.spans[name] = [
+                    spacy.tokens.Span(
+                        new_doc,
+                        max(0, span.start - start),
+                        min(end, span.end) - start,
+                        span.label,
+                    )
+                    for span in group
+                    if span.end > start and span.start < end
+                ]
+
+            return new_doc
+
+        def split_doc(doc):
+            if max_length == 0 or len(doc) < max_length:
+                yield doc
+            else:
+                start = 0
+                end = 0
+                for sent in (
+                    doc.sents if doc.has_annotation("SENT_START") else (doc[:],)
+                ):
+                    if len(sent) == 0:
+                        continue
+                    # If the sentence adds too many tokens
+                    if sent.end - start > max_length:
+                        # But the current buffer too large
+                        while sent.end - start > max_length:
+                            yield subset_doc(doc, start, start + max_length)
+                            start = start + max_length
+                        yield subset_doc(doc, start, sent.end)
+                        start = sent.end
+
+                    # Otherwise, extend the current buffer
+                    end = sent.end
+
+                yield subset_doc(doc, start, end)
+
         docs: List[Doc] = []
         for raw in raw_data:
             doc = nlp.make_doc(raw["note_text"])
             doc._.note_id = raw["note_id"]
+            doc._.note_datetime = raw.get("note_datetime")
+            doc._.note_class_source_value = raw.get("note_class_source_value")
+            doc._.context = raw.get("context", {})
             doc = normalizer(doc)
             doc = sentencizer(doc)
             docs.append(doc)
@@ -129,27 +165,17 @@ def pseudo_dataset(path, limit: Optional[int] = None, span_getter=make_span_gett
                     label=ent["label"],
                     alignment_mode="expand",
                 )
-                ents.append(span)
-                span_groups[ent["label"]].append(span)
+                # ents.append(span)
+                span_groups["pseudo-rb"].append(span)
+                span_groups["pseudo-ml"].append(span)
+                span_groups["pseudo-hybrid"].append(span)
             doc.ents = filter_spans(ents)
             doc.spans.update(span_groups)
 
         new_docs = []
         for doc in docs:
-            for sent in doc.sents:
-                if len(span_getter(sent)):
-                    new_doc = sent.as_doc(copy_user_data=True)
-                    for group in doc.spans:
-                        new_doc.spans[group] = [
-                            Span(
-                                new_doc,
-                                span.start - sent.start,
-                                span.end - sent.start,
-                                span.label_,
-                            )
-                            for span in doc.spans.get(group, ())
-                            if span.start >= sent.start and span.end <= sent.end
-                        ]
+            for new_doc in split_doc(doc):
+                if len(new_doc.text.strip()):
                     new_docs.append(new_doc)
         return new_docs
 
@@ -170,6 +196,30 @@ def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
     return res
 
 
+@validate_arguments
+class PseudoScorer:
+    def __init__(self, **scorers: Scorer):
+        self.scorers = scorers
+
+    def __call__(self, nlp, docs):
+        clean_docs: List[spacy.tokens.Doc] = [d.copy() for d in docs]
+        for d in clean_docs:
+            d.ents = []
+            d.spans.clear()
+        t0 = time.time()
+        preds = list(nlp.pipe(clean_docs))
+        duration = time.time() - t0
+        scores = {
+            scorer_name: scorer(docs, preds)
+            for scorer_name, scorer in self.scorers.items()
+        }
+        scores["speed"] = dict(
+            wps=sum(len(d) for d in docs) / duration,
+            dps=len(docs) / duration,
+        )
+        return scores
+
+
 @app.command(name="train", registry=registry)
 def train(
     nlp: Pipeline,
@@ -181,39 +231,17 @@ def train(
     batch_size: int = 4,
     lr: float = 8e-5,
     validation_interval: int = 10,
+    scorer: PseudoScorer = PseudoScorer(),
 ):
     set_seed(seed)
-    with RichTablePrinter(
-        {
-            "step": {},
-            "(.*_)?loss": {
-                "goal": "lower_is_better",
-                "format": "{:.2e}",
-                "goal_wait": 2,
-            },
-            "ner/(ents_.*)": {
-                "goal": "higher_is_better",
-                "format": "{:.2%}",
-                "goal_wait": 1,
-                "name": r"\1",
-            },
-            "lr": {"format": "{:.2e}"},
-            "speed": {"format": "{:.2f}"},
-            "labels": {"format": "{:.2f}"},
-        },
-        auto_refresh=False,
-    ) as logger:
+    with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
         with set_seed(data_seed):
             train_docs: List[spacy.tokens.Doc] = list(train_data(nlp))
-            if isinstance(val_data, float):
-                offset = int(len(train_docs) * (1 - val_data))
-                random.shuffle(train_docs)
-                train_docs, val_docs = train_docs[:offset], train_docs[offset:]
-            else:
-                val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
+            val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
 
         model_path = BASE_DIR / "artifacts/model-last"
         train_metrics_path = BASE_DIR / "artifacts/train_metrics.jsonl"
+        os.makedirs(BASE_DIR / "artifacts", exist_ok=True)
 
         # Initialize pipeline with training documents
         nlp.post_init(train_docs)
@@ -301,16 +329,16 @@ def train(
             for step in bar:
                 if (step % validation_interval) == 0:
                     count = cumulated_data.pop("count")
-                    scores = flatten_dict(nlp.score(val_docs))
-                    print(scores)
-                    metrics = {
-                        "step": step,
-                        "lr": optimizer.param_groups[0]["lr"],
-                        # "emb_lr": optimizer.param_groups[1]["lr"],
-                        **cumulated_data,
-                        **scores,
-                        "labels": cumulated_data["labels"] / max(count, 1),
-                    }
+                    scores = scorer(nlp, val_docs)
+                    metrics = flatten_dict(
+                        {
+                            "step": step,
+                            "lr": optimizer.param_groups[0]["lr"],
+                            **cumulated_data,
+                            **scores,
+                            "labels": cumulated_data["labels"] / max(count, 1),
+                        }
+                    )
                     cumulated_data = defaultdict(lambda: 0.0, count=0)
                     all_metrics.append(metrics)
                     logger.log_metrics(metrics)
@@ -322,10 +350,11 @@ def train(
                     break
 
                 batch = next(iterator)
-                n_words = batch["ner"]["embedding"]["mask"].sum().item()
-                n_padded = torch.numel(batch["ner"]["embedding"]["mask"])
-                n_words_bert = batch["ner"]["embedding"]["attention_mask"].sum().item()
-                n_padded_bert = torch.numel(batch["ner"]["embedding"]["attention_mask"])
+                trf_batch = batch["ner"]["embedding"]["embedding"]
+                n_words = trf_batch["mask"].sum().item()
+                n_padded = torch.numel(trf_batch["mask"])
+                n_words_bert = trf_batch["attention_mask"].sum().item()
+                n_padded_bert = torch.numel(trf_batch["attention_mask"])
                 bar.set_postfix(
                     n_words=n_words,
                     ratio=n_words / n_padded,

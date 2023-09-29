@@ -1,33 +1,30 @@
 from itertools import chain
-from typing import Callable, Optional, Sequence
+from typing import List
 
+from edsnlp import registry
+from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.phrase import EDSPhraseMatcher
 from edsnlp.matchers.regex import RegexMatcher
-from edsnlp.utils.filter import filter_spans
-from spacy.language import Language
+from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
 from spacy.tokens import Doc
 
 from .patterns import patterns, person_patterns
 
-DEFAULT_CONFIG = dict(
-    attr="NORM",
-    scorer={"@scorers": "spacy.ner_scorer.v1"},
-    pattern_keys=[*patterns, "PERSON"],
-)
 
-
-@Language.factory("pseudonymisation-rules", default_config=DEFAULT_CONFIG)
-class Pseudonymisation:
+@registry.factory.register("eds_pseudo.simple_rules")
+class Pseudonymisation(BaseNERComponent):
     def __init__(
         self,
-        nlp: Language,
-        name: str,
-        attr: str,
-        scorer: Optional[Callable],
-        pattern_keys: Sequence[str],
+        nlp: PipelineProtocol = None,
+        name: str = None,
+        *,
+        attr: str = "NORM",
+        pattern_keys: List[str] = [*patterns, "PERSON"],
+        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
     ):
+        super().__init__(nlp, name, span_setter=span_setter)
+        self.span_setter = span_setter
 
-        self.scorer = scorer
         self.regex_matcher = RegexMatcher(attr=attr)
         self.phrase_matcher = EDSPhraseMatcher(vocab=nlp.vocab, attr=attr)
 
@@ -75,11 +72,7 @@ class Pseudonymisation:
                     ),
                 )
 
-        matches = filter_spans((*doc.ents, *matches))
-
-        doc.ents = matches
-
-        return doc
+        return self.set_spans(doc, matches)
 
     def __call__(self, doc: Doc) -> Doc:
         return self.process(doc)

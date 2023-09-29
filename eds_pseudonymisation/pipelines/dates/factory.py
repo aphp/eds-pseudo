@@ -1,35 +1,31 @@
-from typing import Callable, List, Optional
+from typing import List, Optional
 
-from spacy.language import Language
+from edsnlp import registry
+from edsnlp.core import PipelineProtocol
+from edsnlp.pipelines.base import SpanSetterArg
 
 from .dates import PseudonymisationDates
 from .patterns import false_positive_pattern, pseudo_date_pattern
 
-DEFAULT_CONFIG = dict(
-    absolute=None,
-    false_positive=None,
-    attr="LOWER",
-    scorer={"@scorers": "spacy.ner_scorer.v1"},
-)
 
-
-@Language.factory("pseudonymisation-dates", default_config=DEFAULT_CONFIG)
+@registry.factory.register("eds_pseudo.dates")
 def create_component(
-    nlp: Language,
-    name: str,
-    absolute: Optional[List[str]],
-    false_positive: Optional[List[str]],
-    attr: str,
-    scorer: Optional[Callable],
+    nlp: PipelineProtocol = None,
+    name: str = None,
+    *,
+    absolute: Optional[List[str]] = None,
+    false_positive: Optional[List[str]] = None,
+    attr: str = "LOWER",
+    span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
 ):
-
     if absolute is None:
         absolute = pseudo_date_pattern
     if false_positive is None:
         false_positive = false_positive_pattern
 
     return PseudonymisationDates(
-        nlp,
+        nlp=nlp,
+        name=name,
         absolute=absolute,
         relative=[],
         duration=[],
@@ -37,7 +33,6 @@ def create_component(
         false_positive=false_positive,
         on_ents_only=False,
         detect_periods=False,
-        as_ents=True,
+        span_setter=span_setter,
         attr=attr,
-        scorer=scorer,
     )

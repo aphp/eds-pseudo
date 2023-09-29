@@ -1,29 +1,25 @@
-from typing import Callable, Optional
-
+from edsnlp import registry
+from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.regex import RegexMatcher
+from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
 from edsnlp.utils.filter import filter_spans
-from spacy.language import Language
 from spacy.tokens import Doc
 
 from .patterns import address_patterns
 
-DEFAULT_CONFIG = dict(
-    attr="NORM",
-    scorer={"@scorers": "spacy.ner_scorer.v1"},
-)
 
-
-@Language.factory("pseudonymisation-addresses", default_config=DEFAULT_CONFIG)
-class PseudonymisationAddresses:
+@registry.factory.register("eds_pseudo.addresses")
+class PseudonymisationAddresses(BaseNERComponent):
     def __init__(
         self,
-        nlp: Language,
+        nlp: PipelineProtocol,
         name: str,
-        attr: str,
-        scorer: Optional[Callable],
+        *,
+        attr: str = "NORM",
+        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
     ):
+        super().__init__(nlp, name, span_setter=span_setter)
 
-        self.scorer = scorer
         self.regex_matcher = RegexMatcher(attr=attr)
         self.regex_matcher.build_patterns({"ADRESSE": address_patterns})
 
@@ -34,7 +30,6 @@ class PseudonymisationAddresses:
         cities = []
         filtered_matches = []
         for span, gd in self.regex_matcher.match_with_groupdict_as_spans(doc):
-            print(gd)
             if gd.get("UPPER_STREET") is not None and gd.get("NUMERO") is not None:
                 filtered_matches.append((span, gd))
             elif (
@@ -65,10 +60,7 @@ class PseudonymisationAddresses:
             if "VILLE" in gd:
                 cities.append(gd["VILLE"])
 
-        doc.spans["ADRESSE"] = addresses
-        doc.spans["VILLE"] = cities
-        doc.spans["ZIP"] = zip_codes
-        doc.ents = filter_spans((*doc.ents, *addresses, *cities, *zip_codes))
+        return self.set_spans(doc, [*addresses, *cities, *zip_codes])
 
     def __call__(self, doc: Doc) -> Doc:
         self.process(doc)

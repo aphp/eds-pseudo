@@ -6,11 +6,12 @@ authors = ["Perceval Wajsburt <perceval.wajsburt-ext@aphp.fr>", "Alice Calliger 
 include = ["eds_pseudonymisation/resources/*.csv.gz"]
 
 [tool.poetry.plugins."spacy_factories"]
-"structured-data-matcher" = "eds_pseudonymisation.pipelines.structured:StructuredDataMatcher"
-"pseudonymisation-rules" = "eds_pseudonymisation.pipelines.pseudonymisation.pseudonymisation:Pseudonymisation"
-"pseudonymisation-dates" = "eds_pseudonymisation.pipelines.dates.factory:create_component"
-"pseudonymisation-addresses" = "eds_pseudonymisation.pipelines.addresses.addresses:PseudonymisationAddresses"
-"clean-entities" = "eds_pseudonymisation.pipelines.clean_entities:CleanEntities"
+"eds_pseudo.clean"         = "eds_pseudonymisation.pipelines.clean_entities:CleanEntities"
+"eds_pseudo.addresses"     = "eds_pseudonymisation.pipelines.addresses.addresses:PseudonymisationAddresses"
+"eds_pseudo.dates"         = "eds_pseudonymisation.pipelines.dates.factory:create_component"
+"eds_pseudo.simple_rules"  = "eds_pseudonymisation.pipelines.pseudonymisation.pseudonymisation:Pseudonymisation"
+"eds_pseudo.context"       = "eds_pseudonymisation.pipelines.structured:ContextMatcher"
+"eds_pseudo.merge"         = "eds_pseudonymisation.pipelines.merge_entities:MergeEntities"
 
 [tool.poetry.plugins."spacy_readers"]
 "eds-pseudonymisation.Corpus.v1" = "eds_pseudonymisation.corpus_reader:PseudoCorpus"
