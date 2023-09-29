@@ -1,4 +1,4 @@
-from spacy.language import Language
+from edsnlp.core import PipelineProtocol
 
 examples = [
     ("le 06/02/2020", dict(day="06", month="02", year="2020"), "DATE"),
@@ -8,7 +8,7 @@ examples = [
 ]
 
 
-def test_dates(nlp: Language):
+def test_dates(nlp: PipelineProtocol):
     for example, date_string, label in examples:
         doc = nlp(example)
         assert doc.ents

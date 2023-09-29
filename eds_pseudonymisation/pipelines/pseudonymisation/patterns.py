@@ -100,21 +100,6 @@ person_patterns = [
 """,
 ]
 
-
-common_medical_terms = {
-    "EVA",
-    "GE",
-    "BIO",
-    "SAU",
-    "MEDICAL",
-    "PA",
-    "AVC",
-    "PO",
-    "OMS",
-    "IVA",
-    "AD",
-}
-
 patterns = dict(
     IPP=ipp_pattern,
     MAIL=mail_pattern,

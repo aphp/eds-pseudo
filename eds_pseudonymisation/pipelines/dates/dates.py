@@ -1,11 +1,11 @@
 import re
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-from edsnlp.pipelines.misc.dates.dates import Dates
+from edsnlp.core import PipelineProtocol
+from edsnlp.pipelines.base import SpanSetterArg
+from edsnlp.pipelines.misc.dates.dates import DatesMatcher
 from edsnlp.pipelines.misc.dates.models import AbsoluteDate
-from edsnlp.utils.filter import filter_spans
 from pydantic import BaseModel, root_validator
-from spacy import Language
 from spacy.tokens import Doc, Span
 
 if not Span.has_extension("date_string"):
@@ -23,34 +23,35 @@ class DateString(BaseModel):
         return normalised
 
 
-class PseudonymisationDates(Dates):
+class PseudonymisationDates(DatesMatcher):
     def __init__(
         self,
-        nlp: Language,
+        nlp: PipelineProtocol = None,
+        name: str = None,
+        *,
         absolute: Optional[List[str]],
         relative: Optional[List[str]],
         duration: Optional[List[str]],
         false_positive: Optional[List[str]],
-        on_ents_only: Union[bool, List[str]],
+        on_ents_only: Union[bool, str, Iterable[str]],
         detect_periods: bool,
         detect_time: bool,
-        as_ents: bool,
+        span_setter: SpanSetterArg,
         attr: str,
-        scorer: Optional[Callable],
     ):
         super().__init__(
-            nlp,
-            absolute,
-            relative,
-            duration,
-            false_positive,
-            on_ents_only,
-            detect_periods,
-            detect_time,
-            as_ents,
-            attr,
+            nlp=nlp,
+            name=name,
+            absolute=absolute,
+            relative=relative,
+            duration=duration,
+            false_positive=false_positive,
+            on_ents_only=on_ents_only,
+            detect_periods=detect_periods,
+            detect_time=detect_time,
+            span_setter=span_setter,
+            attr=attr,
         )
-        self.scorer = scorer
 
     def parse(self, dates: List[Tuple[Span, Dict[str, str]]]) -> List[Span]:
         """
@@ -95,9 +96,11 @@ class PseudonymisationDates(Dates):
         doc : Doc
             spaCy Doc object, annotated for dates
         """
+        matches = self.process(doc)
         dates = []
+
         birth_date = None
-        for date in self.parse(self.process(doc)):
+        for date in matches:
             snippet = doc[max(0, date.start - 5) : date.end + 5].text
             if re.search(r"\b(né|n[ée]e|naissance)\b", snippet, flags=re.IGNORECASE):
                 date.label_ = "DATE_NAISSANCE"
@@ -110,8 +113,6 @@ class PseudonymisationDates(Dates):
             if date._.date == birth_date:
                 date.label_ = "DATE_NAISSANCE"
 
-        ents = filter_spans(list(doc.ents) + dates, return_discarded=False)
-
-        doc.ents = ents
+        self.set_spans(doc, dates)
 
         return doc
