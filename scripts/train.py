@@ -3,27 +3,27 @@ import json
 import math
 import os
 import random
-import time
 from collections import defaultdict
 from itertools import chain, repeat
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Tuple
 
 import spacy
 import torch
 from accelerate import Accelerator
-from confit import Cli, validate_arguments
+from confit import Cli
 from confit.utils.random import set_seed
 from edsnlp.core.pipeline import Pipeline
 from edsnlp.core.registry import registry
 from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
-from edsnlp.scorers import Scorer
 from edsnlp.utils.collections import batchify
-from edsnlp.utils.filter import filter_spans
 from rich_logger import RichTablePrinter
 from spacy.tokens import Doc
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+import eds_pseudonymisation.adapter  # noqa: F401
+from eds_pseudonymisation.scorer import PseudoScorer
 
 app = Cli(pretty_exceptions_show_locals=False)
 
@@ -35,11 +35,11 @@ LOGGER_FIELDS = {
         "format": "{:.2e}",
         "goal_wait": 2,
     },
-    "token_ner_hybrid/ents_(.*)": {
+    "token_ner_ml/ents_(.*)": {
         "goal": "higher_is_better",
         "format": "{:.2%}",
         "goal_wait": 1,
-        "name": r"tok_hyb_\1",
+        "name": r"tok_ml_\1",
     },
     "lr": {"format": "{:.2e}"},
     "speed/wps": {"format": "{:.2f}", "name": "wps"},
@@ -47,139 +47,96 @@ LOGGER_FIELDS = {
 }
 
 
+class BatchSizeArg:
+    def __init__(self, batch_size: int):
+        self.batch_size = batch_size
+
+    @classmethod
+    def validate(cls, value, config=None):
+        value = str(value)
+        parts = value.split()
+        num = int(parts[0])
+        if str(num) == parts[0]:
+            if len(parts) == 1:
+                return num, "samples"
+            if parts[1] in ("words", "samples"):
+                return num, parts[1]
+        raise Exception(f"Invalid batch size: {value}, must be <int> samples|words")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+
+if TYPE_CHECKING:
+    BatchSizeArg = Tuple[int, str]  # noqa: F811
+
+
 class LengthSortedBatchSampler:
-    def __init__(self, dataset, batch_size, noise=1, drop_last=True):
+    def __init__(
+        self, dataset, batch_size: int, batch_unit: str, noise=1, drop_last=True
+    ):
         self.dataset = dataset
         self.batch_size = batch_size
+        self.batch_unit = batch_unit
         self.noise = noise
         self.drop_last = drop_last
 
     def __iter__(self):
         # Shuffle the dataset
-        def sample_len(idx):
-            wt = next(
-                v for k, v in self.dataset[idx].items() if k.endswith("word_tokens")
+        def sample_len(idx, noise=True):
+            count = sum(
+                len(x)
+                for x in next(
+                    v
+                    for k, v in self.dataset[idx].items()
+                    if k.endswith("word_lengths")
+                )
             )
-            return len(wt) + random.randint(-self.noise, self.noise)
+            if not noise:
+                return count
+            return count + random.randint(-self.noise, self.noise)
+
+        def make_batches():
+            current_count = 0
+            current_batch = []
+            for idx in sorted_sequences:
+                if self.batch_unit == "words":
+                    seq_size = sample_len(idx, noise=False)
+                    if current_count + seq_size > self.batch_size:
+                        yield current_batch
+                        current_batch = []
+                        current_count = 0
+                    current_count += seq_size
+                    current_batch.append(idx)
+                else:
+                    if len(current_batch) == self.batch_size:
+                        yield current_batch
+                        current_batch = []
+                    current_batch.append(idx)
+            if len(current_batch):
+                yield current_batch
 
         # Sort sequences by length +- some noise
-        sequences = chain.from_iterable(
+        sorted_sequences = chain.from_iterable(
             sorted(range(len(self.dataset)), key=sample_len) for _ in repeat(None)
         )
 
         # Batch sorted sequences
-        batches = batchify(sequences, self.batch_size)
+        batches = make_batches()
 
         # Shuffle the batches in buffer that contain approximately
         # the full dataset to add more randomness
-        buffers = batchify(batches, math.ceil(len(self.dataset) / self.batch_size))
+        if self.batch_unit == "words":
+            total_count = sum(
+                sample_len(idx, noise=False) for idx in range(len(self.dataset))
+            )
+        else:
+            total_count = len(self.dataset)
+        buffers = batchify(batches, math.ceil(total_count / self.batch_size))
         for buffer in buffers:
             random.shuffle(buffer)
             yield from buffer
-
-
-@registry.misc.register("pseudo-dataset")
-def pseudo_dataset(
-    path,
-    limit: Optional[int] = None,
-    max_length: int = 0,
-):
-    def load(nlp) -> List[Doc]:
-        # Load the jsonl data from path
-        raw_data = []
-        with open(path, "r") as f:
-            for line in f:
-                raw_data.append(json.loads(line))
-
-        assert len(raw_data) > 0, "No data found in {}".format(path)
-        if limit is not None:
-            raw_data = raw_data[:limit]
-
-        # Initialize the docs (tokenize them)
-        normalizer = nlp.get_pipe("normalizer")
-        sentencizer = nlp.get_pipe("sentencizer")
-
-        def subset_doc(doc, start, end):
-            # TODO: review user_data copy strategy
-            new_doc = doc[start:end].as_doc(copy_user_data=True)
-            new_doc.user_data.update(doc.user_data)
-
-            for name, group in doc.spans.items():
-                new_doc.spans[name] = [
-                    spacy.tokens.Span(
-                        new_doc,
-                        max(0, span.start - start),
-                        min(end, span.end) - start,
-                        span.label,
-                    )
-                    for span in group
-                    if span.end > start and span.start < end
-                ]
-
-            return new_doc
-
-        def split_doc(doc):
-            if max_length == 0 or len(doc) < max_length:
-                yield doc
-            else:
-                start = 0
-                end = 0
-                for sent in (
-                    doc.sents if doc.has_annotation("SENT_START") else (doc[:],)
-                ):
-                    if len(sent) == 0:
-                        continue
-                    # If the sentence adds too many tokens
-                    if sent.end - start > max_length:
-                        # But the current buffer too large
-                        while sent.end - start > max_length:
-                            yield subset_doc(doc, start, start + max_length)
-                            start = start + max_length
-                        yield subset_doc(doc, start, sent.end)
-                        start = sent.end
-
-                    # Otherwise, extend the current buffer
-                    end = sent.end
-
-                yield subset_doc(doc, start, end)
-
-        docs: List[Doc] = []
-        for raw in raw_data:
-            doc = nlp.make_doc(raw["note_text"])
-            doc._.note_id = raw["note_id"]
-            doc._.note_datetime = raw.get("note_datetime")
-            doc._.note_class_source_value = raw.get("note_class_source_value")
-            doc._.context = raw.get("context", {})
-            doc = normalizer(doc)
-            doc = sentencizer(doc)
-            docs.append(doc)
-
-        # Annotate entities from the raw data
-        for doc, raw in zip(docs, raw_data):
-            ents = []
-            span_groups = defaultdict(list)
-            for ent in raw["entities"]:
-                span = doc.char_span(
-                    ent["start"],
-                    ent["end"],
-                    label=ent["label"],
-                    alignment_mode="expand",
-                )
-                # ents.append(span)
-                span_groups["pseudo-rb"].append(span)
-                span_groups["pseudo-ml"].append(span)
-                span_groups["pseudo-hybrid"].append(span)
-            doc.ents = filter_spans(ents)
-            doc.spans.update(span_groups)
-
-        new_docs = []
-        for doc in docs:
-            for new_doc in split_doc(doc):
-                if len(new_doc.text.strip()):
-                    new_docs.append(new_doc)
-        return new_docs
-
-    return load
 
 
 def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
@@ -196,30 +153,6 @@ def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
     return res
 
 
-@validate_arguments
-class PseudoScorer:
-    def __init__(self, **scorers: Scorer):
-        self.scorers = scorers
-
-    def __call__(self, nlp, docs):
-        clean_docs: List[spacy.tokens.Doc] = [d.copy() for d in docs]
-        for d in clean_docs:
-            d.ents = []
-            d.spans.clear()
-        t0 = time.time()
-        preds = list(nlp.pipe(clean_docs))
-        duration = time.time() - t0
-        scores = {
-            scorer_name: scorer(docs, preds)
-            for scorer_name, scorer in self.scorers.items()
-        }
-        scores["speed"] = dict(
-            wps=sum(len(d) for d in docs) / duration,
-            dps=len(docs) / duration,
-        )
-        return scores
-
-
 @app.command(name="train", registry=registry)
 def train(
     nlp: Pipeline,
@@ -228,10 +161,12 @@ def train(
     seed: int = 42,
     data_seed: int = 42,
     max_steps: int = 1000,
-    batch_size: int = 4,
-    lr: float = 8e-5,
+    batch_size: BatchSizeArg = 2000,
+    embedding_lr: float = 5e-5,
+    task_lr: float = 3e-4,
     validation_interval: int = 10,
     scorer: PseudoScorer = PseudoScorer(),
+    cpu: bool = False,
 ):
     set_seed(seed)
     with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
@@ -250,11 +185,27 @@ def train(
         print("Preprocessing data")
 
         preprocessed = list(nlp.preprocess_many(train_docs, supervision=True))
+        print(f"TRAINING DATASET SIZE: {len(preprocessed)}")
         dataloader = DataLoader(
             preprocessed,
-            batch_sampler=LengthSortedBatchSampler(preprocessed, batch_size),
+            batch_sampler=LengthSortedBatchSampler(
+                preprocessed,
+                batch_size=batch_size[0],
+                batch_unit=batch_size[1],
+            ),
             collate_fn=nlp.collate,
         )
+        # total_wp = 0
+        # total_seq = 0
+        # total_sample = 0
+        # for sample in preprocessed:
+        #     input_ids = sample['ner/embedding/embedding/input_ids']
+        #     total_wp += sum(len(d) for d in input_ids[0])
+        #     total_seq += len(input_ids[0])
+        #     total_sample += len(input_ids)
+        # print("AVERAGE WINDOW SIZE", total_wp / total_seq)
+        # print("AVERAGE SAMPLE WP", total_wp / total_sample)
+        # print("AVERAGE SAMPLE WINDOWS", total_seq / total_sample)
 
         trf_params = set(nlp.get_pipe("ner").embedding.embedding.parameters())
 
@@ -266,18 +217,19 @@ def train(
                 [
                     {
                         "params": list(set(nlp.parameters()) - trf_params),
-                        "lr": lr,
+                        "lr": task_lr,
                         "schedules": [
                             LinearSchedule(
                                 total_steps=max_steps,
-                                start_value=lr,
+                                warmup_rate=0.1,
+                                start_value=task_lr,
                                 path="lr",
                             )
                         ],
                     },
                     {
                         "params": list(trf_params),
-                        "lr": lr,
+                        "lr": embedding_lr,
                         "schedules": [
                             LinearSchedule(
                                 total_steps=max_steps,
@@ -305,7 +257,7 @@ def train(
             f"Not optimizing {len(set(nlp.parameters()) - optimized_parameters)} params"
         )
 
-        accelerator = Accelerator(cpu=True)
+        accelerator = Accelerator(cpu=cpu)
         trained_pipes = [pipe for name, pipe in nlp.torch_components()]
         print("Device:", accelerator.device)
         [dataloader, optimizer, *trained_pipes] = accelerator.prepare(
@@ -350,17 +302,17 @@ def train(
                     break
 
                 batch = next(iterator)
-                trf_batch = batch["ner"]["embedding"]["embedding"]
-                n_words = trf_batch["mask"].sum().item()
-                n_padded = torch.numel(trf_batch["mask"])
-                n_words_bert = trf_batch["attention_mask"].sum().item()
-                n_padded_bert = torch.numel(trf_batch["attention_mask"])
-                bar.set_postfix(
-                    n_words=n_words,
-                    ratio=n_words / n_padded,
-                    n_wp=n_words_bert,
-                    bert_ratio=n_words_bert / n_padded_bert,
-                )
+                # trf_batch = batch["ner"]["embedding"]["embedding"]
+                # n_words = trf_batch["mask"].sum().item()
+                # n_padded = torch.numel(trf_batch["mask"])
+                # n_words_bert = trf_batch["input_ids"].mask.sum().item()
+                # n_padded_bert = torch.numel(trf_batch["input_ids"])
+                # bar.set_postfix(
+                #     n_words=n_words,
+                #     ratio=n_words / n_padded,
+                #     n_wp=n_words_bert,
+                #     bert_ratio=n_words_bert / n_padded_bert,
+                # )
 
                 optimizer.zero_grad()
                 with nlp.cache():
