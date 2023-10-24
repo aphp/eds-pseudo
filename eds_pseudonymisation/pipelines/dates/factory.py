@@ -16,7 +16,12 @@ def create_component(
     absolute: Optional[List[str]] = None,
     false_positive: Optional[List[str]] = None,
     attr: str = "LOWER",
-    span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
+    span_setter: SpanSetterArg = {
+        "ents": True,
+        "pseudo-rb": True,
+        "DATE": "DATE",
+        "DATE_NAISSANCE": "DATE_NAISSANCE",
+    },
 ):
     if absolute is None:
         absolute = pseudo_date_pattern

@@ -35,11 +35,17 @@ LOGGER_FIELDS = {
         "format": "{:.2e}",
         "goal_wait": 2,
     },
-    "token_ner_ml/ents_(.*)": {
+    "token_ner_ml/ents_([^/]*)$": {
         "goal": "higher_is_better",
         "format": "{:.2%}",
-        "goal_wait": 1,
-        "name": r"tok_ml_\1",
+        "goal_wait": 2,
+        "name": r"\1",
+    },
+    "redact_ner_ml/([^/]*)$": {
+        "goal": "higher_is_better",
+        "format": "{:.2%}",
+        "goal_wait": 2,
+        "name": r"\1",
     },
     "lr": {"format": "{:.2e}"},
     "speed/wps": {"format": "{:.2f}", "name": "wps"},

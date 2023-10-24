@@ -68,17 +68,15 @@ def split_doc(
     -------
     Iterable[Doc]
     """
-    if max_length == 0 or len(doc) < max_length:
+    if max_length <= 0:
         yield doc
     else:
         start = 0
         end = 0
-        for ent in doc.spans["pseudo-ml"]:
+        for ent in doc.spans.get("pseudo-ml", ()):
             for token in ent:
                 token.is_sent_start = False
         for sent in doc.sents if doc.has_annotation("SENT_START") else (doc[:],):
-            if len(sent) == 0:
-                continue
             # If the sentence adds too many tokens
             if sent.end - start > max_length:
                 # But the current buffer too large
@@ -120,8 +118,6 @@ def pseudo_dataset(
                 raw_data.append(json.loads(line))
 
         assert len(raw_data) > 0, "No data found in {}".format(path)
-        if limit is not None:
-            raw_data = raw_data[:limit]
 
         # Initialize the docs (tokenize them)
         normalizer = nlp.get_pipe("normalizer")
@@ -168,6 +164,9 @@ def pseudo_dataset(
             for new_doc in split_doc(doc, max_length, randomize, multi_sentence):
                 if len(new_doc.text.strip()):
                     new_docs.append(new_doc)
+
+        if limit is not None:
+            new_docs = new_docs[:limit]
         return new_docs
 
     return load

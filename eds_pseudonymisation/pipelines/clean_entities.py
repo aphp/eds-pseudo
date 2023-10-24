@@ -14,7 +14,11 @@ class CleanEntities(BaseNERComponent):
         nlp: PipelineProtocol,
         name: str,
         *,
-        span_getter: SpanGetterArg = {"pseudo-rb": True, "pseudo-ml": True},
+        span_getter: SpanGetterArg = {
+            "ents": True,
+            "pseudo-rb": True,
+            "pseudo-ml": True,
+        },
     ):
         """
         Removes empty entities from the document and clean entity boundaries
@@ -48,6 +52,6 @@ class CleanEntities(BaseNERComponent):
         for name, spans in self.span_setter.items():
             if name == "ents":
                 doc.ents = self.clean_spans(doc.ents)
-            else:
+            elif name in doc.spans:
                 doc.spans[name] = self.clean_spans(doc.spans[name])
         return doc

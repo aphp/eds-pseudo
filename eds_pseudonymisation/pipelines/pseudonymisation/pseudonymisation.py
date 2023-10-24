@@ -20,10 +20,18 @@ class Pseudonymisation(BaseNERComponent):
         *,
         attr: str = "NORM",
         pattern_keys: List[str] = [*patterns, "PERSON"],
-        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
+        span_setter: SpanSetterArg = {
+            "ents": True,
+            "pseudo-rb": True,
+            "IPP": "IPP",
+            "MAIL": "MAIL",
+            "TEL": "TEL",
+            "NDA": "NDA",
+            "PRENOM": "PRENOM",
+            "NOM": "NOM",
+        },
     ):
         super().__init__(nlp, name, span_setter=span_setter)
-        self.span_setter = span_setter
 
         self.regex_matcher = RegexMatcher(attr=attr)
         self.phrase_matcher = EDSPhraseMatcher(vocab=nlp.vocab, attr=attr)
@@ -72,7 +80,8 @@ class Pseudonymisation(BaseNERComponent):
                     ),
                 )
 
-        return self.set_spans(doc, matches)
+        self.set_spans(doc, matches)
+        return doc
 
     def __call__(self, doc: Doc) -> Doc:
         return self.process(doc)

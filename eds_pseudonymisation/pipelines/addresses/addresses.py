@@ -16,7 +16,13 @@ class PseudonymisationAddresses(BaseNERComponent):
         name: str,
         *,
         attr: str = "NORM",
-        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
+        span_setter: SpanSetterArg = {
+            "ents": True,  # base filtered span group
+            "pseudo-rb": True,  # base unfiltered span group
+            "ADRESSE": "ADRESSE",  # only for ADRESSE spans
+            "ZIP": "ZIP",  # only for ZIP spans
+            "VILLE": "VILLE",  # only for VILLE spans
+        },
     ):
         super().__init__(nlp, name, span_setter=span_setter)
 
