@@ -4,13 +4,8 @@ from typing import Dict, List
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.phrase import EDSPhraseMatcher
-from edsnlp.matchers.regex import RegexMatcher
 from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
 from spacy.tokens import Doc, Span
-from typing_extensions import Literal
-
-if not Doc.has_extension("context"):
-    Doc.set_extension("context", default=dict())
 
 
 @registry.factory.register("eds_pseudo.context")
@@ -25,8 +20,6 @@ class ContextMatcher(BaseNERComponent):
         The pipeline object
     name: str
         Name of the component, not used.
-    matcher : Matcher
-        Enum, to match using regex or phrase
     attr : str
         The default attribute to use for matching.
         Can be overridden using the `terms` and `regex` configurations.
@@ -41,7 +34,6 @@ class ContextMatcher(BaseNERComponent):
         name: str = None,
         *,
         span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
-        matcher: Literal["regex", "phrase"] = "phrase",
         attr: str = "NORM",
         ignore_excluded: bool = False,
     ):
@@ -49,11 +41,6 @@ class ContextMatcher(BaseNERComponent):
 
         self.attr = attr
         self.ignore_excluded = ignore_excluded
-        self.matcher_factory = (
-            self.phrase_matcher_factory
-            if matcher == "phrase"
-            else self.regex_matcher_factory
-        )
         self.punct_remover = str.maketrans(punctuation, " " * len(punctuation))
 
     def set_extensions(self):
@@ -61,7 +48,7 @@ class ContextMatcher(BaseNERComponent):
             Span.set_extension("source", default=None)
         super().set_extensions()
 
-    def phrase_matcher_factory(
+    def matcher_factory(
         self,
         context: Dict[str, List[str]],
     ) -> EDSPhraseMatcher:
@@ -79,17 +66,6 @@ class ContextMatcher(BaseNERComponent):
                 for k, v in context.items()
             },
         )
-        return matcher
-
-    def regex_matcher_factory(
-        self,
-        context: Dict[str, List[str]],
-    ) -> RegexMatcher:
-        matcher = RegexMatcher(
-            attr=self.attr,
-            ignore_excluded=self.ignore_excluded,
-        )
-        matcher.build_patterns(regex=context)
         return matcher
 
     def process(self, doc: Doc) -> List[Span]:

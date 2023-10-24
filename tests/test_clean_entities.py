@@ -2,7 +2,7 @@ from spacy.tokens import Span
 
 
 def test_clean_entities(blank_nlp):
-    blank_nlp.add_pipe("clean-entities")
+    blank_nlp.add_pipe("eds_pseudo.clean")
     text = "Elle habite au 2 rue de la paix    75002, PARIS"
     doc = blank_nlp.make_doc(text)
     doc.ents = [Span(doc, 3, 9, "ADRESSE"), Span(doc, 10, 11, "ZIP")]

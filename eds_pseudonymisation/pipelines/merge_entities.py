@@ -6,6 +6,7 @@ from edsnlp.pipelines.base import (
     SpanSetterArg,
     get_spans,
 )
+from edsnlp.utils.filter import filter_spans
 from spacy.tokens import Doc
 
 
@@ -27,5 +28,10 @@ class MergeEntities(BaseNERComponent):
         self.span_getter = span_getter
 
     def __call__(self, doc: Doc) -> Doc:
-        ents = get_spans(doc, self.span_getter)
+        ents = filter_spans(get_spans(doc, self.span_getter))
+        for group in self.span_setter:
+            doc.spans[group] = []
+        for group in self.span_getter:
+            if group in doc.spans:
+                doc.spans[group] = filter_spans(doc.spans[group])
         return self.set_spans(doc, ents)

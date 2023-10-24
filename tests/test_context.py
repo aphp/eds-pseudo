@@ -7,7 +7,7 @@ def test_structured(blank_nlp):
         "NOM_NAISS": ["Élise"],
         "PRENOM": ["Marie"],
     }
-    blank_nlp.add_pipe("structured-data-matcher")
+    blank_nlp.add_pipe("eds_pseudo.context")
     doc = blank_nlp.make_doc(text)
     doc._.context = context
     doc = blank_nlp(doc)
