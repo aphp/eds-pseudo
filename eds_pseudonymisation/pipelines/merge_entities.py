@@ -28,10 +28,16 @@ class MergeEntities(BaseNERComponent):
         self.span_getter = span_getter
 
     def __call__(self, doc: Doc) -> Doc:
-        ents = filter_spans(get_spans(doc, self.span_getter))
         for group in self.span_setter:
             doc.spans[group] = []
+        # First, filter spans in each span group (rb, and ml) by keeping the largest,
+        # leftmost span
         for group in self.span_getter:
             if group in doc.spans:
                 doc.spans[group] = filter_spans(doc.spans[group])
-        return self.set_spans(doc, ents)
+        # Second, merge spans between the two groups, by keeping
+        ents = filter_spans(
+            ((span, i) for i, span in enumerate(get_spans(doc, self.span_getter))),
+            sort_key=lambda pair: pair[1],
+        )
+        return self.set_spans(doc, [e[0] for e in ents])
