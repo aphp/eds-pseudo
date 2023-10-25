@@ -1,5 +1,6 @@
 import json
 import random
+from pathlib import Path
 from typing import List, Optional
 
 import spacy
@@ -104,69 +105,79 @@ def pseudo_dataset(
     path,
     limit: Optional[int] = None,
     max_length: int = 0,
-    randomize: bool = True,
+    randomize: bool = False,
     multi_sentence: bool = True,
     filter_expr: Optional[str] = None,
 ):
     filter_fn = eval(f"lambda doc: {filter_expr}") if filter_expr else None
+    assert not (
+        limit is not None and isinstance(path, dict)
+    ), "Cannot use specify both global limit and path-wise limit"
+    if isinstance(path, (str, Path)):
+        path = [path]
+    if isinstance(path, list):
+        path = {single_path: (limit or 0) for single_path in path}
 
     def load(nlp) -> List[Doc]:
-        # Load the jsonl data from path
-        raw_data = []
-        with open(path, "r") as f:
-            for line in f:
-                raw_data.append(json.loads(line))
-
-        assert len(raw_data) > 0, "No data found in {}".format(path)
 
         # Initialize the docs (tokenize them)
         normalizer = nlp.get_pipe("normalizer")
         sentencizer = nlp.get_pipe("sentencizer")
 
-        docs: List[Doc] = []
-        for raw in raw_data:
-            doc = nlp.make_doc(raw["note_text"])
-            doc._.note_id = raw["note_id"]
-            doc._.note_datetime = raw.get("note_datetime")
-            doc._.note_class_source_value = raw.get("note_class_source_value")
-            doc._.context = raw.get("context", {})
-            doc = normalizer(doc)
-            doc = sentencizer(doc)
-            if len(doc) and (filter_fn is None or filter_fn(doc)):
-                docs.append(doc)
+        # Load the jsonl data from path
+        for single_path, path_limit in path.items():
+            path_count = 0
+            with open(single_path, "r") as f:
+                lines = f
+                if randomize:
+                    lines = list(lines)
+                    random.shuffle(lines)
 
-        # Annotate entities from the raw data
-        for doc, raw in zip(docs, raw_data):
-            ents = []
+                for line in lines:
+                    if path_limit > 0 and path_count >= path_limit:
+                        break
+                    raw = json.loads(line)
+                    doc = nlp.make_doc(raw["note_text"])
+                    doc._.note_id = raw["note_id"]
+                    doc._.note_datetime = raw.get("note_datetime")
+                    doc._.note_class_source_value = raw.get("note_class_source_value")
+                    doc._.context = raw.get("context", {})
+                    doc = normalizer(doc)
+                    doc = sentencizer(doc)
+                    if not (len(doc) and (filter_fn is None or filter_fn(doc))):
+                        continue
 
-            span_groups = {
-                "pseudo-rb": [],
-                "pseudo-ml": [],
-                "pseudo-hybrid": [],
-            }
+                    path_count += 1
 
-            for ent in raw["entities"]:
-                span = doc.char_span(
-                    ent["start"],
-                    ent["end"],
-                    label=ent["label"],
-                    alignment_mode="expand",
-                )
-                # ents.append(span)
-                span_groups["pseudo-rb"].append(span)
-                span_groups["pseudo-ml"].append(span)
-                span_groups["pseudo-hybrid"].append(span)
-            doc.ents = filter_spans(ents)
-            doc.spans.update(span_groups)
+                    # Annotate entities from the raw data
+                    ents = []
+                    span_groups = {
+                        "pseudo-rb": [],
+                        "pseudo-ml": [],
+                        "pseudo-hybrid": [],
+                    }
+                    for ent in raw["entities"]:
+                        span = doc.char_span(
+                            ent["start"],
+                            ent["end"],
+                            label=ent["label"],
+                            alignment_mode="expand",
+                        )
+                        ents.append(span)
+                        span_groups["pseudo-rb"].append(span)
+                        span_groups["pseudo-ml"].append(span)
+                        span_groups["pseudo-hybrid"].append(span)
+                    doc.ents = filter_spans(ents)
+                    doc.spans.update(span_groups)
 
-        new_docs = []
-        for doc in docs:
-            for new_doc in split_doc(doc, max_length, randomize, multi_sentence):
-                if len(new_doc.text.strip()):
-                    new_docs.append(new_doc)
+                    for new_doc in split_doc(
+                        doc, max_length, randomize, multi_sentence
+                    ):
+                        if len(new_doc.text.strip()):
+                            yield new_doc
+                    else:
+                        continue
 
-        if limit is not None:
-            new_docs = new_docs[:limit]
-        return new_docs
+                assert path_count > 0, "No data found in {}".format(single_path)
 
     return load
