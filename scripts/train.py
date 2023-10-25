@@ -36,13 +36,7 @@ LOGGER_FIELDS = {
         "format": "{:.2e}",
         "goal_wait": 2,
     },
-    "token_ner_ml/ents_([^/]*)$": {
-        "goal": "higher_is_better",
-        "format": "{:.2%}",
-        "goal_wait": 2,
-        "name": r"\1",
-    },
-    "redact_ner_ml/([^/]*)$": {
+    "(p|r|f|redact|full)": {
         "goal": "higher_is_better",
         "format": "{:.2%}",
         "goal_wait": 2,
@@ -190,6 +184,7 @@ def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
 
 @app.command(name="train", registry=registry)
 def train(
+    *,
     nlp: Pipeline,
     train_data: Callable[[Pipeline], Iterable[Doc]],
     val_data: Callable[[Pipeline], Iterable[Doc]],
@@ -202,7 +197,7 @@ def train(
     validation_interval: int = 10,
     grad_max_norm: float = 5.0,
     grad_accumulation_max_tokens: int = 96 * 128,
-    scorer: PseudoScorer = PseudoScorer(),
+    scorer: PseudoScorer,
     cpu: bool = False,
 ):
     trf_pipe = next(
@@ -325,20 +320,17 @@ def train(
         ) as bar:
             for step in bar:
                 if (step % validation_interval) == 0:
-                    count = cumulated_data.pop("count")
                     scores = scorer(nlp, val_docs)
-                    metrics = flatten_dict(
+                    cumulated_data = defaultdict(lambda: 0.0, count=0)
+                    all_metrics.append(
                         {
                             "step": step,
                             "lr": optimizer.param_groups[0]["lr"],
                             **cumulated_data,
                             **scores,
-                            "labels": cumulated_data["labels"] / max(count, 1),
                         }
                     )
-                    cumulated_data = defaultdict(lambda: 0.0, count=0)
-                    all_metrics.append(metrics)
-                    logger.log_metrics(metrics)
+                    logger.log_metrics(all_metrics[-1])
                     train_metrics_path.write_text(json.dumps(all_metrics, indent=2))
 
                     nlp.to_disk(model_path)
