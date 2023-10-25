@@ -1,15 +1,14 @@
-from edsnlp.scorers.ner import create_ner_exact_scorer
 from spacy.tokens import Span
 
-from eds_pseudonymisation.scorer import PseudoScorer, create_pseudo_ner_redact_scorer
+from eds_pseudonymisation.scorer import PseudoScorer
 
 
 def test_scorer(nlp):
-    ner_scorer = create_ner_exact_scorer("pseudo-rb")
-    redact_scorer = create_pseudo_ner_redact_scorer("pseudo-rb")
     scorer = PseudoScorer(
-        ner=ner_scorer,
-        redact=redact_scorer,
+        ml_spans="pseudo-ml",
+        rb_spans="pseudo-rb",
+        hybrid_spans="pseudo-hybrid",
+        main_mode="rb",
     )
     text = "Dr. Juan a pour mail don juan@caramail.fr vit a grigny, tel 0607080910."
     doc = nlp.make_doc(text)
@@ -20,14 +19,15 @@ def test_scorer(nlp):
         Span(doc, 16, 17, "MAIL"),  # not a mail but to test the scorer
     ]
     print(doc.spans)
-    scores = scorer(nlp, [doc, nlp.make_doc("")])
-    print(nlp(doc).spans)
+    main_scores = scorer(nlp, [doc, nlp.make_doc("")])["main"]
+    wps = main_scores.pop("wps")
+    dps = main_scores.pop("dps")
 
-    assert scores["ner"]["ents_p"] == 2 / 3
-    assert scores["ner"]["ents_r"] == 2 / 4
-    assert scores["ner"]["ents_f"] == 4 / 7
-    assert scores["ner"]["support"] == 4
-    assert scores["redact"]["redact"] == 7 / 8
-    assert scores["redact"]["redact_full"] == 0.5
-    assert scores["speed"]["wps"] > 0
-    assert scores["speed"]["dps"] > 0
+    assert main_scores == {
+        "f": 0.8,
+        "full": 0.5,
+        "p": 6 / 7,
+        "r": 0.75,
+        "redact": 0.875,
+    }
+    assert wps > 0 and dps > 0

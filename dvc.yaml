@@ -12,5 +12,3 @@ stages:
     metrics:
       - artifacts/test_metrics.json:
           cache: false
-      - artifacts/test_metrics_per_doc.jsonl:
-          cache: false
