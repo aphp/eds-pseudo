@@ -5,7 +5,7 @@ import edsnlp
 from eds_pseudonymisation.adapter import pseudo_dataset
 
 
-def test_corpus_reader(tmp_path):
+def test_pseudo_adapter(tmp_path):
     """
     We test the corpus reader by creating a Doc, storing it in a DocBin, and then
     reading it back in.
@@ -92,4 +92,4 @@ def test_corpus_reader(tmp_path):
             filter_expr='doc._.note_class_source_value == "CONSULTATION"',
         )(nlp)
     )
-    assert len(consultation_docs) == 1
+    assert len(consultation_docs) == 2

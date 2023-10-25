@@ -16,6 +16,7 @@ from confit.utils.random import set_seed
 from edsnlp.core.pipeline import Pipeline
 from edsnlp.core.registry import registry
 from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
+from edsnlp.pipelines.trainable.embeddings.transformer.transformer import Transformer
 from edsnlp.utils.collections import batchify
 from rich_logger import RichTablePrinter
 from spacy.tokens import Doc
@@ -145,6 +146,34 @@ class LengthSortedBatchSampler:
             yield from buffer
 
 
+class SubBatchCollater:
+    def __init__(self, nlp, embedding, grad_accumulation_max_tokens):
+        self.nlp = nlp
+        self.embedding: Transformer = embedding
+        self.grad_accumulation_max_tokens = grad_accumulation_max_tokens
+
+    def __call__(self, seq):
+        total = 0
+        mini_batches = [[]]
+        for sample_features in seq:
+            num_tokens = sum(
+                math.ceil(len(p) / self.embedding.stride) * self.embedding.window
+                for key in sample_features
+                if key.endswith("/input_ids")
+                for p in sample_features[key]
+            )
+            if total + num_tokens > self.grad_accumulation_max_tokens:
+                print(
+                    f"Mini batch size was becoming too large: {total} > "
+                    f"{self.grad_accumulation_max_tokens} so it was split"
+                )
+                total = 0
+                mini_batches.append([])
+            total += num_tokens
+            mini_batches[-1].append(sample_features)
+        return [self.nlp.collate(b) for b in mini_batches]
+
+
 def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
     res = {}
 
@@ -171,9 +200,18 @@ def train(
     embedding_lr: float = 5e-5,
     task_lr: float = 3e-4,
     validation_interval: int = 10,
+    grad_max_norm: float = 5.0,
+    grad_accumulation_max_tokens: int = 96 * 128,
     scorer: PseudoScorer = PseudoScorer(),
     cpu: bool = False,
 ):
+    trf_pipe = next(
+        module
+        for name, pipe in nlp.torch_components()
+        for module_name, module in pipe.named_component_modules()
+        if isinstance(module, Transformer)
+    )
+
     set_seed(seed)
     with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
         with set_seed(data_seed):
@@ -199,7 +237,11 @@ def train(
                 batch_size=batch_size[0],
                 batch_unit=batch_size[1],
             ),
-            collate_fn=nlp.collate,
+            collate_fn=SubBatchCollater(
+                nlp,
+                trf_pipe,
+                grad_accumulation_max_tokens=grad_accumulation_max_tokens,
+            ),
         )
         # total_wp = 0
         # total_seq = 0
@@ -213,16 +255,17 @@ def train(
         # print("AVERAGE SAMPLE WP", total_wp / total_sample)
         # print("AVERAGE SAMPLE WINDOWS", total_seq / total_sample)
 
-        trf_params = set(nlp.get_pipe("ner").embedding.embedding.parameters())
-
         # Training loop
         trained_pipes = nlp.torch_components()
         print("Training", ", ".join([name for name, c in trained_pipes]))
+
+        trf_params = set(trf_pipe.parameters())
+        params = set(nlp.parameters())
         optimizer = ScheduledOptimizer(
             torch.optim.AdamW(
                 [
                     {
-                        "params": list(set(nlp.parameters()) - trf_params),
+                        "params": list(params - trf_params),
                         "lr": task_lr,
                         "schedules": [
                             LinearSchedule(
@@ -248,9 +291,7 @@ def train(
                 ]
             )
         )
-        optimized_parameters = {
-            p for group in optimizer.param_groups for p in group["params"]
-        }
+        grad_params = {p for group in optimizer.param_groups for p in group["params"]}
         print(
             "Optimizing:"
             + "".join(
@@ -259,9 +300,7 @@ def train(
                 for group in optimizer.param_groups
             )
         )
-        print(
-            f"Not optimizing {len(set(nlp.parameters()) - optimized_parameters)} params"
-        )
+        print(f"Not optimizing {len(params - grad_params)} params")
 
         accelerator = Accelerator(cpu=cpu)
         trained_pipes = [pipe for name, pipe in nlp.torch_components()]
@@ -307,7 +346,7 @@ def train(
                 if step == max_steps:
                     break
 
-                batch = next(iterator)
+                mini_batches = next(iterator)
                 # trf_batch = batch["ner"]["embedding"]["embedding"]
                 # n_words = trf_batch["mask"].sum().item()
                 # n_padded = torch.numel(trf_batch["mask"])
@@ -320,17 +359,23 @@ def train(
                 #     bert_ratio=n_words_bert / n_padded_bert,
                 # )
 
-                optimizer.zero_grad()
-                with nlp.cache():
+                for mini_batch in mini_batches:
+                    optimizer.zero_grad()
                     loss = torch.zeros((), device=accelerator.device)
-                    for pipe in trained_pipes:
-                        output = pipe.module_forward(batch[pipe.name])
-                        if "loss" in output:
-                            loss += output["loss"]
-                        for key, value in output.items():
-                            if key.endswith("loss"):
-                                cumulated_data[key] += float(value)
-                accelerator.backward(loss)
+                    with nlp.cache():
+                        for pipe in trained_pipes:
+                            output = pipe.module_forward(mini_batch[pipe.name])
+                            if "loss" in output:
+                                loss += output["loss"]
+                            for key, value in output.items():
+                                if key.endswith("loss"):
+                                    cumulated_data[key] += float(value)
+                    accelerator.backward(loss)
+
+                torch.nn.utils.clip_grad_norm_(
+                    (p for g in optimizer.param_groups for p in g["params"]),
+                    grad_max_norm,
+                )
                 optimizer.step()
 
 
