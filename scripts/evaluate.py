@@ -1,17 +1,15 @@
 import json
 from pathlib import Path
-from typing import Callable, Iterable, List
+from typing import List
 
 import edsnlp
 import spacy
 import torch
 from confit import Cli
 from confit.utils.random import set_seed
-from edsnlp.core.pipeline import Pipeline
 from edsnlp.core.registry import registry
-from spacy.tokens import Doc
 
-import eds_pseudonymisation.adapter  # noqa: F401
+from eds_pseudonymisation.adapter import PseudoReader
 from eds_pseudonymisation.scorer import PseudoScorer
 
 app = Cli(pretty_exceptions_show_locals=False)
@@ -34,7 +32,7 @@ def flatten_dict(d, depth=-1, path="", current_depth=0):
 @app.command(name="evaluate", registry=registry)
 def evaluate(
     *,
-    data: Callable[[Pipeline], Iterable[Doc]],
+    data: PseudoReader,
     model_path: Path = BASE_DIR / "artifacts/model-last",
     scorer: PseudoScorer,
     data_seed: int = 42,

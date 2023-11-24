@@ -4,9 +4,15 @@ import math
 import os
 import random
 from collections import defaultdict
+from collections.abc import Sized
 from itertools import chain, repeat
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Tuple
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Optional,
+    Tuple,
+)
 
 import spacy
 import torch
@@ -18,12 +24,12 @@ from edsnlp.core.registry import registry
 from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
 from edsnlp.pipelines.trainable.embeddings.transformer.transformer import Transformer
 from edsnlp.utils.collections import batchify
+from edsnlp.utils.typing import AsList
 from rich_logger import RichTablePrinter
-from spacy.tokens import Doc
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import eds_pseudonymisation.adapter  # noqa: F401
+from eds_pseudonymisation.adapter import PseudoReader
 from eds_pseudonymisation.scorer import PseudoScorer
 
 app = Cli(pretty_exceptions_show_locals=False)
@@ -31,7 +37,7 @@ app = Cli(pretty_exceptions_show_locals=False)
 BASE_DIR = Path(__file__).parent.parent
 LOGGER_FIELDS = {
     "step": {},
-    "(.*_)?loss": {
+    "(.*)loss": {
         "goal": "lower_is_better",
         "format": "{:.2e}",
         "goal_wait": 2,
@@ -43,7 +49,7 @@ LOGGER_FIELDS = {
         "name": r"\1",
     },
     "lr": {"format": "{:.2e}"},
-    "speed/wps": {"format": "{:.2f}", "name": "wps"},
+    "speed/(.*)": {"format": "{:.2f}", r"name": r"\1"},
     "labels": {"format": "{:.2f}"},
 }
 
@@ -74,73 +80,111 @@ if TYPE_CHECKING:
 
 
 class LengthSortedBatchSampler:
+    """
+    Batch sampler that sorts the dataset by length and then batches
+    sequences of similar length together. This is useful for transformer
+    models that can then be padded more efficiently.
+
+    Parameters
+    ----------
+    dataset: Iterable
+        The dataset to sample from (can be a generator or a fixed size collection)
+    batch_size: int
+        The batch size
+    batch_unit: str
+        The unit of the batch size, either "words" or "samples"
+    noise: int
+        The amount of noise to add to the sequence length before sorting
+        (uniformly sampled in [-noise, noise])
+    drop_last: bool
+        Whether to drop the last batch if it is smaller than the batch size
+    buffer_size: Optional[int]
+        The size of the buffer to use to shuffle the batches. If None, the buffer
+        will be approximately the size of the dataset.
+    """
+
     def __init__(
-        self, dataset, batch_size: int, batch_unit: str, noise=1, drop_last=True
+        self,
+        dataset,
+        batch_size: int,
+        batch_unit: str,
+        noise=1,
+        drop_last=True,
+        buffer_size: Optional[int] = None,
     ):
         self.dataset = dataset
         self.batch_size = batch_size
         self.batch_unit = batch_unit
         self.noise = noise
         self.drop_last = drop_last
+        self.buffer_size = buffer_size
 
     def __iter__(self):
         # Shuffle the dataset
-        def sample_len(idx, noise=True):
-            count = sum(
-                len(x)
-                for x in next(
-                    v
-                    for k, v in self.dataset[idx].items()
-                    if k.endswith("word_lengths")
+        if self.batch_unit == "words":
+
+            def sample_len(idx, noise=True):
+                count = sum(
+                    len(x)
+                    for x in next(
+                        v
+                        for k, v in self.dataset[idx].items()
+                        if k.endswith("word_lengths")
+                    )
                 )
-            )
-            if not noise:
-                return count
-            return count + random.randint(-self.noise, self.noise)
+                if not noise:
+                    return count
+                return count + random.randint(-self.noise, self.noise)
 
         def make_batches():
-            current_count = 0
-            current_batch = []
-            for idx in sorted_sequences:
-                if self.batch_unit == "words":
-                    seq_size = sample_len(idx, noise=False)
-                    if current_count + seq_size > self.batch_size:
-                        yield current_batch
-                        current_batch = []
-                        current_count = 0
-                    current_count += seq_size
-                    current_batch.append(idx)
-                else:
-                    if len(current_batch) == self.batch_size:
-                        yield current_batch
-                        current_batch = []
-                    current_batch.append(idx)
-            if len(current_batch):
-                yield current_batch
+            total = 0
+            batch = []
+            for seq_size, idx in sorted_sequences:
+                if total and total + seq_size > self.batch_size:
+                    yield batch
+                    total = 0
+                    batch = []
+                total += seq_size
+                batch.append(idx)
+
+        # Shuffle the batches in buffer that contain approximately
+        # the full dataset to add more randomness
+        if isinstance(self.dataset, Sized):
+            total_count = sum(sample_len(i, False) for i in range(len(self.dataset)))
+
+        assert (
+            isinstance(self.dataset, Sized) or self.buffer_size is not None
+        ), "Dataset must have a length or buffer_size must be specified"
+        buffer_size = self.buffer_size or math.ceil(total_count / self.batch_size)
 
         # Sort sequences by length +- some noise
         sorted_sequences = chain.from_iterable(
-            sorted(range(len(self.dataset)), key=sample_len) for _ in repeat(None)
+            sorted((sample_len(i), i) for i in range(len(self.dataset)))
+            for _ in repeat(None)
         )
 
         # Batch sorted sequences
         batches = make_batches()
-
-        # Shuffle the batches in buffer that contain approximately
-        # the full dataset to add more randomness
-        if self.batch_unit == "words":
-            total_count = sum(
-                sample_len(idx, noise=False) for idx in range(len(self.dataset))
-            )
-        else:
-            total_count = len(self.dataset)
-        buffers = batchify(batches, math.ceil(total_count / self.batch_size))
+        buffers = batchify(batches, buffer_size)
         for buffer in buffers:
             random.shuffle(buffer)
             yield from buffer
 
 
 class SubBatchCollater:
+    """
+    Collater that splits batches into sub-batches of a maximum size
+
+    Parameters
+    ----------
+    nlp: Pipeline
+        The pipeline object
+    embedding: Transformer
+        The transformer embedding pipe
+    grad_accumulation_max_tokens: int
+        The maximum number of tokens (word pieces) to accumulate in a single batch
+    """
+
     def __init__(self, nlp, embedding, grad_accumulation_max_tokens):
         self.nlp = nlp
         self.embedding: Transformer = embedding
@@ -168,26 +212,12 @@ class SubBatchCollater:
         return [self.nlp.collate(b) for b in mini_batches]
 
 
-def flatten_dict(root: Dict[str, Any], depth=-1) -> Dict[str, Any]:
-    res = {}
-
-    def rec(d, path, current_depth):
-        for k, v in d.items():
-            if isinstance(v, dict) and current_depth != depth:
-                rec(v, path + "/" + k if path is not None else k, current_depth + 1)
-            else:
-                res[path + "/" + k if path is not None else k] = v
-
-    rec(root, None, 0)
-    return res
-
-
 @app.command(name="train", registry=registry)
 def train(
     *,
     nlp: Pipeline,
-    train_data: Callable[[Pipeline], Iterable[Doc]],
-    val_data: Callable[[Pipeline], Iterable[Doc]],
+    train_data: AsList[PseudoReader],
+    val_data: PseudoReader,
     seed: int = 42,
     data_seed: int = 42,
     max_steps: int = 1000,
@@ -210,7 +240,9 @@ def train(
     set_seed(seed)
     with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
         with set_seed(data_seed):
-            train_docs: List[spacy.tokens.Doc] = list(train_data(nlp))
+            train_docs: List[spacy.tokens.Doc] = list(
+                chain.from_iterable(td(nlp) for td in train_data)
+            )
             val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
 
         model_path = BASE_DIR / "artifacts/model-last"
@@ -298,13 +330,15 @@ def train(
         print(f"Not optimizing {len(params - grad_params)} params")
 
         accelerator = Accelerator(cpu=cpu)
-        trained_pipes = [pipe for name, pipe in nlp.torch_components()]
+        trained_pipes = dict(nlp.torch_components())
         print("Device:", accelerator.device)
-        [dataloader, optimizer, *trained_pipes] = accelerator.prepare(
+        [dataloader, optimizer, *accelerated_pipes] = accelerator.prepare(
             dataloader,
             optimizer,
-            *trained_pipes,
+            *trained_pipes.values(),
         )
+        trained_pipes = list(zip(trained_pipes.keys(), accelerated_pipes))
+        del accelerated_pipes
 
         cumulated_data = defaultdict(lambda: 0.0, count=0)
 
@@ -355,8 +389,8 @@ def train(
                     optimizer.zero_grad()
                     loss = torch.zeros((), device=accelerator.device)
                     with nlp.cache():
-                        for pipe in trained_pipes:
-                            output = pipe.module_forward(mini_batch[pipe.name])
+                        for name, pipe in trained_pipes:
+                            output = pipe.module_forward(mini_batch[name])
                             if "loss" in output:
                                 loss += output["loss"]
                             for key, value in output.items():

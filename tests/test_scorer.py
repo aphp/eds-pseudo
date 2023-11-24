@@ -19,7 +19,7 @@ def test_scorer(nlp):
         Span(doc, 16, 17, "MAIL"),  # not a mail but to test the scorer
     ]
     print(doc.spans)
-    main_scores = scorer(nlp, [doc, nlp.make_doc("")])["main"]
+    main_scores = scorer(nlp, [doc, nlp.make_doc("")])
     wps = main_scores.pop("wps")
     dps = main_scores.pop("dps")
 

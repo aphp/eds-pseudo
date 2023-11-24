@@ -2,7 +2,7 @@ import json
 
 import edsnlp
 
-from eds_pseudonymisation.adapter import pseudo_dataset
+from eds_pseudonymisation.adapter import PseudoReader
 
 
 def test_pseudo_adapter(tmp_path):
@@ -60,8 +60,14 @@ def test_pseudo_adapter(tmp_path):
     nlp.add_pipe("eds.normalizer", name="normalizer")
     nlp.add_pipe("eds.sentences", name="sentencizer")
     docs = list(
-        pseudo_dataset(
-            tmp_path / "test.jsonl", max_length=12, multi_sentence=True, randomize=False
+        PseudoReader(
+            edsnlp.data.read_json(
+                tmp_path / "test.jsonl",
+                converter="pseudo",
+            ),
+            max_length=12,
+            multi_sentence=True,
+            randomize=False,
         )(nlp)
     )
     assert [d.text for d in docs] == [
@@ -74,7 +80,15 @@ def test_pseudo_adapter(tmp_path):
         "plus équilibré en mangeant des légumes et des fruits.",
     ]
 
-    full_docs = list(pseudo_dataset(tmp_path / "test.jsonl", max_length=0)(nlp))
+    full_docs = list(
+        PseudoReader(
+            edsnlp.data.read_json(
+                tmp_path / "test.jsonl",
+                converter="pseudo",
+            ),
+            max_length=0,
+        )(nlp)
+    )
     assert [d.text for d in full_docs] == [
         "This is a sentence of exactly 12 words used in test. This is another test.",
         "Le patient est né le 02/03/2000. Il est hospitalisé depuis 2 jours.",
@@ -84,8 +98,11 @@ def test_pseudo_adapter(tmp_path):
     ]
 
     consultation_docs = list(
-        pseudo_dataset(
-            tmp_path / "test.jsonl",
+        PseudoReader(
+            edsnlp.data.read_json(
+                tmp_path / "test.jsonl",
+                converter="pseudo",
+            ),
             max_length=1000,
             multi_sentence=False,
             limit=1,
