@@ -10,7 +10,6 @@ from edsnlp.pipelines.base import SpanGetter, SpanGetterArg, get_spans
 from edsnlp.scorers import make_examples
 from edsnlp.scorers.ner import ner_exact_scorer, ner_token_scorer
 from spacy.training import Example
-from tqdm import tqdm
 
 import eds_pseudonymisation.adapter  # noqa: F401
 
@@ -119,7 +118,7 @@ class PseudoScorer:
             d.ents = []
             d.spans.clear()
         t0 = time.time()
-        preds = list(nlp.pipe(tqdm(clean_docs)))
+        preds = list(nlp.pipe(clean_docs).configure(show_progress=True))
         duration = time.time() - t0
         speeds = dict(
             wps=sum(len(d) for d in docs) / duration,

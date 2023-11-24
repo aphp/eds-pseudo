@@ -1,12 +1,116 @@
-import json
 import random
-from pathlib import Path
-from typing import List, Optional
+from typing import Any, Iterable, List, Optional
 
+import edsnlp
 import spacy
-from edsnlp.core.registry import registry
-from edsnlp.utils.filter import filter_spans
-from spacy.tokens import Doc
+from confit import validate_arguments
+from edsnlp import registry
+from edsnlp.core.pipeline import PipelineProtocol
+from edsnlp.data.converters import (
+    FILENAME,
+    AttributesMappingArg,
+    SequenceStr,
+    get_current_tokenizer,
+)
+from edsnlp.utils.span_getters import SpanSetterArg, set_spans
+from spacy.tokens import Doc, Span
+
+
+@registry.factory.register("eds.pseudo_dict2doc", spacy_compatible=False)
+class PseudoDict2DocConverter:
+    """
+    Read a JSON dictionary in the format used by EDS-Pseudo and convert it to a Doc
+    object.
+
+    Parameters
+    ----------
+    nlp: Optional[PipelineProtocol]
+        The pipeline object (optional and likely not needed, prefer to use the
+        `tokenizer` directly argument instead).
+    tokenizer: Optional[spacy.tokenizer.Tokenizer]
+        The tokenizer instance used to tokenize the documents. Likely not needed since
+        by default it uses the current context tokenizer :
+
+        - the tokenizer of the next pipeline run by `.map_model` in a
+          [LazyCollection][edsnlp.core.lazy_collection.LazyCollection].
+        - or the `eds` tokenizer by default.
+    span_setter: SpanSetterArg
+        The span setter to use when setting the spans in the documents. Defaults to
+        setting the spans in the `ents` attribute, and creates a new span group for
+        each JSON entity label.
+    doc_attributes: AttributesMappingArg
+        Mapping from JSON attributes to Span extensions (can be a list too).
+        By default, all attributes are imported as Doc extensions with the same name.
+    span_attributes: Optional[AttributesMappingArg]
+        Mapping from JSON attributes to Span extensions (can be a list too).
+        By default, all attributes are imported as Span extensions with the same name.
+    bool_attributes: SequenceStr
+        List of attributes for which missing values should be set to False.
+    """
+
+    def __init__(
+        self,
+        nlp: Optional[PipelineProtocol] = None,
+        *,
+        tokenizer: Optional[PipelineProtocol] = None,
+        span_setter: SpanSetterArg = {"ents": True, "*": True},
+        doc_attributes: AttributesMappingArg = {
+            "note_class_source_value": "note_class_source_value",
+            "note_datetime": "note_datetime",
+            "context": "context",
+        },
+        span_attributes: Optional[AttributesMappingArg] = None,
+        bool_attributes: SequenceStr = [],
+    ):
+        self.tokenizer = tokenizer or (nlp.tokenizer if nlp is not None else None)
+        self.span_setter = span_setter
+        self.doc_attributes = doc_attributes
+        self.span_attributes = span_attributes
+        self.bool_attributes = bool_attributes
+
+    def __call__(self, obj):
+        tok = get_current_tokenizer() if self.tokenizer is None else self.tokenizer
+        doc = tok(obj["note_text"] or "")
+        doc._.note_id = obj.get("note_id", obj.get(FILENAME))
+        for obj_name, ext_name in self.doc_attributes.items():
+            if not Doc.has_extension(ext_name):
+                Doc.set_extension(ext_name, default=None)
+            doc._.set(ext_name, obj.get(obj_name))
+
+        spans = []
+
+        if self.span_attributes is not None:
+            for dst in self.span_attributes.values():
+                if not Span.has_extension(dst):
+                    Span.set_extension(dst, default=None)
+
+        for ent in obj.get("entities") or ():
+            ent = dict(ent)
+            span = doc.char_span(
+                ent.pop("start"),
+                ent.pop("end"),
+                label=ent.pop("label"),
+                alignment_mode="expand",
+            )
+            for label, value in ent.items():
+                new_name = (
+                    self.span_attributes.get(label, None)
+                    if self.span_attributes is not None
+                    else label
+                )
+                if self.span_attributes is None and not Span.has_extension(new_name):
+                    Span.set_extension(new_name, default=None)
+
+                if new_name:
+                    span._.set(new_name, value)
+            spans.append(span)
+
+        set_spans(doc, spans, span_setter=self.span_setter)
+        for attr in self.bool_attributes:
+            for span in spans:
+                if span._.get(attr) is None:
+                    span._.set(attr, False)
+        return doc
 
 
 def subset_doc(doc: Doc, start: int, end: int) -> Doc:
@@ -45,139 +149,117 @@ def subset_doc(doc: Doc, start: int, end: int) -> Doc:
     return new_doc
 
 
-def split_doc(
-    doc: Doc,
-    max_length: int = 0,
-    randomize: bool = True,
-    multi_sentence: bool = True,
-) -> List[Doc]:
+@validate_arguments
+class PseudoReader:
     """
-    Split a doc into multiple docs of max_length tokens.
+    Reader that reads docs from a file or a generator, and adapts them to the pipeline.
 
     Parameters
     ----------
-    doc: Doc
-        The doc to split
+    source: Callable[..., Iterable[Doc]]
+        The source of documents (e.g. `edsnlp.data.from_json(...)` or something else)
+    limit: Optional[int]
+        The maximum number of docs to read
     max_length: int
         The maximum length of the resulting docs
-    multi_sentence: bool
-        Whether to split sentences across multiple docs
     randomize: bool
         Whether to randomize the split
-
-    Returns
-    -------
-    Iterable[Doc]
+    multi_sentence: bool
+        Whether to split sentences across multiple docs
+    filter_expr: Optional[str]
+        An expression to filter the docs to generate
     """
-    if max_length <= 0:
-        yield doc
-    else:
-        start = 0
-        end = 0
-        for ent in doc.spans.get("pseudo-ml", ()):
-            for token in ent:
-                token.is_sent_start = False
-        for sent in doc.sents if doc.has_annotation("SENT_START") else (doc[:],):
-            # If the sentence adds too many tokens
-            if sent.end - start > max_length:
-                # But the current buffer too large
-                while sent.end - start > max_length:
-                    subset_end = start + int(
-                        max_length * (random.random() ** 0.3 if randomize else 1)
-                    )
-                    yield subset_doc(doc, start, subset_end)
-                    start = subset_end
-                yield subset_doc(doc, start, sent.end)
-                start = sent.end
 
-            if not multi_sentence:
-                yield subset_doc(doc, start, sent.end)
-                start = sent.end
+    def __init__(
+        self,
+        source: Any,
+        limit: Optional[int] = -1,
+        max_length: int = 0,
+        randomize: bool = False,
+        multi_sentence: bool = True,
+        filter_expr: Optional[str] = None,
+    ):
+        self.source = source
+        self.limit = limit
+        self.max_length = max_length
+        self.randomize = randomize
+        self.multi_sentence = multi_sentence
+        self.filter_expr = filter_expr
 
-            # Otherwise, extend the current buffer
-            end = sent.end
+    def __call__(self, nlp) -> List[Doc]:
+        filter_fn = eval(f"lambda doc:{self.filter_expr}") if self.filter_expr else None
 
-        yield subset_doc(doc, start, end)
+        blank_nlp = edsnlp.Pipeline(nlp.lang, vocab=nlp.vocab, vocab_config=None)
+        blank_nlp.add_pipe("eds.normalizer")
+        blank_nlp.add_pipe("eds.sentences")
 
+        docs = blank_nlp.pipe(self.source)
 
-@registry.misc.register("pseudo-dataset")
-def pseudo_dataset(
-    path,
-    limit: Optional[int] = None,
-    max_length: int = 0,
-    randomize: bool = False,
-    multi_sentence: bool = True,
-    filter_expr: Optional[str] = None,
-):
-    filter_fn = eval(f"lambda doc: {filter_expr}") if filter_expr else None
-    assert not (
-        limit is not None and isinstance(path, dict)
-    ), "Cannot use specify both global limit and path-wise limit"
-    if isinstance(path, (str, Path)):
-        path = [path]
-    if isinstance(path, list):
-        path = {single_path: (limit or 0) for single_path in path}
-
-    def load(nlp) -> List[Doc]:
-
-        # Initialize the docs (tokenize them)
-        normalizer = nlp.get_pipe("normalizer")
-        sentencizer = nlp.get_pipe("sentencizer")
+        count = 0
 
         # Load the jsonl data from path
-        for single_path, path_limit in path.items():
-            path_count = 0
-            with open(single_path, "r") as f:
-                lines = f
-                if randomize:
-                    lines = list(lines)
-                    random.shuffle(lines)
+        if self.randomize:
+            docs: List[Doc] = list(docs)
+            random.shuffle(docs)
 
-                for line in lines:
-                    if path_limit > 0 and path_count >= path_limit:
-                        break
-                    raw = json.loads(line)
-                    doc = nlp.make_doc(raw["note_text"])
-                    doc._.note_id = raw["note_id"]
-                    doc._.note_datetime = raw.get("note_datetime")
-                    doc._.note_class_source_value = raw.get("note_class_source_value")
-                    doc._.context = raw.get("context", {})
-                    doc = normalizer(doc)
-                    doc = sentencizer(doc)
-                    if not (len(doc) and (filter_fn is None or filter_fn(doc))):
-                        continue
+        for doc in docs:
+            if 0 <= self.limit <= count:
+                break
+            if not (len(doc) and (filter_fn is None or filter_fn(doc))):
+                continue
+            count += 1
 
-                    path_count += 1
+            for sub_doc in self.split_doc(doc):
+                if len(sub_doc.text.strip()):
+                    yield sub_doc
+            else:
+                continue
 
-                    # Annotate entities from the raw data
-                    ents = []
-                    span_groups = {
-                        "pseudo-rb": [],
-                        "pseudo-ml": [],
-                        "pseudo-hybrid": [],
-                    }
-                    for ent in raw["entities"]:
-                        span = doc.char_span(
-                            ent["start"],
-                            ent["end"],
-                            label=ent["label"],
-                            alignment_mode="expand",
+    def split_doc(
+        self,
+        doc: Doc,
+    ) -> Iterable[Doc]:
+        """
+        Split a doc into multiple docs of max_length tokens.
+
+        Parameters
+        ----------
+        doc: Doc
+            The doc to split
+
+        Returns
+        -------
+        Iterable[Doc]
+        """
+        max_length = self.max_length
+        randomize = self.randomize
+
+        if max_length <= 0:
+            yield doc
+        else:
+            start = 0
+            end = 0
+            for ent in doc.ents:
+                for token in ent:
+                    token.is_sent_start = False
+            for sent in doc.sents if doc.has_annotation("SENT_START") else (doc[:],):
+                # If the sentence adds too many tokens
+                if sent.end - start > max_length:
+                    # But the current buffer too large
+                    while sent.end - start > max_length:
+                        subset_end = start + int(
+                            max_length * (random.random() ** 0.3 if randomize else 1)
                         )
-                        ents.append(span)
-                        span_groups["pseudo-rb"].append(span)
-                        span_groups["pseudo-ml"].append(span)
-                        span_groups["pseudo-hybrid"].append(span)
-                    doc.ents = filter_spans(ents)
-                    doc.spans.update(span_groups)
+                        yield subset_doc(doc, start, subset_end)
+                        start = subset_end
+                    yield subset_doc(doc, start, sent.end)
+                    start = sent.end
 
-                    for new_doc in split_doc(
-                        doc, max_length, randomize, multi_sentence
-                    ):
-                        if len(new_doc.text.strip()):
-                            yield new_doc
-                    else:
-                        continue
+                if not self.multi_sentence:
+                    yield subset_doc(doc, start, sent.end)
+                    start = sent.end
 
-                assert path_count > 0, "No data found in {}".format(single_path)
+                # Otherwise, extend the current buffer
+                end = sent.end
 
-    return load
+            yield subset_doc(doc, start, end)

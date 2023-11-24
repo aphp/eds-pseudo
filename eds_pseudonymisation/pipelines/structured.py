@@ -39,6 +39,7 @@ class ContextMatcher(BaseNERComponent):
     ):
         super().__init__(nlp, name, span_setter=span_setter)
 
+        self.nlp = nlp
         self.attr = attr
         self.ignore_excluded = ignore_excluded
         self.punct_remover = str.maketrans(punctuation, " " * len(punctuation))
