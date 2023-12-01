@@ -11,9 +11,18 @@
     <img src="https://img.shields.io/badge/reproducibility-dvc-blue" alt="DVC">
 </a>
 
-# EDS-Pseudonymisation
+# EDS-Pseudo
 
-This project aims at detecting identifying entities at AP-HP's Clinical Data Warehouse:
+This project aims at detecting identifying entities documents, and was primarily tested
+on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
+
+The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
+hybrid model (rule-based + deep learning) for which we provide rules (`eds_pseudo/pipes`)
+and a training recipe (`eds_pseudo/scripts/train.py`).
+
+We also provide a small set of fictive documents (`data/gen_dataset`) to test the method.
+
+The entities that are detected are listed below.
 
 | Label            | Description                                                   |
 |------------------|---------------------------------------------------------------|
@@ -30,6 +39,61 @@ This project aims at detecting identifying entities at AP-HP's Clinical Data War
 | `TEL`            | Any phone number                                              |
 | `VILLE`          | Any city                                                      |
 | `ZIP`            | Any zip code                                                  |
+
+## Installation
+
+You can install EDS-Pseudo via `pip`. We recommend pinning the library version in your projects, or use a strict package manager like [Poetry](https://python-poetry.org/).
+
+```shell
+git clone https://github.com/aphp/eds-pseudo.git
+cd eds-pseudo
+```
+
+And install the dependencies:
+
+```shell
+poetry install
+```
+
+## How to use
+
+Put your data in the `data/dataset` folder (or copy `data/gen_dataset` to `data/dataset`).
+
+```shell
+python scripts/train.py --config configs/config.cfg --train.seed 43 --cpu
+```
+
+This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (`data/dataset/test.jsonl`) with:
+
+```shell
+python scripts/evaluate.py --config configs/config.cfg
+```
+
+To package it, run:
+
+```shell
+python scripts/package.py
+```
+
+This will create a `dist/eds-pseudo-aphp-0.3.0.***.whl` file that you can install with `pip install dist/eds-pseudo-aphp-0.3.0*`.
+
+You can use it in your code:
+
+```python
+import edsnlp
+
+# Either from the model path directly
+nlp = edsnlp.load("artifacts/model-last")
+
+# Or from the wheel file
+import eds_pseudo_aphp
+
+nlp = eds_pseudo_aphp.load()
+```
+
+## Documentation
+
+Visit the [documentation](https://aphp.github.io/eds-pseudo/) for more information!
 
 ## Publication
 

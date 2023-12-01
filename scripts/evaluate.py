@@ -2,15 +2,15 @@ import json
 from pathlib import Path
 from typing import List
 
-import edsnlp
 import spacy
 import torch
 from confit import Cli
 from confit.utils.random import set_seed
-from edsnlp.core.registry import registry
 
-from eds_pseudonymisation.adapter import PseudoReader
-from eds_pseudonymisation.scorer import PseudoScorer
+import edsnlp
+from eds_pseudo.adapter import PseudoReader
+from eds_pseudo.scorer import PseudoScorer
+from edsnlp.core.registry import registry
 
 app = Cli(pretty_exceptions_show_locals=False)
 

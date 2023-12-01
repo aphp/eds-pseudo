@@ -1,9 +1,10 @@
+from spacy.tokens import Doc
+
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.regex import RegexMatcher
-from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
+from edsnlp.pipes.base import BaseNERComponent, SpanSetterArg
 from edsnlp.utils.filter import filter_spans
-from spacy.tokens import Doc
 
 from .patterns import address_patterns
 
@@ -30,7 +31,6 @@ class PseudonymisationAddresses(BaseNERComponent):
         self.regex_matcher.build_patterns({"ADRESSE": address_patterns})
 
     def process(self, doc: Doc) -> Doc:
-
         addresses = []
         zip_codes = []
         cities = []
