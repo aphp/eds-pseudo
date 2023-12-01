@@ -3,6 +3,10 @@ import typer
 
 
 def main(models: str, default_text: str):
+    raise Exception(
+        "This is is not longer supported, please file an issue if you need us"
+        "to support it again."
+    )
     models = [name.strip() for name in models.split(",")]
     spacy_streamlit.visualize(models, default_text, visualizers=["ner"])
 

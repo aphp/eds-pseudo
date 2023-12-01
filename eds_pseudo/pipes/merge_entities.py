@@ -1,13 +1,14 @@
+from spacy.tokens import Doc
+
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
-from edsnlp.pipelines.base import (
+from edsnlp.pipes.base import (
     BaseNERComponent,
     SpanGetterArg,
     SpanSetterArg,
     get_spans,
 )
 from edsnlp.utils.filter import filter_spans
-from spacy.tokens import Doc
 
 
 @registry.factory.register("eds_pseudo.merge")

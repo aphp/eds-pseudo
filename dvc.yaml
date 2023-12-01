@@ -2,13 +2,16 @@ stages:
   train:
     deps:
       - data
-      - eds_pseudonymisation
+      - eds_pseudo
       - scripts/train.py
-    params:
-      - configs/config.cfg:
+      - configs/config.cfg
     cmd:
       - python scripts/train.py --config configs/config.cfg
       - python scripts/evaluate.py --config configs/config.cfg
+      - python scripts/package.py
     metrics:
       - artifacts/test_metrics.json:
+          cache: false
+    outs:
+      - artifacts/test_metrics_per_doc.jsonl:
           cache: false

@@ -1,8 +1,7 @@
 import json
 
 import edsnlp
-
-from eds_pseudonymisation.adapter import PseudoReader
+from eds_pseudo.adapter import PseudoReader
 
 
 def test_pseudo_adapter(tmp_path):
@@ -87,15 +86,16 @@ def test_pseudo_adapter(tmp_path):
                 converter="pseudo",
             ),
             max_length=0,
+            randomize=True,
         )(nlp)
     )
-    assert [d.text for d in full_docs] == [
+    assert {d.text for d in full_docs} == {
         "This is a sentence of exactly 12 words used in test. This is another test.",
         "Le patient est né le 02/03/2000. Il est hospitalisé depuis 2 jours.",
         "Le patient mange des pates depuis le début du confinement, il est donc un "
         "peu ballonné, mais pense revenir à un régime plus équilibré en mangeant des "
         "légumes et des fruits.",
-    ]
+    }
 
     consultation_docs = list(
         PseudoReader(

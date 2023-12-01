@@ -1,28 +1,27 @@
+[tool.edsnlp]
+# Suggestion: choose a name that mixes both the architecture (eds-pseudo) and the
+# dataset on which the model was trained (aphp)
+# This field will be read by script/package.py
+model_name = "eds-pseudo-aphp"
+
 [tool.poetry]
-name = "eds-pseudonymisation"
+name = "eds-pseudo"
 version = "0.3.0"
 description = ""
-authors = ["Perceval Wajsburt <perceval.wajsburt-ext@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
-include = ["eds_pseudonymisation/resources/*.csv.gz"]
+authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 
 [tool.poetry.plugins."spacy_factories"]
-"eds_pseudo.clean" = "eds_pseudonymisation.pipelines.clean_entities:CleanEntities"
-"eds_pseudo.addresses" = "eds_pseudonymisation.pipelines.addresses.addresses:PseudonymisationAddresses"
-"eds_pseudo.dates" = "eds_pseudonymisation.pipelines.dates.factory:create_component"
-"eds_pseudo.simple_rules" = "eds_pseudonymisation.pipelines.pseudonymisation.pseudonymisation:Pseudonymisation"
-"eds_pseudo.context" = "eds_pseudonymisation.pipelines.structured:ContextMatcher"
-"eds_pseudo.merge" = "eds_pseudonymisation.pipelines.merge_entities:MergeEntities"
+"eds_pseudo.clean"        = "eds_pseudo.pipes.clean_entities:CleanEntities"
+"eds_pseudo.addresses"    = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
+"eds_pseudo.dates"        = "eds_pseudo.pipes.dates.factory:create_component"
+"eds_pseudo.simple_rules" = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
+"eds_pseudo.context"      = "eds_pseudo.pipes.structured:ContextMatcher"
+"eds_pseudo.merge"        = "eds_pseudo.pipes.merge_entities:MergeEntities"
 
 [tool.poetry.dependencies]
-python = ">3.7.6,<3.12,!=3.8.1"
-spacy = "^3.2.4"
-edsnlp = "0.10.0beta1"
+python = ">3.7,<4.0"
+edsnlp = { version = "0.10.0", extras = ["ml"] }
 sentencepiece = "^0.1.96"
-torch = ">=1.0"
-scipy = [
-    { version = "^1.10.1", markers = "python_version >= '3.8'" },
-    { version = "^1.6.1", markers = "python_version < '3.8'" },
-]
 
 [tool.poetry.group.dev.dependencies]
 dvc = { version = "^2.37.0", markers = "python_version >= '3.8'" }
@@ -96,7 +95,7 @@ plugins = "pydantic.mypy"
 
 [tool.ruff]
 fix = true
-exclude = [
+extend-exclude = [
     ".git",
     "__pycache__",
     "__init__.py",
@@ -105,7 +104,6 @@ exclude = [
     ".venv",
     "build",
 ]
-ignore = []
 line-length = 88
 select = [
     "E",
@@ -113,7 +111,41 @@ select = [
     "W",
     "I001"
 ]
-fixable = ["E", "F", "W", "I"]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.isort]
+known-first-party = ["edsnlp"]
+order-by-type = true
+
+[tool.coverage.report]
+include = [
+    "eds_pseudo/*",
+    "scripts/*",
+]
+omit = [
+    "tests/*",
+]
+exclude_lines = [
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "@overload",
+    "pragma: no cover",
+    "raise .*Error",
+    "raise .*Exception",
+    "warn\\(",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "Span.set_extension.*",
+    "Doc.set_extension.*",
+    "Token.set_extension.*",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "pypandoc<1.8.0"]

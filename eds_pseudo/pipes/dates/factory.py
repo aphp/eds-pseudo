@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
-from edsnlp.pipelines.base import SpanSetterArg
+from edsnlp.pipes.base import SpanSetterArg
 
 from .dates import PseudonymisationDates
 from .patterns import false_positive_pattern, pseudo_date_pattern

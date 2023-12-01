@@ -1,12 +1,13 @@
 from itertools import chain
 from typing import List
 
+from spacy.tokens import Doc
+
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.phrase import EDSPhraseMatcher
 from edsnlp.matchers.regex import RegexMatcher
-from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
-from spacy.tokens import Doc
+from edsnlp.pipes.base import BaseNERComponent, SpanSetterArg
 
 from .patterns import patterns, person_patterns
 
@@ -47,7 +48,6 @@ class Pseudonymisation(BaseNERComponent):
             self.person_matcher.build_patterns({"PERSON": person_patterns})
 
     def process(self, doc: Doc) -> Doc:
-
         matches = list(
             chain(
                 list(self.regex_matcher(doc, as_spans=True)),

@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## v0.3.0 - 2023-12-01
 
-### What's changed
+- Refactoring and fixes to use [edsnlp](https://github.com/aphp/edsnlp) instead of spaCy.
+- Renamed
+- New `scripts/train.py` script to train the model (it's pytorch, nothing less and nothing more).
 
 Some fixes to enable training the model:
 - committed the missing script `infer.py`

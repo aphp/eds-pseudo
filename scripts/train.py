@@ -19,22 +19,23 @@ import torch
 from accelerate import Accelerator
 from confit import Cli
 from confit.utils.random import set_seed
-from edsnlp.core.pipeline import Pipeline
-from edsnlp.core.registry import registry
-from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
-from edsnlp.pipelines.trainable.embeddings.transformer.transformer import Transformer
-from edsnlp.utils.collections import batchify
-from edsnlp.utils.typing import AsList
 from rich_logger import RichTablePrinter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from eds_pseudonymisation.adapter import PseudoReader
-from eds_pseudonymisation.scorer import PseudoScorer
+from eds_pseudo.adapter import PseudoReader
+from eds_pseudo.scorer import PseudoScorer
+from edsnlp.core.pipeline import Pipeline
+from edsnlp.core.registry import registry
+from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
+from edsnlp.pipes.trainable.embeddings.transformer.transformer import Transformer
+from edsnlp.utils.collections import batchify
+from edsnlp.utils.typing import AsList
 
 app = Cli(pretty_exceptions_show_locals=False)
 
-BASE_DIR = Path(__file__).parent.parent
+BASE_DIR = Path.cwd()
+
 LOGGER_FIELDS = {
     "step": {},
     "(.*)loss": {
@@ -55,19 +56,35 @@ LOGGER_FIELDS = {
 
 
 class BatchSizeArg:
-    def __init__(self, batch_size: int):
-        self.batch_size = batch_size
+    """
+    Batch size argument validator / caster for confit/pydantic
+
+    Examples
+    --------
+    ```python
+    def fn(batch_size: BatchSizeArg):
+        return batch_size
+
+
+    print(fn("10 samples"))
+    # Out: (10, "samples")
+
+    print(fn("10 words"))
+    # Out: (10, "words")
+
+    print(fn(10))
+    # Out: (10, "samples")
+    ```
+    """
 
     @classmethod
     def validate(cls, value, config=None):
         value = str(value)
         parts = value.split()
         num = int(parts[0])
-        if str(num) == parts[0]:
-            if len(parts) == 1:
-                return num, "samples"
-            if parts[1] in ("words", "samples"):
-                return num, parts[1]
+        unit = parts[1] if len(parts) == 2 else "samples"
+        if len(parts) == 2 and str(num) == parts[0] and unit in ("words", "samples"):
+            return num, unit
         raise Exception(f"Invalid batch size: {value}, must be <int> samples|words")
 
     @classmethod
@@ -135,6 +152,9 @@ class LengthSortedBatchSampler:
                 if not noise:
                     return count
                 return count + random.randint(-self.noise, self.noise)
+
+        else:
+            sample_len = lambda idx, noise=True: 1  # noqa: E731
 
         def make_batches():
             total = 0
@@ -209,7 +229,7 @@ class SubBatchCollater:
                 mini_batches.append([])
             total += num_tokens
             mini_batches[-1].append(sample_features)
-        return [self.nlp.collate(b) for b in mini_batches]
+        return [self.nlp.collate(b) for b in mini_batches if len(b)]
 
 
 @app.command(name="train", registry=registry)
@@ -228,14 +248,63 @@ def train(
     grad_max_norm: float = 5.0,
     grad_accumulation_max_tokens: int = 96 * 128,
     scorer: PseudoScorer,
+    output_dir: Optional[Path] = None,
     cpu: bool = False,
 ):
+    """
+    Train a model on a dataset.
+
+    Parameters
+    ----------
+    nlp: Pipeline
+        The edsnlp pipeline object
+    train_data: AsList[PseudoReader]
+        The training data, can be a PseudoReader or a list of PseudoReaders
+    val_data: PseudoReader
+        The validation data
+    seed: int
+        The seed to use for random number generators when initializing the model
+    data_seed: int
+        The seed to use for random number generators when shuffling the data
+    max_steps: int
+        The maximum number of training steps
+    batch_size: BatchSizeArg
+        The batch size to use for training, support the following units:
+
+        - <int> samples: the number of samples per batch
+        - <int> words: the number of words per batch
+    embedding_lr: float
+        The learning rate for the transformer embedding
+    task_lr: float
+        The learning rate for the task (NER) head
+    validation_interval: int
+        The number of steps between each validation
+    grad_max_norm: float
+        The maximum gradient norm to use for gradient clipping
+    grad_accumulation_max_tokens: int
+        The maximum number of tokens to accumulate in a single batch
+    scorer: PseudoScorer
+        The scorer object to use for validation
+    output_dir: Optional[Path]
+        The output directory to save the model and training metrics.
+    cpu: bool
+        Whether to force the training to run on CPU (useful for M1 chips for which
+        all the ops of transformers are not yet supported)
+
+    Returns
+    -------
+    Pipeline
+        The model (trained in place). The artifacts are saved in `artifacts/model-last`
+        and `artifacts/train_metrics.jsonl`.
+    """
     trf_pipe = next(
         module
         for name, pipe in nlp.torch_components()
         for module_name, module in pipe.named_component_modules()
         if isinstance(module, Transformer)
     )
+
+    output_dir = Path(output_dir or BASE_DIR / "artifacts")
 
     set_seed(seed)
     with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
@@ -245,9 +314,9 @@ def train(
             )
             val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
 
-        model_path = BASE_DIR / "artifacts/model-last"
-        train_metrics_path = BASE_DIR / "artifacts/train_metrics.jsonl"
-        os.makedirs(BASE_DIR / "artifacts", exist_ok=True)
+        model_path = output_dir / "model-last"
+        train_metrics_path = output_dir / "train_metrics.jsonl"
+        os.makedirs(output_dir, exist_ok=True)
 
         # Initialize pipeline with training documents
         nlp.post_init(train_docs)
@@ -270,19 +339,7 @@ def train(
                 grad_accumulation_max_tokens=grad_accumulation_max_tokens,
             ),
         )
-        # total_wp = 0
-        # total_seq = 0
-        # total_sample = 0
-        # for sample in preprocessed:
-        #     input_ids = sample['ner/embedding/embedding/input_ids']
-        #     total_wp += sum(len(d) for d in input_ids[0])
-        #     total_seq += len(input_ids[0])
-        #     total_sample += len(input_ids)
-        # print("AVERAGE WINDOW SIZE", total_wp / total_seq)
-        # print("AVERAGE SAMPLE WP", total_wp / total_sample)
-        # print("AVERAGE SAMPLE WINDOWS", total_seq / total_sample)
 
-        # Training loop
         trained_pipes = nlp.torch_components()
         print("Training", ", ".join([name for name, c in trained_pipes]))
 
@@ -346,6 +403,8 @@ def train(
         all_metrics = []
         nlp.train(True)
         set_seed(seed)
+
+        # Training loop
         with tqdm(
             range(max_steps + 1),
             "Training model",
@@ -373,17 +432,6 @@ def train(
                     break
 
                 mini_batches = next(iterator)
-                # trf_batch = batch["ner"]["embedding"]["embedding"]
-                # n_words = trf_batch["mask"].sum().item()
-                # n_padded = torch.numel(trf_batch["mask"])
-                # n_words_bert = trf_batch["input_ids"].mask.sum().item()
-                # n_padded_bert = torch.numel(trf_batch["input_ids"])
-                # bar.set_postfix(
-                #     n_words=n_words,
-                #     ratio=n_words / n_padded,
-                #     n_wp=n_words_bert,
-                #     bert_ratio=n_words_bert / n_padded_bert,
-                # )
 
                 for mini_batch in mini_batches:
                     optimizer.zero_grad()
@@ -403,6 +451,8 @@ def train(
                     grad_max_norm,
                 )
                 optimizer.step()
+
+        return nlp
 
 
 if __name__ == "__main__":

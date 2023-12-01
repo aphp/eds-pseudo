@@ -1,9 +1,11 @@
 import random
 from typing import Any, Iterable, List, Optional
 
-import edsnlp
 import spacy
 from confit import validate_arguments
+from spacy.tokens import Doc
+
+import edsnlp
 from edsnlp import registry
 from edsnlp.core.pipeline import PipelineProtocol
 from edsnlp.data.converters import (
@@ -13,7 +15,6 @@ from edsnlp.data.converters import (
     get_current_tokenizer,
 )
 from edsnlp.utils.span_getters import SpanSetterArg, set_spans
-from spacy.tokens import Doc, Span
 
 
 @registry.factory.register("eds.pseudo_dict2doc", spacy_compatible=False)
@@ -59,13 +60,11 @@ class PseudoDict2DocConverter:
             "note_datetime": "note_datetime",
             "context": "context",
         },
-        span_attributes: Optional[AttributesMappingArg] = None,
         bool_attributes: SequenceStr = [],
     ):
         self.tokenizer = tokenizer or (nlp.tokenizer if nlp is not None else None)
         self.span_setter = span_setter
         self.doc_attributes = doc_attributes
-        self.span_attributes = span_attributes
         self.bool_attributes = bool_attributes
 
     def __call__(self, obj):
@@ -75,14 +74,10 @@ class PseudoDict2DocConverter:
         for obj_name, ext_name in self.doc_attributes.items():
             if not Doc.has_extension(ext_name):
                 Doc.set_extension(ext_name, default=None)
-            doc._.set(ext_name, obj.get(obj_name))
+            if obj_name in obj:
+                doc._.set(ext_name, obj[obj_name])
 
         spans = []
-
-        if self.span_attributes is not None:
-            for dst in self.span_attributes.values():
-                if not Span.has_extension(dst):
-                    Span.set_extension(dst, default=None)
 
         for ent in obj.get("entities") or ():
             ent = dict(ent)
@@ -92,24 +87,9 @@ class PseudoDict2DocConverter:
                 label=ent.pop("label"),
                 alignment_mode="expand",
             )
-            for label, value in ent.items():
-                new_name = (
-                    self.span_attributes.get(label, None)
-                    if self.span_attributes is not None
-                    else label
-                )
-                if self.span_attributes is None and not Span.has_extension(new_name):
-                    Span.set_extension(new_name, default=None)
-
-                if new_name:
-                    span._.set(new_name, value)
             spans.append(span)
 
         set_spans(doc, spans, span_setter=self.span_setter)
-        for attr in self.bool_attributes:
-            for span in spans:
-                if span._.get(attr) is None:
-                    span._.set(attr, False)
         return doc
 
 

@@ -2,16 +2,14 @@ import time
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List
 
-import pandas as pd
 import spacy
 from confit import validate_arguments
-from edsnlp import registry
-from edsnlp.pipelines.base import SpanGetter, SpanGetterArg, get_spans
-from edsnlp.scorers import make_examples
-from edsnlp.scorers.ner import ner_exact_scorer, ner_token_scorer
 from spacy.training import Example
 
-import eds_pseudonymisation.adapter  # noqa: F401
+import eds_pseudo.adapter  # noqa: F401
+from edsnlp.pipes.base import SpanGetter, get_spans
+from edsnlp.scorers import make_examples
+from edsnlp.scorers.ner import ner_exact_scorer, ner_token_scorer
 
 
 def redact_scorer(
@@ -71,28 +69,6 @@ def redact_scorer(
         }
 
     return {name: prf(pred_labels, gold) for name, gold in gold_labels.items()}
-
-
-@registry.scorers.register("eds_pseudo.ner_redact_scorer")
-def create_redact_scorer(
-    span_getter: SpanGetterArg,
-):
-    return lambda *args: redact_scorer(make_examples(*args), span_getter)
-
-
-def table_prf(table):
-    support = table["support"].sum()
-    positives = table["positives"].sum(skipna=False)
-    tp = table["tp"].sum()
-    full_count = (table["tp"] == table["support"]).sum()
-    count = len(table)
-    res = {
-        "p": float(support == tp if positives == 0 else tp / positives),
-        "r": float(tp / support if support > 0 else 1.0),
-        "f": float((tp * 2 / (support + positives)) if support > 0 else support == tp),
-        "full": float(full_count / count),
-    }
-    return pd.Series(res)
 
 
 @validate_arguments
@@ -178,42 +154,3 @@ class PseudoScorer:
                         per_doc_records.append(record)
 
         return scores, per_doc_records
-
-
-class PRFEntry(dict):
-    def __init__(self, tp=0, support=0, positives=0):
-        self.tp = tp
-        self.positives = positives
-        self.support = support
-
-    def items(self):
-        prf = self.compute()
-        return prf.items()
-
-    def compute(self):
-        res = {}
-        if self.positives is not None:
-            if self.positives == 0:
-                res["f"] = res["p"] = float(self.positives == self.tp)
-            else:
-                res["f"] = 2 * self.tp / (self.positives + self.support)
-                res["p"] = self.tp / self.positives
-        if self.support > 0:
-            res["r"] = self.tp / self.support
-        else:
-            res["r"] = float(self.tp == self.support)
-        return res
-
-    def __add__(self, other):
-        return PRFEntry(
-            tp=self.tp + other.tp,
-            support=self.support + other.support,
-            positives=self.positives + other.positives,
-        )
-
-    def __repr__(self):
-        prf = self.compute()
-        if "p" in prf:
-            return "p: {p:.2f}, r: {r:.2f}, f: {f:.2f}".format(**prf)
-        else:
-            return "r: {r:.2f}".format(**prf)

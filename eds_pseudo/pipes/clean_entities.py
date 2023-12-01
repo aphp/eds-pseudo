@@ -1,10 +1,11 @@
 import re
 import string
 
+from spacy.tokens import Doc
+
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
-from edsnlp.pipelines.base import BaseNERComponent, SpanGetterArg
-from spacy.tokens import Doc
+from edsnlp.pipes.base import BaseNERComponent, SpanGetterArg
 
 
 @registry.factory.register("eds_pseudo.clean")

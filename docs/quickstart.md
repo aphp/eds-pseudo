@@ -58,7 +58,7 @@ dvc repro
 You should now be able to install and publish it:
 
 ```bash
-pip install dist/eds_pseudonymisation-0.2.0-*
+pip install dist/eds_pseudo_aphp-0.2.0-*
 ```
 
 ## Use it
@@ -66,10 +66,10 @@ pip install dist/eds_pseudonymisation-0.2.0-*
 To use it, execute
 
 ```python
-import eds_pseudonymisation
+import eds_pseudo
 
 # Load the machine learning model
-nlp = eds_pseudonymisation.load()
+nlp = eds_pseudo.load()
 
 # Add optional rule-based components
 nlp.add_pipe("eds.remove-lowercase", name="remove-lowercase")

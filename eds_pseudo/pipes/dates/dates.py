@@ -1,12 +1,13 @@
 import re
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-from edsnlp.core import PipelineProtocol
-from edsnlp.pipelines.base import SpanSetterArg
-from edsnlp.pipelines.misc.dates.dates import DatesMatcher
-from edsnlp.pipelines.misc.dates.models import AbsoluteDate
 from pydantic import BaseModel, root_validator
 from spacy.tokens import Doc, Span
+
+from edsnlp.core import PipelineProtocol
+from edsnlp.pipes.base import SpanSetterArg
+from edsnlp.pipes.misc.dates.dates import DatesMatcher
+from edsnlp.pipes.misc.dates.models import AbsoluteDate
 
 if not Span.has_extension("date_string"):
     Span.set_extension("date_string", default=None)

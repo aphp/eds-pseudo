@@ -1,11 +1,12 @@
 from string import punctuation
 from typing import Dict, List
 
+from spacy.tokens import Doc, Span
+
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
 from edsnlp.matchers.phrase import EDSPhraseMatcher
-from edsnlp.pipelines.base import BaseNERComponent, SpanSetterArg
-from spacy.tokens import Doc, Span
+from edsnlp.pipes.base import BaseNERComponent, SpanSetterArg
 
 
 @registry.factory.register("eds_pseudo.context")
