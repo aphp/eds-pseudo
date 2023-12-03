@@ -8,7 +8,7 @@ examples = [
     'Veuillez contacter le <ent label="TEL">06 01 02 03 04</ent>',
     'Consultation\nNumero d\'examen: <ent label="NDA">123456789</ent>\nLe patient est venu ce jour pour consultation.',
     'Consultation\n<ent label="SECU">253072B07300123</ent>\nLe patient est venu ce jour pour consultation.',
-    'Le patient est venu ce jour pour consultation.',
+    "Le patient est venu ce jour pour consultation.",
     # fmt: on
 ]
 

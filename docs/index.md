@@ -1,26 +1,16 @@
 # Overview
 
-EDS-Pseudonymisation is a spaCy-based project used at APHP to extract and replace identifying entities
-in medical documents.
+EDS-Pseudo is a project aimed at detecting identifying entities in textual documents,
+and was primarily tested on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 
-## Getting started
+The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
+hybrid model (rule-based + deep learning) for which we provide rules [`eds_pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds-pseudo/pipes) and a training recipe [`scripts/train.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/train.py).
 
-EDS-Pseudonymisation is a [spaCy project](https://spacy.io/usage/projects).
-We created a single workflow that:
+We also provide a small set of fictive documents
+[`data/gen_dataset/train.jsonl`](https://github.com/aphp/eds-pseudo/blob/main/data/gen_dataset/train.jsonl)
+to test the method.
 
-- Converts the datasets to spaCy format
-- Trains the pipeline
-- Evaluates the pipeline using the test set
-- Packages the resulting model to make it pip-installable
-
-To use it, you will need to supply:
-
-- A labelled dataset
-- A HuggingFace transformers model, or use `camembert-base`
-
-In any case, you will need to modify the configuration to reflect these changes.
-
-## Entities
+The entities that are detected are listed below.
 
 | Label            | Description                                                   |
 |------------------|---------------------------------------------------------------|
@@ -37,19 +27,3 @@ In any case, you will need to modify the configuration to reflect these changes.
 | `TEL`            | Any phone number                                              |
 | `VILLE`          | Any city                                                      |
 | `ZIP`            | Any zip code                                                  |
-
-
-### Commands
-
-| Command           | Description                                                |
-|-------------------|------------------------------------------------------------|
-| `convert`         | Convert the data to spaCy's binary format                  |
-| `train`           | Train the NER model                                        |
-| `evaluate`        | Evaluate the model and export metrics                      |
-| `package`         | Package the trained model as a pip package                 |
-| `visualize-model` | Visualize the model's output interactively using Streamlit |
-
-Run the command with
-```bash
-spacy project run [command] [options]
-```

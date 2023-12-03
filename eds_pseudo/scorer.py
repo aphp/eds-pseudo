@@ -94,7 +94,7 @@ class PseudoScorer:
             d.ents = []
             d.spans.clear()
         t0 = time.time()
-        preds = list(nlp.pipe(clean_docs).configure(show_progress=True))
+        preds = list(nlp.pipe(clean_docs).set_processing(show_progress=True))
         duration = time.time() - t0
         speeds = dict(
             wps=sum(len(d) for d in docs) / duration,

@@ -81,7 +81,7 @@ body, input {
 }
 
 .md-typeset code {
-    font-size: 1em;
+    font-size: 0.95em;
 }
 
 .md-typeset pre>code, .termy > [data-termynal], .highlighttable .linenos {
