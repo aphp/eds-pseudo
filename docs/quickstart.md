@@ -15,6 +15,9 @@ And install the dependencies:
 poetry install
 ```
 
+If you face issues with the installation, try to lower the maximum python version to
+<= 3.10 (in `pyproject.toml`).
+
 ## Without machine learning
 
 If you do not have a labelled dataset, you can still use the rule-based components of the
@@ -76,7 +79,7 @@ Assuming we have a dataframe `df` with columns `note_id`, `text` and an optional
 | note_id | text                                                                            | context                            |
 |---------|---------------------------------------------------------------------------------|------------------------------------|
 | doc-1   | En 2015, M. Charles-François-Bienvenu ...                                       | {"VILLE": "DIGNE", "zip": "04070"} |
-| doc-2   | Mme. Josephine-Ange Gardien est admise pour irritation des tendons fléchisseurs |                                    |
+| doc-2   | Mme. Ange-Gardien Josephine est admise pour irritation des tendons fléchisseurs |                                    |
 | doc-3   | josephine.ange-gardien @ test.com                                               |                                    |
 
 We can apply the model to all the documents with the following code:
@@ -85,6 +88,7 @@ We can apply the model to all the documents with the following code:
 import edsnlp
 
 
+# Function to convert a row of the dataframe to a Doc object
 def converter(row):
     tokenizer = edsnlp.data.converters.get_current_tokenizer()
     doc = tokenizer(row["text"])
@@ -110,6 +114,6 @@ and we get the following dataframe:
 | doc-1   | 61    | 66  | VILLE  | Digne                             |
 | doc-1   | 145   | 150 | VILLE  | Digne                             |
 | doc-1   | 158   | 162 | DATE   | 2006                              |
-| doc-2   | 5     | 19  | NOM    | Josephine-Ange                    |
-| doc-2   | 20    | 27  | PRENOM | Gardien                           |
+| doc-2   | 5     | 17  | NOM    | Ange-Gardien                      |
+| doc-2   | 18    | 27  | PRENOM | Joséphine                         |
 | doc-3   | 0     | 33  | MAIL   | josephine.ange-gardien @ test.com |
