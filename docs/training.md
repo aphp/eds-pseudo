@@ -101,5 +101,5 @@ You can also add the NER component to an existing model (this is only compatible
 # Given an existing model
 existing_nlp = ...
 
-existing_nlp.add_pipe(nlp.get_pipe("ner"))
+existing_nlp.add_pipe(nlp.get_pipe("ner"), name="ner")
 ```

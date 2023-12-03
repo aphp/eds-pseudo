@@ -42,20 +42,67 @@ The entities that are detected are listed below.
 
 ## Installation
 
-You can install EDS-Pseudo via `pip`. We recommend pinning the library version in your projects, or use a strict package manager like [Poetry](https://python-poetry.org/).
+Clone eds-pseudo:
 
 ```shell
 git clone https://github.com/aphp/eds-pseudo.git
 cd eds-pseudo
 ```
 
-And install the dependencies:
+And install the dependencies. We recommend pinning the library version in your projects, or use a strict package manager like [Poetry](https://python-poetry.org/).
 
 ```shell
 poetry install
 ```
 
-## How to use
+## How to use without machine learning
+
+```python
+import edsnlp
+
+nlp = edsnlp.blank("eds")
+
+# Some text cleaning
+nlp.add_pipe("eds.normalizer")
+
+# Various simple rules
+nlp.add_pipe(
+    "eds_pseudo.simple_rules",
+    config={"pattern_keys": ["TEL", "MAIL", "SECU", "PERSON"]},
+)
+
+# Address detection
+nlp.add_pipe("eds_pseudo.addresses")
+
+# Date detection
+nlp.add_pipe("eds_pseudo.dates")
+
+# Contextual rules (requires a dict of info about the patient)
+nlp.add_pipe("eds_pseudo.context")
+
+# Apply it to a text
+doc = nlp(
+    "En 2015, M. Charles-François-Bienvenu "
+    "Myriel était évêque de Digne. C’était un vieillard "
+    "d’environ soixante-quinze ans ; il occupait le "
+    "siège de Digne depuis 2006."
+)
+
+for ent in doc.ents:
+    print(ent, ent.label_)
+
+# 2015 DATE
+# Charles-François-Bienvenu NOM
+# Myriel PRENOM
+# 2006 DATE
+```
+
+## How to train
+
+Before training a model, you should update the
+[configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) and
+[pyproject.toml](https://github.com/aphp/eds-pseudo/blob/main/pyproject.toml) files to
+fit your needs.
 
 Put your data in the `data/dataset` folder (or copy `data/gen_dataset` to `data/dataset`).
 
