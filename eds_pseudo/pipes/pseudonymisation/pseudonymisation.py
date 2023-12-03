@@ -58,8 +58,13 @@ class Pseudonymisation(BaseNERComponent):
         for span, groups in self.person_matcher(
             doc, as_spans=True, return_groupdict=True
         ):
-            first_name = groups.get("FN0") or groups.get("FN1")
-            last_name = groups.get("LN0") or groups.get("LN1") or groups.get("LN2")
+            first_name = groups.get("FN0") or groups.get("FN1") or groups.get("FN2")
+            last_name = (
+                groups.get("LN0")
+                or groups.get("LN1")
+                or groups.get("LN2")
+                or groups.get("LN3")
+            )
             if first_name is not None:
                 begin = span[0].idx + span.text.index(first_name)
                 matches.insert(
