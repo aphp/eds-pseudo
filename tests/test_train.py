@@ -32,17 +32,22 @@ def test_train(run_in_test_dir, tmp_path, batch_size, do_package):
             "training_docs": {
                 "source": {"path": "../data/gen_dataset/train.jsonl"},
                 "limit": 10,
+                "max_length": 50,
                 "randomize": True,
             },
             "val_docs": {
                 "source": {"path": "../data/gen_dataset/train.jsonl"},
                 "limit": 10,
             },
+            "components": {
+                "embedding": {"embedding": {"model": "hf-internal-testing/tiny-bert"}}
+            },
             "train": {
                 "max_steps": 10,
                 "batch_size": batch_size,
                 "validation_interval": 5,
                 "grad_accumulation_max_tokens": 10,
+                "cpu": True,
             },
         }
     )
