@@ -2,7 +2,17 @@
 
 !!! warning "Disclaimer"
 
-    We do not provide the dataset due to privacy and regulatory constraints. You will however find the description of the dataset below. We also release the code for the rule-based annotation system.
+    We do not provide the dataset due to privacy and regulatory constraints. You will
+    however find the description of the dataset below. We also release the code for the
+    rule-based annotation system.
+
+    You can find fictive data in the
+    [`data/gen_dataset`](https://github.com/aphp/eds-pseudo/tree/main/data/gen_dataset/)
+    folder to test the model.
+
+## Format
+
+By default, we expect the annotations to follow the format of the demo dataset [data/gen_dataset](https://github.com/aphp/eds-pseudo/tree/main/data/gen_dataset), but you can change the format by modifying the [config file](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg), and the "Datasets" part of it in particular, or the code of the [adapter](https://github.com/aphp/eds-pseudo/blob/main/eds_pseudo/adapter.py).
 
 ## Data Selection
 
@@ -18,7 +28,8 @@ To ensure the robustness of the model, training and test sets documents were
 generated from two different PDF extraction methods:
 
 - the legacy method, based on [PDFBox](https://pdfbox.apache.org/) with a fixed mask
-- our new method [EDS-PDF](https://github.com/aphp/edspdf) with an adaptative (machine-learned) mask
+- our new method [EDS-PDF](https://github.com/aphp/edspdf) with an adaptative
+  (machine-learned) mask
 
 ## Annotated Entities
 
@@ -62,9 +73,3 @@ The software tools used to annotate the documents with personal identification e
 - [LabelStudio](https://labelstud.io/) for the first annotation campaign
 - [Metanno](https://github.com/percevalw/metanno) for the second annotation campaign
 but any annotation software will do.
-
-The `convert` step takes as input either a jsonlines file (`.jsonl`) or a folder
-containing Standoff files (`.ann`) from an annotation with [Brat](https://brat.nlplab.org/).
-
-Feel free to [submit a pull request](https://github.com/aphp/eds-pseudo/pulls) if these
-formats do not suit you!

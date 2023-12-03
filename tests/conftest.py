@@ -1,6 +1,7 @@
-import edsnlp
 from pytest import fixture
 from spacy.language import Language
+
+import edsnlp
 
 
 @fixture()

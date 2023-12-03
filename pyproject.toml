@@ -7,7 +7,7 @@ model_name = "eds-pseudo-aphp"
 [tool.poetry]
 name = "eds-pseudo"
 version = "0.3.0"
-description = ""
+description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
 authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 
 [tool.poetry.plugins."spacy_factories"]
@@ -19,8 +19,10 @@ authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <ali
 "eds_pseudo.merge"        = "eds_pseudo.pipes.merge_entities:MergeEntities"
 
 [tool.poetry.dependencies]
-python = ">3.7,<4.0"
-edsnlp = { version = "0.10.0", extras = ["ml"] }
+# /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
+python = ">=3.8,<4.0"
+edsnlp = { git = "https://github.com/aphp/edsnlp.git", branch = "core-refacto", extras = ["ml"] }
+# edsnlp = { version = "0.10.0", extras = ["ml"] }
 sentencepiece = "^0.1.96"
 
 [tool.poetry.group.dev.dependencies]
@@ -44,18 +46,26 @@ toml = "^0.10.2"
 wheel = "^0.40.0"
 accelerate = { version = "^0.21.0", markers = "python_version >= '3.8'" }
 rich-logger = "^0.3.0"
+scipy = [
+    { version = "*", markers = "python_version >= '3.8'" },
+    { version = "*", markers = "python_version < '3.8'" }
+]
+torch = [
+    { version = "*", markers = "python_version >= '3.8'" },
+    { version = "*", markers = "python_version < '3.8'" }
+]
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-mike = "^1.1.2"
+mike = "~1.1.2"
 mkdocs-bibtex = "^2.0.3"
 mkdocs-gen-files = "^0.3.4"
 mkdocs-literate-nav = "^0.4.1"
-mkdocs-material = "^8.2.8"
-mkdocstrings = "^0.18.1"
-mkdocstrings-python = "^0.6.6"
+mkdocs-material = ">=9.2.0"
+mkdocstrings = "~0.20.0"
+mkdocstrings-python = "~1.1.0"
 mkdocs-glightbox = "^0.1.6"
 mkdocs-autorefs = "^0.4.1"
 mkdocs-charts-plugin = "^0.0.8"

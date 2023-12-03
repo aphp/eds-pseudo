@@ -20,10 +20,11 @@ import spacy.tokens
 import spacy.training
 from dvc.repo import Repo
 from dvc.repo.experiments.show import show as experiments_show
-from edsnlp.utils.filter import filter_spans
 from pandas.api.types import is_numeric_dtype
 from spacy.tokens import Doc
 from tqdm import tqdm
+
+from edsnlp.utils.filter import filter_spans
 
 logging.basicConfig(level=logging.INFO)
 
