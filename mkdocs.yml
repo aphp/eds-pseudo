@@ -30,6 +30,7 @@ nav:
   - index.md
   - quickstart.md
   - training.md
+  - inference.md
   - reproducibility.md
   - dataset.md
   - results.md
