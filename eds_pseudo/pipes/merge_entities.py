@@ -23,7 +23,7 @@ class MergeEntities(BaseNERComponent):
         name: str = None,
         *,
         span_getter: SpanGetterArg = {"pseudo-rb": True, "pseudo-ml": True},
-        span_setter: SpanSetterArg = {"pseudo-hybrid": True},
+        span_setter: SpanSetterArg = {"pseudo-hybrid": True, "ents": True},
     ):
         super().__init__(nlp, name, span_setter=span_setter)
         self.span_getter = span_getter

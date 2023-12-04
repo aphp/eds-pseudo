@@ -9,7 +9,10 @@ from edsnlp.utils.filter import filter_spans
 from .patterns import address_patterns
 
 
-@registry.factory.register("eds_pseudo.addresses")
+@registry.factory.register(
+    "eds_pseudo.addresses",
+    deprecated=["pseudonymisation-addresses"],
+)
 class PseudonymisationAddresses(BaseNERComponent):
     def __init__(
         self,
@@ -20,9 +23,7 @@ class PseudonymisationAddresses(BaseNERComponent):
         span_setter: SpanSetterArg = {
             "ents": True,  # base filtered span group
             "pseudo-rb": True,  # base unfiltered span group
-            "ADRESSE": "ADRESSE",  # only for ADRESSE spans
-            "ZIP": "ZIP",  # only for ZIP spans
-            "VILLE": "VILLE",  # only for VILLE spans
+            "*": True,  # only for VILLE spans
         },
     ):
         super().__init__(nlp, name, span_setter=span_setter)
