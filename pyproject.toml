@@ -11,17 +11,24 @@ description = "EDS-Pseudo is a hybrid model for detecting personally identifying
 authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 
 [tool.poetry.plugins."spacy_factories"]
-"eds_pseudo.clean"        = "eds_pseudo.pipes.clean_entities:CleanEntities"
-"eds_pseudo.addresses"    = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
-"eds_pseudo.dates"        = "eds_pseudo.pipes.dates.factory:create_component"
-"eds_pseudo.simple_rules" = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
-"eds_pseudo.context"      = "eds_pseudo.pipes.structured:ContextMatcher"
-"eds_pseudo.merge"        = "eds_pseudo.pipes.merge_entities:MergeEntities"
+"eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
+"eds_pseudo.addresses"       = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
+"eds_pseudo.dates"           = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
+"eds_pseudo.simple_rules"    = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
+"eds_pseudo.context"         = "eds_pseudo.pipes.structured:ContextMatcher"
+"eds_pseudo.merge"           = "eds_pseudo.pipes.merge_entities:MergeEntities"
+
+# Deprecated
+"structured-data-matcher"    = "eds_pseudo.pipes.structured:ContextMatcher"
+"pseudonymisation-rules"     = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
+"pseudonymisation-dates"     = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
+"pseudonymisation-addresses" = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
+"clean-entities"             = "eds_pseudo.pipes.clean_entities:CleanEntities"
 
 [tool.poetry.dependencies]
 # /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
 python = ">=3.8,<4.0"
-edsnlp = { version = "0.10.0", extras = ["ml"] }
+edsnlp = { version = ">=0.10.0", extras = ["ml"] }
 sentencepiece = "^0.1.96"
 
 [tool.poetry.group.dev.dependencies]

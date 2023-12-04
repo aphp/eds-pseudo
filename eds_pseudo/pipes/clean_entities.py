@@ -8,7 +8,10 @@ from edsnlp.core import PipelineProtocol
 from edsnlp.pipes.base import BaseNERComponent, SpanGetterArg
 
 
-@registry.factory.register("eds_pseudo.clean")
+@registry.factory.register(
+    "eds_pseudo.clean",
+    deprecated=["clean-entities"],
+)
 class CleanEntities(BaseNERComponent):
     def __init__(
         self,

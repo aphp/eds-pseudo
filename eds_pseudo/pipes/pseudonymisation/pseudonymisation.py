@@ -12,7 +12,10 @@ from edsnlp.pipes.base import BaseNERComponent, SpanSetterArg
 from .patterns import patterns, person_patterns
 
 
-@registry.factory.register("eds_pseudo.simple_rules")
+@registry.factory.register(
+    "eds_pseudo.simple_rules",
+    deprecated=["pseudonymisation-rules"],
+)
 class Pseudonymisation(BaseNERComponent):
     def __init__(
         self,
@@ -24,12 +27,7 @@ class Pseudonymisation(BaseNERComponent):
         span_setter: SpanSetterArg = {
             "ents": True,
             "pseudo-rb": True,
-            "IPP": "IPP",
-            "MAIL": "MAIL",
-            "TEL": "TEL",
-            "NDA": "NDA",
-            "PRENOM": "PRENOM",
-            "NOM": "NOM",
+            "*": True,
         },
     ):
         super().__init__(nlp, name, span_setter=span_setter)

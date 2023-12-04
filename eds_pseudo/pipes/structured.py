@@ -34,7 +34,11 @@ class ContextMatcher(BaseNERComponent):
         nlp: PipelineProtocol = None,
         name: str = None,
         *,
-        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True},
+        span_setter: SpanSetterArg = {
+            "ents": True,
+            "pseudo-rb": True,
+            "*": True,
+        },
         attr: str = "NORM",
         ignore_excluded: bool = False,
     ):

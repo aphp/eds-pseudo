@@ -4,10 +4,13 @@ from typing import Dict, Iterable, List, Optional, Tuple, Union
 from pydantic import BaseModel, root_validator
 from spacy.tokens import Doc, Span
 
+from edsnlp import registry
 from edsnlp.core import PipelineProtocol
 from edsnlp.pipes.base import SpanSetterArg
 from edsnlp.pipes.misc.dates.dates import DatesMatcher
 from edsnlp.pipes.misc.dates.models import AbsoluteDate
+
+from . import patterns
 
 if not Span.has_extension("date_string"):
     Span.set_extension("date_string", default=None)
@@ -24,22 +27,34 @@ class DateString(BaseModel):
         return normalised
 
 
+@registry.factory.register(
+    "eds_pseudo.dates",
+    deprecated=["pseudonymisation-dates"],
+)
 class PseudonymisationDates(DatesMatcher):
     def __init__(
         self,
-        nlp: PipelineProtocol = None,
+        nlp: Optional[PipelineProtocol] = None,
         name: str = None,
         *,
-        absolute: Optional[List[str]],
-        relative: Optional[List[str]],
-        duration: Optional[List[str]],
-        false_positive: Optional[List[str]],
-        on_ents_only: Union[bool, str, Iterable[str]],
-        detect_periods: bool,
-        detect_time: bool,
-        span_setter: SpanSetterArg,
-        attr: str,
+        absolute: Optional[List[str]] = None,
+        relative: Optional[List[str]] = [],
+        duration: Optional[List[str]] = [],
+        false_positive: Optional[List[str]] = None,
+        on_ents_only: Union[bool, str, Iterable[str]] = False,
+        detect_periods: bool = False,
+        detect_time: bool = False,
+        attr: str = "LOWER",
+        span_setter: SpanSetterArg = {
+            "ents": True,
+            "pseudo-rb": True,
+            "*": True,
+        },
     ):
+        if absolute is None:
+            absolute = patterns.pseudo_date_pattern
+        if false_positive is None:
+            false_positive = patterns.false_positive_pattern
         super().__init__(
             nlp=nlp,
             name=name,
