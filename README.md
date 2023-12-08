@@ -104,13 +104,15 @@ Before training a model, you should update the
 [pyproject.toml](https://github.com/aphp/eds-pseudo/blob/main/pyproject.toml) files to
 fit your needs.
 
-Put your data in the `data/dataset` folder (or copy `data/gen_dataset` to `data/dataset`).
+Put your data in the `data/dataset` folder (or edit the paths `configs/config.cfg` file to point to `data/gen_dataset/train.jsonl`).
+
+Then, run the training script
 
 ```shell
-python scripts/train.py --config configs/config.cfg --train.seed 43 --cpu
+python scripts/train.py --config configs/config.cfg --seed 43
 ```
 
-This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (`data/dataset/test.jsonl`) with:
+This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (defaults to `data/dataset/test.jsonl`) with:
 
 ```shell
 python scripts/evaluate.py --config configs/config.cfg
@@ -122,7 +124,7 @@ To package it, run:
 python scripts/package.py
 ```
 
-This will create a `dist/eds-pseudo-aphp-0.3.0.***.whl` file that you can install with `pip install dist/eds-pseudo-aphp-0.3.0*`.
+This will create a `dist/eds-pseudo-aphp-***.whl` file that you can install with `pip install dist/eds-pseudo-aphp-***`.
 
 You can use it in your code:
 
