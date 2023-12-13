@@ -295,7 +295,7 @@ def train(
     -------
     Pipeline
         The model (trained in place). The artifacts are saved in `artifacts/model-last`
-        and `artifacts/train_metrics.jsonl`.
+        and `artifacts/train_metrics.json`.
     """
     trf_pipe = next(
         module
@@ -315,7 +315,7 @@ def train(
             val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
 
         model_path = output_dir / "model-last"
-        train_metrics_path = output_dir / "train_metrics.jsonl"
+        train_metrics_path = output_dir / "train_metrics.json"
         os.makedirs(output_dir, exist_ok=True)
 
         # Initialize pipeline with training documents
