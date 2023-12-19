@@ -433,8 +433,8 @@ def train(
 
                 mini_batches = next(iterator)
 
+                optimizer.zero_grad()
                 for mini_batch in mini_batches:
-                    optimizer.zero_grad()
                     loss = torch.zeros((), device=accelerator.device)
                     with nlp.cache():
                         for name, pipe in trained_pipes:
