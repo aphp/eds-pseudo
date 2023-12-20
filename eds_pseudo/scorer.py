@@ -1,6 +1,6 @@
 import time
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Union
 
 import spacy
 from confit import validate_arguments
@@ -78,15 +78,17 @@ class PseudoScorer:
         ml_spans: str,
         rb_spans: str,
         hybrid_spans: str,
-        main_mode="ml",
+        main_mode="hybrid",
         # note_id: extract from test/edspdf/0123 -> edspdf
         note_id_regex: str = r"(?:.*/)?(?P<split>[^/]+)/(?:[^/]+)",
+        labels: Union[bool, List[str]] = True,
     ):
         self.ml_spans = ml_spans
         self.rb_spans = rb_spans
         self.hybrid_spans = hybrid_spans
         self.main_mode = main_mode
         self.note_id_regex = note_id_regex
+        self.labels = labels
 
     def __call__(self, nlp, docs, per_doc=False):
         clean_docs: List[spacy.tokens.Doc] = [d.copy() for d in docs]
@@ -101,9 +103,9 @@ class PseudoScorer:
             dps=len(docs) / duration,
         )
         modes = {
-            "ml": {self.ml_spans: True},
-            "rb": {self.rb_spans: True},
-            "hybrid": {self.hybrid_spans: True},
+            "ml": {self.ml_spans: self.labels},
+            "rb": {self.rb_spans: self.labels},
+            "hybrid": {self.hybrid_spans: self.labels},
         }
 
         examples = make_examples(docs, preds)
