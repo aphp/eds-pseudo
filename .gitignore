@@ -75,10 +75,11 @@ coverage.xml
 *.pickle
 *.joblib
 *.pdf
-data/
+data/**/*.jsonl
 
 # MkDocs output
 site/
 
 # DVC
-.dvc
+.dvc/tmp
+.dvc/cache
