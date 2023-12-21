@@ -35,5 +35,6 @@ jobs:
       - name: Build documentation
         run: |
           git fetch origin gh-pages
+          poetry run pip install setuptools
           poetry run mike delete main
           poetry run mike deploy --push main
