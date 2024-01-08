@@ -1,5 +1,9 @@
 # Changelog
 
+## Pending
+
+- Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
+
 ## v0.3.0 - 2023-12-01
 
 - Refactoring and fixes to use [edsnlp](https://github.com/aphp/edsnlp) instead of spaCy.
