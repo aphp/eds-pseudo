@@ -80,19 +80,22 @@ To test it, execute
 ```python
 # Apply it to a text
 doc = nlp(
-    "En 1815, M. Charles-François-Bienvenu "
+    "En 2015, M. Charles-François-Bienvenu "
     "Myriel était évêque de Digne. C’était un vieillard "
     "d’environ soixante-quinze ans ; il occupait le "
-    "siège de Digne depuis 1806."
+    "siège de Digne depuis le 2 janveir 2006."
 )
-for ent in doc.ents:
-    print(ent, ent.label_)
+for e in doc.ents:
+    print(f"{e.text: <30}{e.label_: <10}{str(e._.date): <15}{e._.date_format}")
 
-# 1815 DATE
-# Charles-François-Bienvenu NOM
-# Myriel PRENOM
-# Digne VILLE
-# 1806 DATE
+# Text                           Label      Date            Format
+# -----------------------------  ---------  --------------  ---------
+# 2015                           DATE       2015-??-??      %Y
+# Charles-François-Bienvenu      PRENOM     None            None
+# Myriel                         NOM        None            None
+# Digne                          VILLE      None            None
+# Digne                          VILLE      None            None
+# 2 janveir 2006                 DATE       2006-01-02      %-d %B %Y
 ```
 
 You can also add the NER component to an existing model (this is only compatible with edsnlp, not spaCy)
