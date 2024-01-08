@@ -14,6 +14,7 @@ authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <ali
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
 "eds_pseudo.addresses"       = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
 "eds_pseudo.dates"           = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
+"eds_pseudo.dates_normalizer"= "eds_pseudo.pipes.dates_normalizer.dates_normalizer:DatesNormalizer"
 "eds_pseudo.simple_rules"    = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
 "eds_pseudo.context"         = "eds_pseudo.pipes.structured:ContextMatcher"
 "eds_pseudo.merge"           = "eds_pseudo.pipes.merge_entities:MergeEntities"

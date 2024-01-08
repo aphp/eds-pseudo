@@ -46,21 +46,31 @@ nlp.add_pipe("eds_pseudo.dates")
 # Contextual rules (requires a dict of info about the patient)
 nlp.add_pipe("eds_pseudo.context")
 
-# Apply it to a text
-doc = nlp(
-    "En 2015, M. Charles-François-Bienvenu "  # (1)!
-    "Myriel était évêque de Digne. C’était un vieillard "
-    "d’environ soixante-quinze ans ; il occupait le "
-    "siège de Digne depuis 2006."
+# Date value and format detector
+# This is useful to reinsert a new shifted date with the same format in the text
+nlp.add_pipe(
+    "eds_pseudo.dates_normalizer",
+    config={"format": "java"}
+    # java format -> will output a format like "yyyy/MM/dd"
+    # strftime format -> will output a format like "%Y/%m/%d"
 )
 
-for ent in doc.ents:
-    print(ent, ent.label_)
+# Apply it to a text
+doc = nlp(
+    "En 2015, M. Charles-François-Bienvenu "
+    "Myriel était évêque de Digne. C’était un vieillard "
+    "d’environ soixante-quinze ans ; il occupait le "
+    "siège de Digne depuis le 2 janvier 2006."
+)
+for e in doc.ents:
+    print(f"{e.text: <30}{e.label_: <10}{str(e._.date): <15}{e._.date_format}")
 
-# 2015 DATE
-# Charles-François-Bienvenu NOM
-# Myriel PRENOM
-# 2006 DATE
+# Text                          Label     Date           Format
+# ----------------------------  --------  -------------  ---------
+# 2015                          DATE      2015-??-??     yyyy
+# Charles-François-Bienvenu     NOM       None           None
+# Myriel                        PRENOM    None           None
+# 2 janvier 2006                DATE      2006-01-02     d MMMM yyyy
 ```
 
 1. The original date is 1815, but the rule-based date detection only matches dates after
@@ -101,7 +111,7 @@ def converter(row):
 
 data = edsnlp.data.from_pandas(df, converter=converter)
 data = data.map_pipeline(nlp)
-data.to_pandas(converter="ents")
+data.to_pandas(converter="ents", span_attributes=["date", "date_format"])
 ```
 
 and we get the following dataframe:
