@@ -10,7 +10,7 @@ from confit.utils.random import set_seed
 import edsnlp
 from eds_pseudo.adapter import PseudoReader
 from eds_pseudo.scorer import PseudoScorer
-from edsnlp.core.registry import registry
+from edsnlp.core.registries import registry
 
 app = Cli(pretty_exceptions_show_locals=False)
 

@@ -26,7 +26,7 @@ from tqdm import tqdm
 from eds_pseudo.adapter import PseudoReader
 from eds_pseudo.scorer import PseudoScorer
 from edsnlp.core.pipeline import Pipeline
-from edsnlp.core.registry import registry
+from edsnlp.core.registries import registry
 from edsnlp.optimization import LinearSchedule, ScheduledOptimizer
 from edsnlp.pipes.trainable.embeddings.transformer.transformer import Transformer
 from edsnlp.utils.collections import batchify
