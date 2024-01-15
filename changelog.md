@@ -3,6 +3,7 @@
 ## Pending
 
 - Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
+- Support empty `doc._.context` field
 
 ## v0.3.0 - 2023-12-01
 
@@ -10,8 +11,6 @@
 - Renamed `eds_pseudonymisation` to `eds_pseudo` and default model name to `eds_pseudo_aphp`.
 - Renamed `pipelines` to `pipes`
 - New `scripts/train.py` script to train the model
-
-## ## v0.2.0 - Unreleased
 
 Some fixes to enable training the model:
 - committed the missing script `infer.py`
