@@ -89,7 +89,7 @@ class ContextMatcher(BaseNERComponent):
             List of Spans returned by the matchers.
         """
 
-        context = doc._.context
+        context = doc._.context or {}
         if "EMAIL" in context:
             context["MAIL"] = context.pop("EMAIL")
 
