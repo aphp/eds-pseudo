@@ -15,6 +15,7 @@ from edsnlp.utils.span_getters import SpanGetterArg, get_spans, validate_span_ge
 from .patterns import full_regex, noun_regex, number_regex
 
 JAVA_CHARS = set("GuyDMLdQqYwWEecFahKkHmsSAnNVzOXxZp'[]#{}")
+DIGIT_TRANS = str.maketrans(string.digits, "?" * len(string.digits))
 
 
 @registry.factory.register(
@@ -67,8 +68,7 @@ class DatesNormalizer(BaseComponent):
         if not Span.has_extension("date_format"):
             Span.set_extension("date_format", default=None)
 
-    @staticmethod
-    def extract_date(s, next_date=None, next_offsets=None):
+    def extract_date(self, s, next_date=None, next_offsets=None):
         date_conf = {}
 
         m = regex.search(full_regex, s)
@@ -78,13 +78,23 @@ class DatesNormalizer(BaseComponent):
                 month=int(m.group("month").replace(" ", "").replace("Û", "0")),
                 year=int(m.group("year").replace(" ", "").replace("Û", "0")),
             )
-            return date, sorted(
+            date_offsets = sorted(
                 [
                     (m.start("day"), m.end("day"), "d"),
                     (m.start("month"), m.end("month"), "m"),
                     (m.start("year"), m.end("year"), "y"),
                 ]
             )
+            if not m.group("spaced"):
+                date_format = self.extract_format(s, date_offsets)
+            else:
+                date_format = "%d/%m/%Y" if self.format == "strftime" else "dd/MM/yyyy"
+                date_format = (
+                    self.escape(s[: date_offsets[0][0]])
+                    + date_format
+                    + self.escape(s[date_offsets[-1][1] :])
+                )
+            return date, date_offsets, date_format
 
         matches = []
         remaining = []
@@ -235,29 +245,25 @@ class DatesNormalizer(BaseComponent):
                 date_conf["year"] = m[3]
 
         date = AbsoluteDate.parse_obj(date_conf)
+        date_offsets = [(b, e, k) for b, e, k, v in matches]
 
-        return date, [(b, e, k) for b, e, k, v in matches]
+        return date, date_offsets, self.extract_format(s, date_offsets)
+
+    def escape(self, s):
+        if self.format == "strftime":
+            return s.translate(DIGIT_TRANS).replace("%", "%%") if s else ""
+
+        # Test s against JAVA_CHARS
+        if set(s).isdisjoint(JAVA_CHARS):
+            return s
+        return ("'" + s.translate(DIGIT_TRANS).replace("'", "") + "'") if s else ""
 
     def extract_format(self, s, matches):
         strftime = self.format == "strftime"
-        trans = str.maketrans(string.digits, "?" * len(string.digits))
-        if strftime:
-
-            def escape(s):
-                return s.translate(trans).replace("%", "%%") if s else ""
-
-        else:
-
-            def escape(s):
-                # Test s against JAVA_CHARS
-                if set(s).isdisjoint(JAVA_CHARS):
-                    return s
-                return ("'" + s.translate(trans).replace("'", "") + "'") if s else ""
-
         date_format = ""
         offset = 0
         for begin, end, kind in matches:
-            date_format += escape(s[offset:begin])
+            date_format += self.escape(s[offset:begin])
             snippet = s[begin:end].replace(" ", "")
             if kind == "d":
                 if snippet.isdigit() and len(snippet) == 2:
@@ -288,10 +294,10 @@ class DatesNormalizer(BaseComponent):
                 else:
                     date_format += "%Y" if strftime else "yyyy"
             elif kind == ".":
-                date_format += escape(s[begin:end])
+                date_format += self.escape(s[begin:end])
             offset = end
 
-        date_format += escape(s[offset:])
+        date_format += self.escape(s[offset:])
 
         return date_format
 
@@ -306,14 +312,14 @@ class DatesNormalizer(BaseComponent):
             if last_span and last_span.start - span.end > 3:
                 last_date = last_date_offsets = None
 
-            date, date_offsets = self.extract_date(
+            date, date_offsets, date_format = self.extract_date(
                 text,
                 last_date,
                 last_date_offsets,
             )
             span._.date = date
             span._.datetime = date.to_datetime(doc._.note_datetime)
-            span._.date_format = self.extract_format(text, date_offsets)
+            span._.date_format = date_format
 
             last_span, last_date, last_date_offsets = span, date, date_offsets
 

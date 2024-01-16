@@ -22,12 +22,16 @@ examples = [
     "<ent norm='1990-??-??' fmt='%y'>90</ent>,",
     "<ent norm='????-??-??' fmt='mercredi'>mercredi</ent>,",
     "<ent norm='2003-02-01' fmt='%d%m%y????'>0102030945</ent>,",
-    "<ent norm='2003-02-01' fmt='%d %m %y ? ? ? ?'>0 1 0 2 0 3 0 9 4 5</ent>,",
+    (
+        "<ent norm='2003-02-01' fmt='dès le %d/%m/%Y ? ? ? ?'>"
+        "dès le 0 1 0 2 0 3 0 9 4 5</ent>,"
+    ),
     "<ent norm='2003-02-01' fmt='%-d %B %Y?'>1er fevreri 20030</ent>,",
     "<ent norm='????-09-31' fmt='%-d %b ????'>trente et un sep 4022</ent>,",
     "<ent norm='????-06-04' fmt='%-d/%-m'>4/6</ent>,",
     "<ent norm='1996-04-??' fmt='%-m/%y'>4/96</ent>,",
     "<ent norm='2010-08-04' fmt='%a %-d/%-m/%y'>lun 4/8/10</ent>,",
+    "<ent norm='1958-08-03' fmt='%d/%m/%Y matin'>0 3 0 8 1 9 5 8 matin</ent>,",
     (
         "<ent norm='1998-01-10' fmt='%d %b %Y'>10 jan mil neuf "
         "cents quatrevingtdix-huit</ent>,"
