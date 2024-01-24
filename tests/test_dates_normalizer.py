@@ -58,6 +58,11 @@ examples = [
         "Il est né en <ent norm='????-03-??' fmt='%B'>mars</ent>. Ensuite, en "
         "<ent norm='2023-05-??' fmt='%B %Y'>mai vingt trois</ent>, ..."
     ),
+    "<ent norm='2023-06-10' fmt='le %dOEUFS %B %Y'>le 10OEUFS juin 2023</ent>, "
+    "<ent norm='1989-10-29' fmt='%y/%m/%d'>89/1O/29</ent>,",
+    "<ent norm='2013-02-10' fmt='le %d %B %Y'>le 1O février 2O13</ent>,",
+    "<ent norm='2003-02-01' fmt='%d%m%yOK'>010203OK</ent>,",
+    "<ent norm='2003-02-01' fmt='O %d%m%y'>O 010203</ent>,",
 ]
 
 

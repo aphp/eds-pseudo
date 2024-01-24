@@ -46,10 +46,10 @@ full_regex = r"""(?x)
 )
 |
 (?P<spaced>
-    (?P<day>[0Û]\ +[1-9]|[12]\ +[\dÛ]|3\ +[Û01])
-    \ *[.-/]?\ *(?<!\d)(?P<month>[0Û]\ +[1-9]|1\ +[Û012])
+    (?P<day>[0ÛO]\ +[1-9]|[12]\ +[\dÛ]|3\ +[Û01])
+    \ *[.-/]?\ *(?<!\d)(?P<month>[0ÛO]\ +[1-9]|1\ +[Û012])
     \ *[.-/]?\ *(?<!\d)(?P<year>
-        (?:1\ +9|2\ +[0Û])\ +[\dÛ]\ +[\dÛ]
+        (?:1\ +9|2\ +[0ÛO])\ +[\dÛ]\ +[\dÛ]
         |[\dÛ]\ +[\dÛ]
     )
 )
@@ -93,6 +93,6 @@ number_regex = r"""(?x)
         (?P<_16>seizes?)
     )
 )|
-# Numbers with digits (0 is sometime wrongly parsed in PDFs as Û)
-[Û\d]+
+# Numbers with digits (0 is sometime wrongly parsed in PDFs as Û or O)
+(?:\d|(?<![[:alpha:]])[ÛO]+(?![[:alpha:]]))+
 """

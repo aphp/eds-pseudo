@@ -14,7 +14,7 @@ from edsnlp.utils.span_getters import SpanGetterArg, get_spans, validate_span_ge
 
 from .patterns import full_regex, noun_regex, number_regex
 
-JAVA_CHARS = set("GuyDMLdQqYwWEecFahKkHmsSAnNVzOXxZp'[]#{}")
+JAVA_CHARS = set(string.ascii_letters + "'[]#{}")
 DIGIT_TRANS = str.maketrans(string.digits, "?" * len(string.digits))
 
 
@@ -74,9 +74,18 @@ class DatesNormalizer(BaseComponent):
         m = regex.search(full_regex, s)
         if m:
             date = AbsoluteDate(
-                day=int(m.group("day").replace(" ", "").replace("Û", "0")),
-                month=int(m.group("month").replace(" ", "").replace("Û", "0")),
-                year=int(m.group("year").replace(" ", "").replace("Û", "0")),
+                day=int(
+                    m.group("day").replace(" ", "").replace("Û", "0").replace("O", "0")
+                ),
+                month=int(
+                    m.group("month")
+                    .replace(" ", "")
+                    .replace("Û", "0")
+                    .replace("O", "0")
+                ),
+                year=int(
+                    m.group("year").replace(" ", "").replace("Û", "0").replace("O", "0")
+                ),
             )
             date_offsets = sorted(
                 [
@@ -110,8 +119,11 @@ class DatesNormalizer(BaseComponent):
         in_10_years_2_digits = 10 + datetime.datetime.now().year % 100
         for match in numbers:
             snippet = match.group()
-            if snippet.replace("Û", "0").isdigit():
-                snippet = snippet.replace("Û", "0")
+            if not snippet.strip("OÛ"):
+                continue
+            clean_snippet = snippet.replace("Û", "0").replace("O", "0")
+            if clean_snippet.isdigit():
+                snippet = clean_snippet
                 value = int(snippet)
             else:
                 value = sum(int(m[1:]) for m, v in match.groupdict().items() if v)
@@ -132,8 +144,8 @@ class DatesNormalizer(BaseComponent):
                 matches.append((match.start(), match.end(), "y", 1900 + value))
             elif 1900 <= value <= 2100:
                 matches.append((match.start(), match.end(), "y", value))
-            elif 1900 <= int(snippet[:4]) <= 2100:
-                value = int(snippet[:4])
+            elif 1900 <= int(clean_snippet[:4]) <= 2100:
+                value = int(clean_snippet[:4])
                 matches.append((match.start(), match.start() + 4, "y", value))
             else:
                 matches.append((match.start(), match.end(), ".", value))
@@ -264,7 +276,8 @@ class DatesNormalizer(BaseComponent):
         offset = 0
         for begin, end, kind in matches:
             date_format += self.escape(s[offset:begin])
-            snippet = s[begin:end].replace(" ", "")
+            raw_snippet = s[begin:end].replace(" ", "")
+            snippet = raw_snippet.replace("Û", "0").replace("O", "0")
             if kind == "d":
                 if snippet.isdigit() and len(snippet) == 2:
                     date_format += "%d" if strftime else "dd"
@@ -279,12 +292,12 @@ class DatesNormalizer(BaseComponent):
                 else:
                     # 'mai' is the only month that has <= 3 letters,
                     # so we assume it's not intended as an abbreviation
-                    if len(snippet) <= 3 and snippet != "mai":
+                    if len(raw_snippet) <= 3 and raw_snippet != "mai":
                         date_format += "%b" if strftime else "MMM"
                     else:
                         date_format += "%B" if strftime else "MMMM"
             elif kind == "w":
-                if len(snippet) <= 3:
+                if len(raw_snippet) <= 3:
                     date_format += "%a" if strftime else "EEE"
                 else:
                     date_format += "%A" if strftime else "EEEE"
