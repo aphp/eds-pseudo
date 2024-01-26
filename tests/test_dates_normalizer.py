@@ -63,10 +63,26 @@ examples = [
     "<ent norm='2013-02-10' fmt='le %d %B %Y'>le 1O février 2O13</ent>,",
     "<ent norm='2003-02-01' fmt='%d%m%yOK'>010203OK</ent>,",
     "<ent norm='2003-02-01' fmt='O %d%m%y'>O 010203</ent>,",
+    "Il est arrivé en <ent norm='????-??-??' fmt='??Y??'>20Y23</ent>,",
+    "<ent norm='2023-12-12' fmt='%Y%m%d'>20231212</ent>",
+    (
+        "<ent norm='2022-12-27' fmt='%A %-d %B %Y'>Mardi vingt-sept Décembre deux "
+        "mille vingt-deux</ent>"
+    ),
+    (
+        "<ent norm='2023-05-07' fmt='%A %-d %B %Y'>Dimanche sept Mai deux mille "
+        "vingt-trois</ent>"
+    ),
+    "<ent norm='2011-09-??' fmt='Début %B %Y'>Début septembre 2011</ent>",
+    (
+        "<ent norm='2019-08-30' fmt='le %-d %B %Y'>le trente août deux mille "
+        "dix neuf</ent>"
+    ),
+    "<ent norm='????-09-07' fmt='le %-d %B au matin'>le sept septembre au matin</ent>",
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def nlp():
     nlp = edsnlp.blank("eds")
     nlp.add_pipe("eds_pseudo.dates_normalizer")
@@ -90,14 +106,19 @@ def test_dates_normalizer(example, nlp):
         assert str(ent._.date_format) == date_format, ent
 
 
-def test_java_formatter():
-    nlp = edsnlp.blank("eds")
-    nlp.add_pipe("eds_pseudo.dates_normalizer", config={"format": "java"})
-
-    example = (
+java_examples = [
+    (
         "<ent norm='2014-01-06' fmt='yyyy, MMMM\" d,  \"d'>"
         "deux mille quatorze, janvier d, ' 6</ent>,"
-    )
+    ),
+    "<ent norm='2011-09-??' fmt='\"Début \"MMMM yyyy'>Début septembre 2011</ent>",
+]
+
+
+@pytest.mark.parametrize("example", java_examples)
+def test_java_formatter(nlp, example):
+    nlp.get_pipe("eds_pseudo.dates_normalizer").format = "java"
+
     text, entities = parse_example(example=example)
     doc = nlp.make_doc(text)
     doc.ents = [
@@ -109,5 +130,13 @@ def test_java_formatter():
         modifiers = dict((m.key, m.value) for m in eg.modifiers)
         norm = modifiers["norm"]
         date_format = modifiers["fmt"].replace('"', "'")
+        assert str(ent._.date_format) == date_format, date_format
         assert str(ent._.date) == norm, ent
-        assert str(ent._.date_format) == date_format, ent
+
+
+def test_span_sorter():
+    spans = [(2, 7), (9, 11), (0, 4), (2, 6), (2, 7)]
+    res = eds_pseudo.pipes.dates_normalizer.dates_normalizer.remove_overlapping_spans(
+        spans
+    )
+    assert res == [(2, 7), (9, 11)]

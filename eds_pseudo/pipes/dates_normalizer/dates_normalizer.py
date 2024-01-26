@@ -18,6 +18,32 @@ JAVA_CHARS = set(string.ascii_letters + "'[]#{}")
 DIGIT_TRANS = str.maketrans(string.digits, "?" * len(string.digits))
 
 
+def remove_overlapping_spans(spans):
+    spans.sort(key=lambda x: (x[0], -x[1]))
+
+    result = []
+    current_span = None
+
+    for span in spans:
+        if current_span is None:
+            current_span = span
+        else:
+            # Check if the current span overlaps with the previous one
+            if span[0] < current_span[1]:
+                # Keep the larger span
+                if (span[1] - span[0]) > (current_span[1] - current_span[0]):
+                    current_span = span
+            else:
+                result.append(current_span)
+                current_span = span
+
+    # Add the last span
+    if current_span is not None:
+        result.append(current_span)
+
+    return result
+
+
 @registry.factory.register(
     "eds_pseudo.dates_normalizer",
     requires=["doc.ents", "doc.spans"],
@@ -118,6 +144,7 @@ class DatesNormalizer(BaseComponent):
         numbers = list(regex.finditer(number_regex, s))
         in_10_years_2_digits = 10 + datetime.datetime.now().year % 100
         for match in numbers:
+            print("MATCH", match)
             snippet = match.group()
             if not snippet.strip("OÛ"):
                 continue
@@ -150,7 +177,7 @@ class DatesNormalizer(BaseComponent):
             else:
                 matches.append((match.start(), match.end(), ".", value))
 
-        matches = sorted(matches)
+        matches = remove_overlapping_spans(matches)
 
         pattern: List[str] = [m[2] for m in matches]  # type: ignore
 
@@ -262,13 +289,15 @@ class DatesNormalizer(BaseComponent):
         return date, date_offsets, self.extract_format(s, date_offsets)
 
     def escape(self, s):
+        s = s.translate(DIGIT_TRANS)
+
         if self.format == "strftime":
-            return s.translate(DIGIT_TRANS).replace("%", "%%") if s else ""
+            return s.replace("%", "%%") if s else ""
 
         # Test s against JAVA_CHARS
         if set(s).isdisjoint(JAVA_CHARS):
             return s
-        return ("'" + s.translate(DIGIT_TRANS).replace("'", "") + "'") if s else ""
+        return ("'" + s.replace("'", "") + "'") if s else ""
 
     def extract_format(self, s, matches):
         strftime = self.format == "strftime"
@@ -292,7 +321,7 @@ class DatesNormalizer(BaseComponent):
                 else:
                     # 'mai' is the only month that has <= 3 letters,
                     # so we assume it's not intended as an abbreviation
-                    if len(raw_snippet) <= 3 and raw_snippet != "mai":
+                    if len(raw_snippet) <= 3 and raw_snippet.lower() != "mai":
                         date_format += "%b" if strftime else "MMM"
                     else:
                         date_format += "%B" if strftime else "MMMM"
