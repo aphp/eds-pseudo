@@ -1,6 +1,18 @@
 # Results
 
-Our article is available on [arXiv](https://arxiv.org/pdf/2303.13451.pdf).
+Please find our publication at the following link: https://doi.org/mkfv.
+
+If you use EDS-Pseudo, please cite us as below:
+
+```
+@article{eds_pseudo,
+  title={Development and validation of a natural language processing algorithm to pseudonymize documents in the context of a clinical data warehouse},
+  author={Tannier, Xavier and Wajsb{\"u}rt, Perceval and Calliger, Alice and Dura, Basile and Mouchet, Alexandre and Hilka, Martin and Bey, Romain},
+  journal={Methods of Information in Medicine},
+  year={2024},
+  publisher={Georg Thieme Verlag KG}
+}
+```
 
 To inspect the results for the latest version of our system, please refer to the
 [latest release](/eds-pseudo/latest/results) page.

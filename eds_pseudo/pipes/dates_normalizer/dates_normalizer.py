@@ -144,7 +144,6 @@ class DatesNormalizer(BaseComponent):
         numbers = list(regex.finditer(number_regex, s))
         in_10_years_2_digits = 10 + datetime.datetime.now().year % 100
         for match in numbers:
-            print("MATCH", match)
             snippet = match.group()
             if not snippet.strip("OÛ"):
                 continue

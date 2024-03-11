@@ -29,7 +29,7 @@ authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <ali
 [tool.poetry.dependencies]
 # /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
 python = ">=3.8,<4.0"
-edsnlp = { version = ">=0.10.3", extras = ["ml"] }
+edsnlp = { version = ">=0.10.7", extras = ["ml"] }
 sentencepiece = "^0.1.96"
 
 [tool.poetry.group.dev.dependencies]

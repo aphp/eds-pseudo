@@ -4,6 +4,12 @@
 
 - Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
 - Support empty `doc._.context` field
+- Update EDS-NLP to v0.10.7:
+  - fix somes issues with jsonl loading
+  - more transformer overriding options
+  - fix out-of-memory issues (auto split transformer input depending on the available memory)
+  - fixes some multiprocessing deadlock issues
+  - add chunk sorting option to the lazy collection `set_processing` method
 
 ## v0.3.0 - 2023-12-01
 
