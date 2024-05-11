@@ -1,15 +1,23 @@
-![Tests](https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square)
-[![Documentation](https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square)](https://aphp.github.io/eds-pseudo/latest/)
-[![Codecov](https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square)](https://codecov.io/gh/aphp/eds-pseudo)
+<div>
+<a target="_blank">
+    <img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square" alt="Tests">
+</a>
+<a href="https://aphp.github.io/eds-pseudo/latest/" target="_blank">
+    <img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square" alt="Documentation">
+</a>
+<a href="https://codecov.io/gh/aphp/eds-pseudo" target="_blank">
+    <img style="display: inline" src="https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square" alt="Codecov">
+</a>
 <a href="https://github.com/psf/black" target="_blank">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+    <img style="display: inline" src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
 </a>
 <a href="https://python-poetry.org" target="_blank">
-    <img src="https://img.shields.io/badge/reproducibility-poetry-blue" alt="Poetry">
+    <img style="display: inline" src="https://img.shields.io/badge/repro-poetry-blue" alt="Poetry">
 </a>
 <a href="https://dvc.org" target="_blank">
-    <img src="https://img.shields.io/badge/reproducibility-dvc-blue" alt="DVC">
+    <img style="display: inline" src="https://img.shields.io/badge/repro-dvc-blue" alt="DVC">
 </a>
+</div>
 
 # EDS-Pseudo
 
@@ -17,10 +25,11 @@ This project aims at detecting identifying entities documents, and was primarily
 on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 
 The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
-hybrid model (rule-based + deep learning) for which we provide rules (`eds_pseudo/pipes`)
-and a training recipe (`eds_pseudo/scripts/train.py`).
+hybrid model (rule-based + deep learning) for which we provide rules ([`eds-pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds_pseudo/pipes))
+and a training recipe [`train.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/train.py).
 
-We also provide a small set of fictive documents (`data/gen_dataset`) to test the method.
+We also provide some fictitious templates ([`templates.txt`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.txt)) and a script to
+generate a synthetic dataset [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py).
 
 The entities that are detected are listed below.
 
@@ -39,6 +48,35 @@ The entities that are detected are listed below.
 | `TEL`            | Any phone number                                              |
 | `VILLE`          | Any city                                                      |
 | `ZIP`            | Any zip code                                                  |
+
+## Downloading the public pre-trained model
+
+The public pretrained model is available on the HuggingFace model hub, and was trained
+on synthetic data (see [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py)). You can also test
+it directly on its huggingface hub page:
+[AP-HP/eds-pseudo-public](https://huggingface.co/AP-HP/eds-pseudo-public).
+
+```shell
+pip install "edsnlp[ml]"
+```
+
+```python
+import edsnlp
+
+nlp = edsnlp.load("AP-HP/eds-pseudo-public", auto_update=True)
+doc = nlp(
+    "En 2015, M. Charles-François-Bienvenu "
+    "Myriel était évêque de Digne. C’était un vieillard "
+    "d’environ soixante-quinze ans ; il occupait le "
+    "siège de Digne depuis 2006."
+)
+
+for ent in doc.ents:
+    print(ent, ent.label_, str(ent._.date))
+```
+
+To apply the model on many documents using one or more GPUs, refer to the documentation
+of [edsnlp](https://aphp.github.io/edsnlp/latest/tutorials/multiple-texts/).
 
 ## Installation
 

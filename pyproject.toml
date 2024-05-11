@@ -2,13 +2,14 @@
 # Suggestion: choose a name that mixes both the architecture (eds-pseudo) and the
 # dataset on which the model was trained (aphp)
 # This field will be read by script/package.py
-model_name = "eds-pseudo-aphp"
+model_name = "eds-pseudo-public"
 
 [tool.poetry]
 name = "eds-pseudo"
 version = "0.3.0"
 description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
 authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
+readme = "README.md"
 
 [tool.poetry.plugins."spacy_factories"]
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
@@ -51,6 +52,7 @@ mypy = "^0.950"
 coverage = "^6.5.0"
 toml = "^0.10.2"
 wheel = "^0.40.0"
+babel = "<2.0.0"
 accelerate = { version = "^0.21.0", markers = "python_version >= '3.8'" }
 rich-logger = "^0.3.0"
 scipy = [

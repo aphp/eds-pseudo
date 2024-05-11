@@ -10,6 +10,8 @@
   - fix out-of-memory issues (auto split transformer input depending on the available memory)
   - fixes some multiprocessing deadlock issues
   - add chunk sorting option to the lazy collection `set_processing` method
+- Replace `gen_dataset/train.jsonl` with the original fictitious templates and the dataset generation script.
+- Update the README with the instructions to download the public pre-trained model.
 
 ## v0.3.0 - 2023-12-01
 
