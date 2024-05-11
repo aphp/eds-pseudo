@@ -8,7 +8,7 @@ stages:
     cmd:
       - python scripts/train.py --config configs/config.cfg
       - python scripts/evaluate.py --config configs/config.cfg
-      - python scripts/package.py
+      - python scripts/package.py --distributions sdist
     metrics:
       - artifacts/test_metrics.json:
           cache: false

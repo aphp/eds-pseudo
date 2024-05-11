@@ -89,7 +89,11 @@ class PseudoDict2DocConverter:
             )
             spans.append(span)
 
-        set_spans(doc, spans, span_setter=self.span_setter)
+        try:
+            set_spans(doc, spans, span_setter=self.span_setter)
+        except:
+            print("Could not load document", obj)
+            raise
         return doc
 
 

@@ -38,10 +38,11 @@ BASE_DIR = Path.cwd()
 
 LOGGER_FIELDS = {
     "step": {},
-    "(.*)loss": {
+    "(.*loss)": {
         "goal": "lower_is_better",
         "format": "{:.2e}",
         "goal_wait": 2,
+        "name": r"\1",
     },
     "(p|r|f|redact|full)": {
         "goal": "higher_is_better",
@@ -303,107 +304,113 @@ def train(
         for module_name, module in pipe.named_component_modules()
         if isinstance(module, Transformer)
     )
+    if nlp.has_pipe("dates-normalizer"):
+        nlp.select_pipes(disable=["dates-normalizer"])
 
     output_dir = Path(output_dir or BASE_DIR / "artifacts")
 
     set_seed(seed)
-    with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
-        with set_seed(data_seed):
-            train_docs: List[spacy.tokens.Doc] = list(
-                chain.from_iterable(td(nlp) for td in train_data)
-            )
-            val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
+    with set_seed(data_seed):
+        train_docs: List[spacy.tokens.Doc] = list(
+            chain.from_iterable(td(nlp) for td in train_data)
+        )
+        val_docs: List[spacy.tokens.Doc] = list(val_data(nlp))
 
-        model_path = output_dir / "model-last"
-        train_metrics_path = output_dir / "train_metrics.json"
-        os.makedirs(output_dir, exist_ok=True)
+    model_path = output_dir / "model-last"
+    train_metrics_path = output_dir / "train_metrics.json"
+    os.makedirs(output_dir, exist_ok=True)
 
-        # Initialize pipeline with training documents
-        nlp.post_init(train_docs)
+    # Initialize pipeline with training documents
+    nlp.post_init(train_docs)
 
-        # Preprocessing training data
-        print("Preprocessing data")
+    # Preprocessing training data
+    print("Preprocessing data")
 
-        preprocessed = list(nlp.preprocess_many(train_docs, supervision=True))
-        print(f"TRAINING DATASET SIZE: {len(preprocessed)}")
-        dataloader = DataLoader(
+    preprocessed = list(
+        nlp.preprocess_many(train_docs, supervision=True).set_processing(
+            backend="multiprocessing", show_progress=True
+        )
+    )
+    print(f"TRAINING DATASET SIZE: {len(preprocessed)}")
+    dataloader = DataLoader(
+        preprocessed,
+        batch_sampler=LengthSortedBatchSampler(
             preprocessed,
-            batch_sampler=LengthSortedBatchSampler(
-                preprocessed,
-                batch_size=batch_size[0],
-                batch_unit=batch_size[1],
-            ),
-            collate_fn=SubBatchCollater(
-                nlp,
-                trf_pipe,
-                grad_accumulation_max_tokens=grad_accumulation_max_tokens,
-            ),
+            batch_size=batch_size[0],
+            batch_unit=batch_size[1],
+        ),
+        collate_fn=SubBatchCollater(
+            nlp,
+            trf_pipe,
+            grad_accumulation_max_tokens=grad_accumulation_max_tokens,
+        ),
+    )
+
+    trained_pipes = nlp.torch_components()
+    print("Training", ", ".join([name for name, c in trained_pipes]))
+
+    trf_params = set(trf_pipe.parameters())
+    params = set(nlp.parameters())
+    optimizer = ScheduledOptimizer(
+        torch.optim.AdamW(
+            [
+                {
+                    "params": list(params - trf_params),
+                    "lr": task_lr,
+                    "schedules": [
+                        LinearSchedule(
+                            total_steps=max_steps,
+                            warmup_rate=0.1,
+                            start_value=task_lr,
+                            path="lr",
+                        )
+                    ],
+                },
+                {
+                    "params": list(trf_params),
+                    "lr": embedding_lr,
+                    "schedules": [
+                        LinearSchedule(
+                            total_steps=max_steps,
+                            warmup_rate=0.1,
+                            start_value=0,
+                            path="lr",
+                        )
+                    ],
+                },
+            ]
         )
-
-        trained_pipes = nlp.torch_components()
-        print("Training", ", ".join([name for name, c in trained_pipes]))
-
-        trf_params = set(trf_pipe.parameters())
-        params = set(nlp.parameters())
-        optimizer = ScheduledOptimizer(
-            torch.optim.AdamW(
-                [
-                    {
-                        "params": list(params - trf_params),
-                        "lr": task_lr,
-                        "schedules": [
-                            LinearSchedule(
-                                total_steps=max_steps,
-                                warmup_rate=0.1,
-                                start_value=task_lr,
-                                path="lr",
-                            )
-                        ],
-                    },
-                    {
-                        "params": list(trf_params),
-                        "lr": embedding_lr,
-                        "schedules": [
-                            LinearSchedule(
-                                total_steps=max_steps,
-                                warmup_rate=0.1,
-                                start_value=0,
-                                path="lr",
-                            )
-                        ],
-                    },
-                ]
-            )
+    )
+    grad_params = {p for group in optimizer.param_groups for p in group["params"]}
+    print(
+        "Optimizing:"
+        + "".join(
+            f"\n - {len(group['params'])} params "
+            f"({sum(p.numel() for p in group['params'])} total)"
+            for group in optimizer.param_groups
         )
-        grad_params = {p for group in optimizer.param_groups for p in group["params"]}
-        print(
-            "Optimizing:"
-            + "".join(
-                f"\n - {len(group['params'])} params "
-                f"({sum(p.numel() for p in group['params'])} total)"
-                for group in optimizer.param_groups
-            )
-        )
-        print(f"Not optimizing {len(params - grad_params)} params")
+    )
+    print(f"Not optimizing {len(params - grad_params)} params")
 
-        accelerator = Accelerator(cpu=cpu)
-        trained_pipes = dict(nlp.torch_components())
-        print("Device:", accelerator.device)
-        [dataloader, optimizer, *accelerated_pipes] = accelerator.prepare(
-            dataloader,
-            optimizer,
-            *trained_pipes.values(),
-        )
-        trained_pipes = list(zip(trained_pipes.keys(), accelerated_pipes))
-        del accelerated_pipes
+    accelerator = Accelerator(cpu=cpu)
+    trained_pipes = dict(nlp.torch_components())
+    print("Device:", accelerator.device)
+    [dataloader, optimizer, *accelerated_pipes] = accelerator.prepare(
+        dataloader,
+        optimizer,
+        *trained_pipes.values(),
+    )
+    trained_pipes = list(zip(trained_pipes.keys(), accelerated_pipes))
+    del accelerated_pipes
 
-        cumulated_data = defaultdict(lambda: 0.0, count=0)
+    cumulated_data = defaultdict(lambda: 0.0, count=0)
 
-        iterator = itertools.chain.from_iterable(itertools.repeat(dataloader))
-        all_metrics = []
-        nlp.train(True)
-        set_seed(seed)
+    iterator = itertools.chain.from_iterable(itertools.repeat(dataloader))
+    all_metrics = []
+    nlp.train(True)
+    set_seed(seed)
 
+    with RichTablePrinter(LOGGER_FIELDS, auto_refresh=False) as logger:
         # Training loop
         with tqdm(
             range(max_steps + 1),
