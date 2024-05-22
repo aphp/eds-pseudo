@@ -89,6 +89,10 @@ class DatesNormalizer(BaseComponent):
     def set_extensions(self):
         if not Span.has_extension("date"):
             Span.set_extension("date", default=None)
+        if not Span.has_extension("DATE"):
+            Span.set_extension("DATE", getter=lambda span: span._.date)
+        if not Span.has_extension("DATE_NAISSANCE"):
+            Span.set_extension("DATE_NAISSANCE", getter=lambda span: span._.date)
         if not Span.has_extension("datetime"):
             Span.set_extension("datetime", default=None)
         if not Span.has_extension("date_format"):
@@ -358,6 +362,7 @@ class DatesNormalizer(BaseComponent):
                 last_date,
                 last_date_offsets,
             )
+            date.doc = doc
             span._.date = date
             span._.datetime = date.to_datetime(doc._.note_datetime)
             span._.date_format = date_format
