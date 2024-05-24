@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eds-pseudo"
-version = "0.3.0"
+version = "0.4.0"
 description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
 authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 readme = "README.md"
@@ -25,7 +25,7 @@ exclude = ["**/*.pyc", "**/__pycache__/*", "**/.ipynb_checkpoints/"]
 [tool.poetry.dependencies]
 # /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
 python = ">=3.8,<4.0"
-edsnlp = { version = ">=0.10.7", extras = ["ml"] }
+edsnlp = { version = ">=0.12.0", extras = ["ml"] }
 sentencepiece = ">=0.1.96"
 
 [tool.poetry.group.dev.dependencies]

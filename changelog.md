@@ -1,6 +1,6 @@
 # Changelog
 
-## Pending
+## v0.4.0 - 2024-24-05
 
 - Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
 - Support empty `doc._.context` field
