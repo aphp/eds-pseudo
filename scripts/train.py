@@ -44,14 +44,17 @@ LOGGER_FIELDS = {
         "goal_wait": 2,
         "name": r"\1",
     },
-    "(p|r|f|redact|full)": {
+    "Token Scores / micro / (.*)": {
         "goal": "higher_is_better",
         "format": "{:.2%}",
         "goal_wait": 2,
-        "name": r"\1",
     },
+    "Token Scores / micro / Precision": {"name": "p"},
+    "Token Scores / micro / Recall": {"name": "r"},
+    "Token Scores / micro / F1": {"name": "f1"},
+    "Token Scores / micro / Redact": {"name": "redact"},
+    "Token Scores / micro / Redact Full": {"name": "full"},
     "lr": {"format": "{:.2e}"},
-    "speed/(.*)": {"format": "{:.2f}", r"name": r"\1"},
     "labels": {"format": "{:.2f}"},
 }
 
@@ -295,7 +298,7 @@ def train(
     Returns
     -------
     Pipeline
-        The model (trained in place). The artifacts are saved in `artifacts/model-last`
+        The model (trained in place). The artifacts are saved in `artifacts`
         and `artifacts/train_metrics.json`.
     """
     trf_pipe = next(
@@ -420,19 +423,18 @@ def train(
         ) as bar:
             for step in bar:
                 if (step % validation_interval) == 0:
-                    scores = scorer(nlp, val_docs)
+                    metrics = {m["name"]: m["value"] for m in scorer(nlp, val_docs)}
                     cumulated_data = defaultdict(lambda: 0.0, count=0)
                     all_metrics.append(
                         {
                             "step": step,
                             "lr": optimizer.param_groups[0]["lr"],
+                            **metrics,
                             **cumulated_data,
-                            **scores,
                         }
                     )
                     logger.log_metrics(all_metrics[-1])
                     train_metrics_path.write_text(json.dumps(all_metrics, indent=2))
-
                     nlp.to_disk(model_path)
 
                 if step == max_steps:

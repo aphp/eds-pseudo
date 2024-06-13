@@ -79,12 +79,14 @@ class PseudoScorer:
         rb_spans: str,
         hybrid_spans: str,
         main_mode="hybrid",
+        compute_speed: bool = False,
         # note_id: extract from test/edspdf/0123 -> edspdf
         note_id_regex: str = r"(?:.*/)?(?P<split>[^/]+)/(?:[^/]+)",
         labels: Union[bool, List[str]] = True,
     ):
         self.ml_spans = ml_spans
         self.rb_spans = rb_spans
+        self.compute_speed = compute_speed
         self.hybrid_spans = hybrid_spans
         self.main_mode = main_mode
         self.note_id_regex = note_id_regex
@@ -98,10 +100,6 @@ class PseudoScorer:
         t0 = time.time()
         preds = list(nlp.pipe(clean_docs).set_processing(show_progress=True))
         duration = time.time() - t0
-        speeds = dict(
-            wps=sum(len(d) for d in docs) / duration,
-            dps=len(docs) / duration,
-        )
         modes = {
             "ml": {self.ml_spans: self.labels},
             "rb": {self.rb_spans: self.labels},
@@ -109,20 +107,61 @@ class PseudoScorer:
         }
 
         examples = make_examples(docs, preds)
-        token_scores = ner_token_scorer(examples, modes[self.main_mode])["micro"]
-        redact_scores = redact_scorer(examples, modes[self.main_mode])["micro"]
+        token_scores = ner_token_scorer(examples, modes[self.main_mode])
+        redact_scores = redact_scorer(examples, modes[self.main_mode])
 
-        scores = {
-            **speeds,
-            "p": token_scores["p"],
-            "r": token_scores["r"],
-            "f": token_scores["f"],
-            "redact": redact_scores["r"],
-            "full": redact_scores["full"],
-        }
+        metrics = (
+            [
+                {
+                    "type": "troughput",
+                    "name": "Speed / Words per second / Value",
+                    "value": sum(len(d) for d in docs) / duration,
+                },
+                {
+                    "type": "troughput",
+                    "name": "Speed / Docs per second / Value",
+                    "value": len(docs) / duration,
+                },
+            ]
+            if self.compute_speed
+            else []
+        )
+        metrics.extend(
+            [
+                metric
+                for label in [*self.labels, "micro"]
+                for metric in (
+                    {
+                        "type": "precision",
+                        "name": f"Token Scores / {label} / Precision",
+                        "value": token_scores[label]["p"],
+                    },
+                    {
+                        "type": "recall",
+                        "name": f"Token Scores / {label} / Recall",
+                        "value": token_scores[label]["r"],
+                    },
+                    {
+                        "type": "f1",
+                        "name": f"Token Scores / {label} / F1",
+                        "value": token_scores[label]["f"],
+                    },
+                    {
+                        "type": "recall",
+                        "name": f"Token Scores / {label} / Redact",
+                        "value": redact_scores[label]["r"],
+                    },
+                    {
+                        "type": "accuracy",
+                        "name": f"Token Scores / {label} / Redact Full",
+                        "value": redact_scores[label]["full"],
+                    },
+                )
+            ]
+        )
 
         if not per_doc:
-            return scores
+            return metrics
 
         per_doc_records = []
         scoring_fns = {
@@ -133,11 +172,11 @@ class PseudoScorer:
         for doc, pred in zip(docs, preds):
             for scoring_fn in ["exact", "token", "redact"]:
                 for mode, span_getter in modes.items():
-                    doc_scores = scoring_fns[scoring_fn](
+                    doc_metrics = scoring_fns[scoring_fn](
                         [spacy.training.Example(pred, doc)],
                         span_getter=span_getter,
                     )
-                    for label, values in doc_scores.items():
+                    for label, values in doc_metrics.items():
                         record = {
                             "matching": scoring_fn,
                             "label": label,
@@ -155,4 +194,4 @@ class PseudoScorer:
                         )
                         per_doc_records.append(record)
 
-        return scores, per_doc_records
+        return metrics, per_doc_records

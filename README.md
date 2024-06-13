@@ -1,22 +1,13 @@
+<!-- modelcard -->
 <div>
-<a target="_blank">
-    <img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square" alt="Tests">
-</a>
-<a href="https://aphp.github.io/eds-pseudo/latest/" target="_blank">
-    <img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square" alt="Documentation">
-</a>
-<a href="https://codecov.io/gh/aphp/eds-pseudo" target="_blank">
-    <img style="display: inline" src="https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square" alt="Codecov">
-</a>
-<a href="https://github.com/psf/black" target="_blank">
-    <img style="display: inline" src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
-</a>
-<a href="https://python-poetry.org" target="_blank">
-    <img style="display: inline" src="https://img.shields.io/badge/repro-poetry-blue" alt="Poetry">
-</a>
-<a href="https://dvc.org" target="_blank">
-    <img style="display: inline" src="https://img.shields.io/badge/repro-dvc-blue" alt="DVC">
-</a>
+
+[<img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square" alt="Tests">]()
+[<img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square" alt="Documentation">](https://aphp.github.io/eds-pseudo/latest/)
+[<img style="display: inline" src="https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square" alt="Codecov">](https://codecov.io/gh/aphp/eds-pseudo)
+[<img style="display: inline" src="https://img.shields.io/badge/repro-poetry-blue?style=flat-square" alt="Poetry">](https://python-poetry.org)
+[<img style="display: inline" src="https://img.shields.io/badge/repro-dvc-blue?style=flat-square" alt="DVC">](https://dvc.org)
+[<img style="display: inline" src="https://img.shields.io/badge/demo%20%F0%9F%9A%80-streamlit-purple?style=flat-square" alt="Demo">](https://eds-pseudo-public.streamlit.app/)
+
 </div>
 
 # EDS-Pseudo
@@ -25,11 +16,14 @@ This project aims at detecting identifying entities documents, and was primarily
 on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 
 The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
-hybrid model (rule-based + deep learning) for which we provide rules ([`eds-pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds_pseudo/pipes))
+hybrid model (rule-based + deep learning) for which we provide
+rules ([`eds-pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds_pseudo/pipes))
 and a training recipe [`train.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/train.py).
 
-We also provide some fictitious templates ([`templates.txt`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.txt)) and a script to
-generate a synthetic dataset [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py).
+We also provide some fictitious
+templates ([`templates.txt`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.txt)) and a script to
+generate a synthetic
+dataset [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py).
 
 The entities that are detected are listed below.
 
@@ -51,14 +45,24 @@ The entities that are detected are listed below.
 
 ## Downloading the public pre-trained model
 
-The public pretrained model is available on the HuggingFace model hub, and was trained
-on synthetic data (see [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py)). You can also test
-it directly on its huggingface hub page:
-[AP-HP/eds-pseudo-public](https://huggingface.co/AP-HP/eds-pseudo-public).
+The public pretrained model is available on the HuggingFace model hub at
+[AP-HP/eds-pseudo-public](https://hf.co/AP-HP/eds-pseudo-public) and was trained on synthetic data
+(see [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py)). You can also
+test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
 
 ```shell
 pip install "edsnlp[ml]"
 ```
+
+Login to huggingface with your token (only once)
+
+```python
+import huggingface_hub
+
+huggingface_hub.login(new_session=False)
+```
+
+and you are ready to use the model:
 
 ```python
 import edsnlp
@@ -78,16 +82,19 @@ for ent in doc.ents:
 To apply the model on many documents using one or more GPUs, refer to the documentation
 of [edsnlp](https://aphp.github.io/edsnlp/latest/tutorials/multiple-texts/).
 
-## Installation
+<!-- metrics -->
 
-Clone eds-pseudo:
+## Installation to reproduce
+
+If you'd like to reproduce eds-pseudo's training or contribute to its development, you should first clone it:
 
 ```shell
 git clone https://github.com/aphp/eds-pseudo.git
 cd eds-pseudo
 ```
 
-And install the dependencies. We recommend pinning the library version in your projects, or use a strict package manager like [Poetry](https://python-poetry.org/).
+And install the dependencies. We recommend pinning the library version in your projects, or use a strict package manager
+like [Poetry](https://python-poetry.org/).
 
 ```shell
 poetry install
@@ -142,7 +149,8 @@ Before training a model, you should update the
 [pyproject.toml](https://github.com/aphp/eds-pseudo/blob/main/pyproject.toml) files to
 fit your needs.
 
-Put your data in the `data/dataset` folder (or edit the paths `configs/config.cfg` file to point to `data/gen_dataset/train.jsonl`).
+Put your data in the `data/dataset` folder (or edit the paths `configs/config.cfg` file to point
+to `data/gen_dataset/train.jsonl`).
 
 Then, run the training script
 
@@ -150,7 +158,8 @@ Then, run the training script
 python scripts/train.py --config configs/config.cfg --seed 43
 ```
 
-This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (defaults to `data/dataset/test.jsonl`) with:
+This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (defaults
+to `data/dataset/test.jsonl`) with:
 
 ```shell
 python scripts/evaluate.py --config configs/config.cfg
@@ -197,10 +206,6 @@ If you use EDS-Pseudo, please cite us as below:
   publisher={Georg Thieme Verlag KG}
 }
 ```
-
-## Documentation
-
-Visit the [documentation](https://aphp.github.io/eds-pseudo/) for more information!
 
 ## Acknowledgement
 
