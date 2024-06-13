@@ -66,7 +66,7 @@ POUR MME [ANA](PRENOM) [PREDAN](NOM) RDV  [12.1.2023](DATE) AU [12 RUE DU DOCTEU
 
 Tel : [(34) 02.29.18.05.95](TEL) Pr [Jillian](PRENOM) [CHILVAY](NOM)
 
-Père: [HELLAL](NOM) [Guillaume](PRENOM) [06543218672](SECU)
+Père: [HELLAL](NOM) [Guillaume](PRENOM) [0654321867](TEL)
 
 IPP: [5820136284](IPP)
 
@@ -138,7 +138,7 @@ En joignant Dr. [Albert](NOM) [Lila](PRENOM) Tél : [01 56 83 34 26](TEL)ilig si
 
 Document imprimé de Hôpital [Charles-Nicolle](HOPITAL) le [02/09/2021](DATE) à 09:23
 
-Avis du [12/02/2027](DATE) par le Dr.roubes komnis Buhitt insermis mendiscoc Numéro de Keien [130064081](SECU)
+Avis du [12/02/2027](DATE) par le Dr.roubes komnis Buhitt insermis mendiscoc Numéro de Keien [2 9 2 4 1 8 7 6 5 3 2 9 8 9 0](SECU)
 
 En contactant le service d'izu pharmacologie de Hôpital [Avicenne](HOPITAL). Tél: [06 60 76 58 92](TEL)
 
@@ -170,11 +170,11 @@ Compte-rendus du service de chirurgie digestive et endocrinienne du Hôpital [Be
 
 [FABRIZI](NOM) [Patrick](PRENOM), RDV des [18 avril](DATE) et [20 avril 2022](DATE) à 7h45 à Hôpital [la Pitié Salpêtrière](HOPITAL).
 
-Assuré : [Pierre](PRENOM) [FAIRMAN](NOM) N° [402 654 803 958 12](SECU)
+Assuré : [Pierre](PRENOM) [FAIRMAN](NOM) [292418765329890](SECU)
 
 Déclaré décédé le [12/09/2018](DATE) par le Dr. [Arthur](PRENOM) [LÉONARD](NOM)
 
-Résultats de laboratoire pour [RUFUNA](NOM) [Marine](PRENOM). Mention: Anormal, [15/12/2019](DATE), [NDA 98765431256](NDA)
+Résultats de laboratoire pour [RUFUNA](NOM) [Marine](PRENOM). Mention: Anormal, [15/12/2019](DATE), [98765431256](NDA)
 
 Radiographie pulmonaire prise le [25/07/2021](DATE) à Hôpital [Lariboisière](HOPITAL)
 
@@ -196,7 +196,7 @@ IPP: [5698230405](IPP), [Alexis](PRENOM) [GROS](NOM), né le [04/06/1976](DATE_N
 
 L'examen a été réalisé le [20 août 2017](DATE) par le Docteur [MAURON](NOM) [Anthéa](PRENOM) au sein de Hôpital [Lariboisière](HOPITAL).
 
-Mademoiselle [Lucie Duval](NOM) est née le [14 septembre 1982](DATE_NAISSANCE) dans la ville de [Nantes](VILLE).
+Mademoiselle [Lucie](PRENOM) [Duval](NOM) est née le [14 septembre 1982](DATE_NAISSANCE) dans la ville de [Nantes](VILLE).
 
 Son domicile se situe au [85 rue de Rivoli](ADRESSE), à [Paris](VILLE) dans le [75001](ZIP).
 
@@ -343,6 +343,7 @@ Liste des Cliniciens associés: Dr [J.](PRENOM) [CHARPENTIER](NOM) [08.16.83.43.
 [0 5 0 8 2 0 1 4](DATE) [LECOMTE](NOM) [Fernand](PRENOM) [2 0 8 5 5 0 6 8 4 3 6 1 8 2 5 4](SECU) [0 5 0 8 2 0 0 2](DATE_NAISSANCE) INFLIXIMAB 100mg/10ml SOL P.j: Injection IV 3mg soit 0.3 ml une fois tous les jours [LECOMTE](NOM) [Fernand](PRENOM) [0 5 0 8 2 0 1 4](DATE) [2 0 8 5 5 0 6 8 4 3 6 1 8 2 5 4](SECU) [0 5 0 8 2 0 0 2](DATE_NAISSANCE) USTEKINUMAB 45 mg/0.5ml SOL INJ SER (STELARA*) : Injection SC d'une dose de 45mg tous les 4 mois [LECOMTE](NOM) [Fernand](PRENOM) [8 5 0 6 8 4 3 1 8 2 1 4](SECU) [0 5 0 8 2 0 0 2](DATE_NAISSANCE) INFLIXIMAB 100mg/10ml SOL P.j: Injection 3mg soit 0.3 ml une fois tous les 2 semaines pendant 3 mois
 
 Rendez-vous pour [BERTHA](PRENOM) [MOREL](NOM) prévu le [16.5.2023](DATE) à l'adresse [11 COURS ALBERT THOMAS](ADRESSE) [69003](ZIP) [LYON](VILLE)
+Changement de sonde à [Bichat](HOPITAL).
 
 Résumé des consultations de chimiothérapie AB 4B2 : AB T18, Lymphome diffus- Dr. [B.](PRENOM) [DUVAL](NOM) : [0603926530](TEL)
 
@@ -387,7 +388,7 @@ Consulter en coalition avec : Dr [Lazard](NOM) [Martien](PRENOM) - [01.42.18.76.
 Rendez-vous donné à Mme [Dufour](PRENOM) [Elodie](NOM) pour le [01/06/2023](DATE) au [12 Avenue du Roule](ADRESSE) [75008](ZIP) [Paris](VILLE)
 Liste des Cliniciens associés : Dr [Favier](NOM) [Simon](PRENOM) [06.44.22.56.68](TEL),  Dr [Dupuis](NOM) [Guillaume](PRENOM) [06.43.12.44.98](TEL) [dupuisg@healthcare.com](MAIL), Dr [Robinet](NOM) [Paul](PRENOM) [06.45.22.44.88](TEL)
 Date d'admission : [13/04/2022](DATE) [Leite](NOM) [Maria](PRENOM) [10/07/1980](DATE_NAISSANCE), [4019341801](IPP)
-Résumé de la chirurgie : Dr [Leboeuf](NOM) [François](PRENOM), [2029342803](NDA), né le [02/12/1970](DATE_NAISSANCE)
+Résumé de la chirurgie : Dr [Leboeuf](NOM) [François](PRENOM), Patient n°[2029342803](IPP), né le [02/12/1970](DATE_NAISSANCE)
 Référence clinique: Infectiologie C6: Dr. [L.](PRENOM) [Leblanc](NOM) : T [06.28.42.50.30](TEL). Mme [A.](PRENOM) [Andre](NOM) [06.28.42.50.32](TEL), Dr [A.](PRENOM) [Anan](NOM) [06/28/42/50/36](TEL)
 Veuillez relayer toutes les informations concernant le suivi aux partenaires : Dr [Bernard](PRENOM) [Smith](NOM), [bernard.smith@univ-med.com](MAIL), Hôpital [Georges Pompidou](HOPITAL) [75015](ZIP) [(33) 01-32-39-28-25](TEL)
 
@@ -442,10 +443,12 @@ Tel : [03 01 09 56 76](TEL)
 Fax : [03 01 09 58 65](TEL) ou 64
 
 [TAILLARD](NOM), [TAILLARD](NOM) [PIERRE](PRENOM)
-[0 8 0 4 1 9 4 1](DATE_NAISSANCE)
+[TAILLARD](NOM), [TAILLARD](NOM) [PIERRE](PRENOM)
+[08 . 04 . 1941](DATE_NAISSANCE)
 N° FINESS
-98760328
+9 8 7 6 0 3 2 8
 [05 1 2 2 0 2 4](DATE)
+9 1 0 2 0 0 0 2 2
 678901245
 [1 1 8 6 8 8 0 1 4 9 9 6 6 3 9](SECU)
 [55 BOULEVARD VICTOR HUGO](ADRESSE), [75018](ZIP), [PARIS](VILLE)
@@ -453,24 +456,41 @@ N° FINESS
 [GOMAU](NOM), [GOMAU](NOM) [FRANCISCO](PRENOM)
 [1 2 0 2 1 9 4 0](DATE_NAISSANCE)
  N° FINESS
-43567891
-[01 1 5 2 0 2 1](DATE)
+4 3 5 6 7 8 9 1
+[0 1 1 5 2 0 2 1](DATE)
 789001234
 [1 8 9 4 2 2 0 9 7 4 1 7 8 2 4](SECU)
+[GOMAU](NOM), [GOMAU](NOM) [FRANCISCO](PRENOM)
+[0 1 1 5 2 0 2 1](DATE)
   [17 PASSAGE THÉO PERULOGA](ADRESSE), [94 403](ZIP), [QUOICOUBEY](VILLE)
+[0 1 1 5 2 0 2 1](DATE)
+[GOMAU](NOM), [GOMAU](NOM) [FRANCISCO](PRENOM)
+[1 2 0 2 1 9 4 0](DATE_NAISSANCE)
+ N° FINESS
+4 3 5 6 7 8 9 1
+[0 1 1 5 2 0 2 1](DATE)
+7 8 9 0 0 1 2 3 4
+780012342
+[1 8 9 4 2 2 0 9 7 4 1 7 8 2 4](SECU)
+[GOMAU](NOM), [GOMAU](NOM) [FRANCISCO](PRENOM)
+[0 1 1 5 2 0 2 1](DATE)
+  [17 PASSAGE THÉO PERULOGA](ADRESSE), [94 403](ZIP), [QUOICOUBEY](VILLE)
+[0 1 1 5 2 0 2 1](DATE)
 
 [DUMONT](NOM), [DUMONT](NOM) [PAUL](PRENOM)
 [1 2 0 5 1 9 5 0](DATE_NAISSANCE)
+9 2 0 1 0 0 0 2 8
 N° FINESS
 43567891
 Nº RPPS
 [01 1 5 2 0 0 1](DATE)
+[DUMONT](NOM), [DUMONT](NOM) [PAUL](PRENOM)
 789001234
 [1 8 9 4 2 2 0 9 7 4 1 7 8 2 4](SECU)
 [17 AVENUE GABRIEL PERI](ADRESSE), [94400](ZIP), [VILLEJUIF](VILLE)
 
 [ROBERT](NOM), [ROBERT](NOM) [HENRI](PRENOM)
-[0 7 0 3 1 9 5 8](DATE_NAISSANCE)
+[07 . 03 . 1958](DATE_NAISSANCE)
 N° FINESS
 12345067
 N° RPPS
@@ -668,7 +688,7 @@ Copie à : Dr. [Marti](PRENOM) [MALEVILLE](NOM)
 NDA : [837264503](NDA) - IPP : [2025042320](IPP)
 [Jean](PRENOM) [BONNET](NOM), né le [03/03/1975](DATE_NAISSANCE)
 [2 RUE DE LA LIBERTE](ADRESSE) [75002](ZIP) [PARIS](VILLE)
-Tél. [07 77 77 77 77](TEL) - Mobile. [07 77 77 77 77](TEL) [jbonnet@free.fr](MAIL) [5123456789873](SECU).
+Tél. [07 77 77 77 77](TEL) - Mobile. [07 77 77 77 77](TEL) [jbonnet@free.fr](MAIL) [29 241 876 532 98 90](SECU).
 Conclusions transmises au Dr [FABIEN](PRENOM) [REMUS](NOM) pour suivi.
 Prochain RDV prévu pour [fin septembre](DATE).
 Par téléphone : Prise de contact le [01/05/2020](DATE) à 10h pour présentation du programme de suivi.
@@ -881,7 +901,7 @@ Erythromicine depuis [06-03-02](DATE);
 CR Consultation [AVC](HOPITAL) au CHU de [Lille](VILLE) C. NEPHROPATIE, Imprimé le [01/01/2011](DATE) - 02:03
 ————————————————— ———————— ———————————————————— ———————————————————————
 [28 ter, place de Beaubourg](ADRESSE)
-[93000](ZIP) [THIELLES](VILLE), France
+[93000](ZIP) [THIELLES CEDEX](VILLE), France
 Standard : [01 29 38 47 10](TEL) ou 23 34
 
 (1)09:32 95 8149 48 95 019 0 3 041 0 1 061 17 0 7 0
@@ -979,6 +999,12 @@ quant à lui préfère se battre. Je ne peux pas le prêter, mon sifflet à roul
 on a décidé qu’[Emilien](PRENOM) préviendrait [Rufus](PRENOM) et [Rufus](PRENOM) sifflerait
 à la place d’[Emilien](PRENOM). C'était ainsi que les choses se passaient dans la cour
 d'école, non loin du centre anti-poison de [Lille](VILLE).
+Niveau oeil gauche: 10/12
+Niveau oeil droit: 12/12
+Infirmiers: [theodore](PRENOM) [roux](NOM), [marie cécile](PRENOM) [lefevre](NOM)
+v ACTES MEDICAUX REALISES A L'ENTREE
+v RISQUES D'INFECTION
+v CONSTANTES FINALES
 
 Bilan:
 Prothèse DMO [2016](DATE) en place.
@@ -988,7 +1014,7 @@ Prothèse DMO [2016](DATE) en place.
 - Créatinine 32 µmol/L
 - Lucentis, Oeil droit, 2mL
 - Lucentis, Oeil gauche, 12mL
-Prochaine visite dans 4semaines.
+Prochaine visite dans 4semaines, en suivi à [Mondor](HOPITAL).
 On propose de se revoir en [fin 2025](DATE) pour se raconter nos vies, sauf si problème,
 par ex. canicule lors de l'été [2024](DATE). Médicaments selon l'année:
 o ([2021](DATE)): Euthyrox
@@ -1032,7 +1058,7 @@ ________
 [François](PRENOM) pour une angiographie. Il a été planifié un rendez-vous de suivi les [18](DATE) et [19/01/2018](DATE) avec le DR [Déo](NOM) [François](PRENOM). Elle a une tension artérielle de 120/80 mmHg, un ECG normal, pas de signes d'ischémie myocardique, un rythme cardiaque régulier et une fonction ventriculaire gauche préservée. Ses analyses sanguines sont normales. Elle a une prothèse DMO depuis [2016](DATE).
 Sa naissance a pris plusieurs heures du [1er fév] au [2 février mille neuf cent cinquante deux](DATE_NAISSANCE).
 
-En ([deux mille dix sept](DATE)), [Jouy en Josas](VILLE)
+En ([deux mille dix sept](DATE)), [Jouy en Josas CEDEX](VILLE)
 Chère Consœur,
 M. [Emmanuel](PRENOM) [Macrin](NOM), suite à la récente publication Development and validation of a natural language processing algorithm to pseudonymize documents in the context of a clinical data warehouse, Tannier X, Wajsbürt P, Calliger A, Dura B., Bey R, Mouchet A., Hilka M. et al., Methods Inf Med. 2024., nous demande si il est possible de transférer hors d'un EDS les données pseudonymisées
 Pr. [Sanson](PRENOM) [Renaudaut](NOM) (0000)
@@ -1040,7 +1066,80 @@ Pr. [Sanson](PRENOM) [Renaudaut](NOM) (0000)
 MM [Etienne](PRENOM) [Sandrin](NOM) et [DUCLOT](NOM) [Paul](PRENOM)
 1111111111111111111111111
 Service d'Hépatologie du CHU d'[Anger](VILLE)
-avec cet algorithme ? Bien évidemment la réponse est non, car cela nécessite également d'inspecter de façon approfondie chque doooocument afin qu'aucune information liée au patient ne puisse permettre de remonter à ce dernier. Il faut que les textes sur M. [Macrin](NOM) soient anonymisés et pas seulement pseudonymisés. Le frère d'[Emmanuel](PRENOM) a récemment intégré la CNIL ([2022](DATE)) et valide mon avis.
+avec cet algorithme ? Bien évidemment la réponse est non, car cela nécessite également d'inspecter de façon approfondie chque doooocument afin qu'aucune information liée au patient ne puisse permettre de remonter à ce dernier. Il faut que les textes sur M. [Macrin](NOM) soient anonymisés et pas seulement pseudonymisés. Le frère [lyonnais](VILLE) d'[Emmanuel](PRENOM) a récemment intégré la CNIL ([2022](DATE)) et valide mon avis.
 Amicalement vôtre,
 [Emilie](PRENOM) [Sandra](NOM)
 Ce document a été validé le [dix-huit juillet deux-milles vingts troiss](DATE) par [Timothé](PRENOM) [Chalomet](NOM).
+
+[RHIFDA](NOM) [aziz](PRENOM) [12/12/2012](DATE)RAPPORT HOLTER
+-1-HIVPSN OLA Medical SACROSCOPE MonoChannel-SingleDay Version 4/10 SN: AYZ12049210
+Analysé par:
+Date de l'examen:
+383838383838
+PATIENT: [RHIFDA](NOM)
+Prénom: [aziz](PRENOM)
+Date de naissance: [12/12/1994](DATE_NAISSANCE)
+Age: 72 ans n°ID: [80123456](IPP)
+Sexe: Masc
+Score de Snell: 5/11
+Score Trenell: 3/4
+Score de Picpus du [3/9](DATE): 10/10
+Dernier examen ([2013 janvier](DATE))
+[RHIFDA](NOM) [aziz](PRENOM) [13/07/2013](DATE)BIOPSIES VENTRICULAIRES
+RAS, similaire à [10-12-2006](DATE), envoyé chez lui au [45 passage de ternes](ADRESSE)
+
+Ordonnance bizone
+n° 94782*12 Articles L.322-3, 3° et 4°, L. 324-1 et R. 161-45 du Code de la sécurité sociale
+Identification du prescripteur Identification de la structure
+(nom, prénom et identifiant) (raison sociale du cabinet, de l'établissement et N°AM, FINESS ou SIRET)
+[JEAN-MARC](PRENOM) [BIENLABAS](NOM) GH [ARMAND TROUSSEAU-LA ROCHE GUYON](HOPITAL)
+
+Donné favori à l'élection présidentielle française de [1995](DATE), il renonce à se présenter à la surprise générale. Il perd ensuite en influence et ne retrouve pas de fonction de premier plan, prenant occasionnellement position sur les questions européennes.
+[Jacques Lucien Jean](PRENOM) [Delors](NOM) est le fils de [Louis](PRENOM) [Delors](NOM), encaisseur à la Banque de France et catholique pratiquant, natif du [Lonzac](VILLE) en Corrèze, et de [Jeanne Joséphine](PRENOM) [Rigal](NOM), née à [Paris](VILLE), d'extraction cantalienne.
+[Jacques](PRENOM) [Delors](NOM) grandit dans le quartier [parisien](VILLE) de [Ménilmontant](ADRESSE).
+
+En [1948](DATE), il épouse [Marie](PRENOM) [Lephaille](NOM), née en [1923](DATE_NAISSANCE) et morte en [2020](DATE). Leur fille [Martine](PRENOM) naît en [1950](DATE_NAISSANCE) puis un fils, [Jean-Paul](PRENOM), naît en [1953](DATE_NAISSANCE). Celui-ci meurt d'une leucémie en [février mille neuf-cent quatre-vingt 2](DATE), à l'âge de 29 ans. La demeure familiale est située dans le département de l'Yonne. [Jacques](PRENOM) [Delors](NOM) était un fervent soutien du LOSC de [Lille](VILLE).
+
+En [1903](DATE), M. [Henri](PRENOM) [Mondor](NOM) rejoint [la capitale](VILLE) pour suivre ses études à la faculté de médecine. C'est là qu'il se lie d'amitié avec un condisciple, M [Georges](PRENOM) [Duhamel](NOM). En [1906](DATE), il est reçu premier au concours de l'externat. En [1909](DATE), il est reçu au concours de l'internat des hôpitaux de [Paris](VILLE), en deuxième position dans une promotion de 55 nouveaux internes. En [1913](DATE), il est interne médaille d'or en chirurgie. Il a pour mère Mme [Jeanne Agnès](PRENOM) [Vidal](NOM)
+
+[Jeudi dix-sept Octobre deux mille dix huit](DATE)
+[1 2 . 0 6 . 1 9 8 1](DATE_NAISSANCE)
+[1 2 0 6 2 0 3 1](DATE)
+8 2 1 6 3 2 4 1 3 7
+[1 3 0 6 2 0 3 1](DATE)
+[1 2 6 1 2 3 8 5 2 1 9 2 1 1 1](SECU)
+[RAOULT](NOM), [RAOULT](NOM) [ROBERT](PRENOM)
+[RAOULT](NOM), [RAOULT](NOM) [ROBERT](PRENOM)
+[Jeudi dix-sept Octobre deux mille dix huit](DATE)
+8 2 1 6 3 2 4 1 3 7
+[2 7 1 1 2 0 3 2](DATE)
+[2 8 1 1 2 0 3 2](DATE)
+[ABHAGANEV LAMMARE](NOM) [LOUMI](PRENOM) GH [A.CHENEVIER-H.MONDOR](HOPITAL)
+[19 Avn Frederic Miterrand](ADDRESSE) [91013](ZIP) [CRETEIL CEDEX](VILLE)
+[1 3 0 6 2 0 3 1](DATE)
+9 2 0 3 0 1 2 2 3 7
+[1 2 6 1 2 3 8 5 2 1 9 2 1 1 1](SECU)
+[RAOULT](NOM), [RAOULT](NOM) [ROBERT](PRENOM)
+[RAOULT](NOM), [RAOULT](NOM) [ROBERT](PRENOM)
+[Jeudi dix-sept Octobre deux mille dix huit](DATE)
+[2 3 1 1 2 0 3 2](DATE)
+[2 4 1 1 2 0 3 2](DATE)
+
+MOTIF DE PRISE EN CHARGE
+Exploration d'un syndrome de Raynaud du pied gauche depuis 6 sem.
+ANTECEDENTS
+- [1966](DATE): derma-corticotiques globaux
+- [1968](DATE)-[1970](DATE): corticothérapie à globules rouges
+- [1973](DATE)-[1978](DATE): thérapie SAINTCLERC
+- [1995](DATE)-[juillet 1998](DATE): retour chez lui à [EVRY](VILLE)
+- [2018](DATE) elle est élue maire de [Nimes](VILLE)
+CONCLUSION
+On lui donne rdv dans 3 sem pour un suivi de son syndrome de Raynaud.
+
+Transfert en Centre Spécialisé pour la Grippe type Dupont
+| [14/02/2018](DATE) | [14/02/2018](DATE) | [14/02/2018](DATE) | [14/02/2018](DATE) |
+Paramètres vitaux:
+Température: 38.5°C ([14/02/2018](DATE)), Poids: 75kg ([13/05/2017](DATE)), Taille 1m75 ([13/05/2017](DATE)), IMC: 24.5 ([aout 18](DATE)), TA: 120/80 mmHg ([04/03/12](DATE))
+FC: 80 bpm ([13/05/2017](DATE)), FR: 16 cpm ([11/03](DATE))
+Prise de bicarbonate de sodium dans 2 sem (1g/j). Début ([2010](DATE)), Fin ([2012](DATE))
+Installation du dispositif le we du [10](DATE) - [12/08](DATE)
