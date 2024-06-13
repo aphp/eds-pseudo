@@ -1,23 +1,24 @@
 import collections
 import datetime
+import io
 import json
 import random
 import re
 import string
 import sys
+import zipfile
 from collections.abc import MutableMapping
 from pathlib import Path
 from random import choice
 
+import polars as pl
 from confit import Cli
+from confit.utils.random import set_seed
 from tqdm import tqdm
 
-import eds_pseudo.pipes.dates_normalizer.dates_normalizer
 import edsnlp
 from eds_pseudo.pipes.dates_normalizer.dates_normalizer import DatesNormalizer
 from edsnlp.core.registries import registry
-
-print(eds_pseudo.pipes.dates_normalizer.dates_normalizer.__file__)
 
 collections.MutableMapping = MutableMapping
 
@@ -249,7 +250,6 @@ hospitals = [
     "HOPITAL DE BICETRE",
     "HTD",
     "Hamburger",
-    "Hdj",
     "Hendaye",
     "Henri\nMondor",
     "Henri Ey",
@@ -591,11 +591,98 @@ def load_insee_deces(path="data/deces-2024-m03.txt"):
             if not city or (set(city) & set(string.digits)):
                 continue
             cities.append(city)
+
     return sorted(names), sorted(cities)
 
 
-def pick_fake_name(names, firstname_case=None, lastname_case=None):
+def load_natality(path="data/nat2022.csv", threshold=100):
+    """
+    CSV format exemple:
+    sexe;preusuel;annais;nombre
+    1;ABD'ALLAH;2011;6
+
+    Parameters
+    ----------
+    path: str
+        Path to the CSV file
+
+    """
+    path = Path(path)
+    if not path.exists():
+        import requests
+
+        url = "https://www.insee.fr/fr/statistiques/fichier/7633685/nat2022_csv.zip"
+        print(f"Downloading natality dataset from {url}")
+        response = requests.get(url)
+
+        # unzip and write
+        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+            with z.open(path.name) as f:
+                path.write_text(f.read().decode("utf-8"))
+
+    df = pl.scan_csv(
+        path,
+        separator=";",
+        schema={
+            "sexe": pl.Int32,
+            "preusuel": pl.Utf8,
+            "annais": pl.Utf8,
+            "nombre": pl.Int32,
+        },
+    )
+    df = df.filter(
+        (pl.col("preusuel") != "_PRENOMS_RARES") & (pl.col("annais") != "XXXX")
+    )
+    df = df.select(
+        pl.col("preusuel"),
+        pl.col("annais").cast(pl.Int32).alias("annais"),
+        pl.col("nombre"),
+    )
+    df = df.group_by(["preusuel"]).agg(pl.sum("nombre").alias("nombre"))
+    df = df.filter(pl.col("nombre") > threshold)
+    df = df.select(
+        pl.col("preusuel").alias("prenom"),
+        (1 / pl.col("nombre") ** 0.25).alias("prob"),
+    )
+    df = df.select(pl.col("prenom"), pl.col("prob") / pl.col("prob").sum())
+    df = df.collect()
+    firstnames = df["prenom"].to_list()
+    probs = df["prob"].to_list()
+    return firstnames, probs
+
+
+def load_names_and_cities(path="data/deces-2024-m03.txt", nat_names_ratio=0.5):
+    """
+    Names will be:
+    - part true names (first + last) from the INSEE deceased records
+    - part randomly sampled firstnames from the natality dataset, merged with
+      randomly sampled lastnames from the INSEE records
+    This is because the INSEE dataset is not representative of the general
+    living population, since it only contains deceased people.
+    """
+    full_names, cities = load_insee_deces(path)
+    firstnames, probs = load_natality()
+
+    n_gen_full_names = int(len(full_names) * nat_names_ratio)
+    sampled_firstnames = [
+        (n,) for n in random.choices(firstnames, probs, k=n_gen_full_names)
+    ]
+    all_lastnames = list(dict.fromkeys(n[1] for n in full_names))
+    sampled_lastnames = random.choices(all_lastnames, k=n_gen_full_names)
+    full_names_2 = full_names + list(zip(sampled_firstnames, sampled_lastnames))
+    return sorted(full_names_2), sorted(cities)
+
+
+total = 0
+
+
+def pick_fake_name(names):
+    global total
+
+    total += 1
     first_names, last_name = random.choice(names)
+    if random.randint(0, 2):
+        first_names = first_names[:1]
     num_names_to_use = random.choice([1, 1, 1, 1, 1, 2, 2, 2, 3])
     first_names = first_names[:num_names_to_use]
     return first_names, (last_name,)
@@ -720,6 +807,9 @@ def generate_random_date(year=None, format=None, allow_missing_parts=False):
     if format == "dddddddd":
         return " ".join(random_date.strftime("%d%m%Y"))
     result = format_date(random_date, format=format, locale="fr_FR")
+
+    if random.randint(0, 20) == 0 and not (set(result) & set(string.ascii_letters)):
+        result = " ".join(char for char in result if char != " ")
 
     # Remove dots like "12 sept. 2012"
     if "." not in format and random.randint(0, 4):
@@ -895,7 +985,7 @@ def augment_sample(sample, *, fake_names, fake_cities):
     normalizer = DatesNormalizer(None, format="java")
     mem = {}
     last_first_names, last_last_name = None, None
-    birth_year = random.randint(1970, 2010)
+    birth_year = random.randint(1970, 2100)
 
     def pick_replacement(match):
         nonlocal last_first_names, last_last_name
@@ -1005,7 +1095,7 @@ def parse_formatted_sample(text, check_parsing_errors=False):
 
 @app.command(name="generate_dataset", registry=registry)
 def generate_dataset(
-    seed: int = 123,
+    seed: int = 42,
     augmentations_ratio: int = 5,
     dummy_snippets_ratio: float = 2,
     staff_list_snippets_ratio: float = 0.5,
@@ -1030,12 +1120,15 @@ def generate_dataset(
     target_words: int
         Target number of words in the generated dataset.
     """
+    set_seed(seed)
     gen_dataset = []
     nlp = edsnlp.blank("eds")
-    fake_names, fake_cities = load_insee_deces()
+    fake_names, fake_cities = load_names_and_cities(nat_names_ratio=0.5)
     templates = Path("data/templates.txt").read_text().split("\n\n")
     total_words = 0
     dup_freq = 0.1
+    dup_newline_prob = [100, 15, 10, 5]
+    dup_newline_prob = [p / sum(dup_newline_prob) for p in dup_newline_prob]
     dup_max_count = 10
     dup_count_probs = [(0.5**i) for i in range(dup_max_count)]
     dup_count_probs = [p / sum(dup_count_probs) for p in dup_count_probs]
@@ -1064,8 +1157,9 @@ def generate_dataset(
                 *dummy_snippets,
                 *staff_list_snippets,
             ):
+                lines = text.split("\n")
+                # Duplicate lines
                 if random.random() < dup_freq:
-                    lines = text.split("\n")
                     safe_lines = [
                         idx
                         for idx, line in enumerate(lines)
@@ -1085,7 +1179,20 @@ def generate_dataset(
                             range(1, 1 + dup_max_count), dup_count_probs
                         )[0]
                         lines[dup_idx:dup_idx] = [lines[dup_idx]] * n
-                        text = "\n".join(lines)
+
+                # Duplicate new lines
+                for i in range(len(lines)):
+                    n_dup = random.choices(
+                        range(len(dup_newline_prob)), dup_newline_prob
+                    )[0]
+                    lines[i] = lines[i] + "\n" * n_dup
+
+                n_dup = random.choices(range(len(dup_newline_prob)), dup_newline_prob)[
+                    0
+                ]
+                text = "\n".join(lines)
+                text = "\n" * n_dup + text
+
                 if not text.strip():
                     continue
                 doc = parse_formatted_sample(text)
