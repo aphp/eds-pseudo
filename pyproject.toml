@@ -1,15 +1,10 @@
-[tool.edsnlp]
-# Suggestion: choose a name that mixes both the architecture (eds-pseudo) and the
-# dataset on which the model was trained (aphp)
-# This field will be read by script/package.py
-model_name = "eds-pseudo-public"
-
 [tool.poetry]
 name = "eds-pseudo"
 version = "0.3.0"
 description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
 authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 readme = "README.md"
+exclude = ["**/*.pyc", "**/__pycache__/*", "**/.ipynb_checkpoints/"]
 
 [tool.poetry.plugins."spacy_factories"]
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
@@ -31,16 +26,18 @@ readme = "README.md"
 # /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
 python = ">=3.8,<4.0"
 edsnlp = { version = ">=0.10.7", extras = ["ml"] }
-sentencepiece = "^0.1.96"
+sentencepiece = ">=0.1.96"
 
 [tool.poetry.group.dev.dependencies]
 dvc = { version = "^2.37.0", markers = "python_version >= '3.8'" }
-loguru = "^0.6.0"
-typer = "^0.6.1"
+loguru = ">=0.6.0"
+typer = ">=0.6.1"
+polars = "*"
 pandas = [
     { version = ">=1.1.0,<2.0.0", markers = "python_version < '3.8'" },
     { version = ">=1.4.0,<2.0.0", markers = "python_version >= '3.8'" }
 ]
+tabulate = "*"
 pyarrow = "^7.0.0"
 fsspec = "^2022.3.0"
 black = "22.6.0"
@@ -52,7 +49,7 @@ mypy = "^0.950"
 coverage = "^6.5.0"
 toml = "^0.10.2"
 wheel = "^0.40.0"
-babel = "<2.0.0"
+babel = "*"
 accelerate = { version = "^0.21.0", markers = "python_version >= '3.8'" }
 rich-logger = "^0.3.0"
 scipy = [
