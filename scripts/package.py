@@ -25,8 +25,9 @@ def package(
     **kwargs,
 ):
     nlp = edsnlp.load(model)
-    metrics_table_parts = ["## Metrics"]
-    for result in nlp.meta["results"]:
+    results = nlp.meta.get("results", [])
+    metrics_table_parts = ["## Metrics"] if results else []
+    for result in results:
         grouped_metrics = defaultdict(lambda: {})
         for metric in result["metrics"]:
             parts = [key.strip() for key in metric["name"].split("/")]
@@ -52,7 +53,7 @@ def package(
         "model-index": [
             {
                 "name": hf_name,
-                "results": nlp.meta["results"],
+                "results": results,
             }
         ],
         "extra_gated_fields": {

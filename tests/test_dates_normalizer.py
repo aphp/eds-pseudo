@@ -117,7 +117,8 @@ java_examples = [
 
 @pytest.mark.parametrize("example", java_examples)
 def test_java_formatter(nlp, example):
-    nlp.get_pipe("eds_pseudo.dates_normalizer").format = "java"
+    print("NLP", nlp.pipe_names)
+    nlp.get_pipe("dates_normalizer").format = "java"
 
     text, entities = parse_example(example=example)
     doc = nlp.make_doc(text)
