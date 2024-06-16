@@ -63,7 +63,7 @@ class DatesNormalizer(BaseComponent):
     ----------
     nlp: PipelineProtocol
         The pipeline object
-    name: str = "eds.dates_normalizer"
+    name: str = "eds_pseudo.dates_normalizer"
         The name of the component
     span_getter: SpanGetterArg
         The spans to process as dates. Default to spans in `doc.ents` that have the
@@ -78,7 +78,7 @@ class DatesNormalizer(BaseComponent):
     def __init__(
         self,
         nlp: Optional[PipelineProtocol],
-        name: str = "eds.dates_normalizer",
+        name: str = "dates_normalizer",
         span_getter: SpanGetterArg = {"ents": ["DATE", "DATE_NAISSANCE"]},
         format: Literal["strftime", "java"] = "strftime",
     ):

@@ -1100,6 +1100,7 @@ def generate_dataset(
     dummy_snippets_ratio: float = 2,
     staff_list_snippets_ratio: float = 0.5,
     target_words: int = 2_000_000,
+    output_path: Path = "data/gen_dataset/train.jsonl",
 ):
     """
     Generate a synthetic dataset of fictitious medical notes annotated personal
@@ -1119,6 +1120,8 @@ def generate_dataset(
         Ratio of staff list snippets to generate.
     target_words: int
         Target number of words in the generated dataset.
+    output_path: Path
+        Path to save the generated dataset.
     """
     set_seed(seed)
     gen_dataset = []
@@ -1207,7 +1210,8 @@ def generate_dataset(
             len(gen_dataset), total_words
         )
     )
-    write_path = Path("data/gen_dataset/train.jsonl")
+    write_path = Path(output_path)
+    write_path.parent.mkdir(parents=True, exist_ok=True)
     write_path.write_text("\n".join([json.dumps(d) for d in gen_dataset]))
 
 

@@ -126,35 +126,42 @@ class PseudoScorer:
             if self.compute_speed
             else []
         )
+        empty_score = {
+            "p": float("nan"),
+            "r": float("nan"),
+            "f": float("nan"),
+            "full": float("nan"),
+        }
+        labels = self.labels if self.labels is not True else sorted(set(token_scores))
         metrics.extend(
             [
                 metric
-                for label in [*self.labels, "micro"]
+                for label in [*labels, "micro"]
                 for metric in (
                     {
                         "type": "precision",
                         "name": f"Token Scores / {label} / Precision",
-                        "value": token_scores[label]["p"],
+                        "value": token_scores.get(label, empty_score)["p"],
                     },
                     {
                         "type": "recall",
                         "name": f"Token Scores / {label} / Recall",
-                        "value": token_scores[label]["r"],
+                        "value": token_scores.get(label, empty_score)["r"],
                     },
                     {
                         "type": "f1",
                         "name": f"Token Scores / {label} / F1",
-                        "value": token_scores[label]["f"],
+                        "value": token_scores.get(label, empty_score)["f"],
                     },
                     {
                         "type": "recall",
                         "name": f"Token Scores / {label} / Redact",
-                        "value": redact_scores[label]["r"],
+                        "value": redact_scores.get(label, empty_score)["r"],
                     },
                     {
                         "type": "accuracy",
                         "name": f"Token Scores / {label} / Redact Full",
-                        "value": redact_scores[label]["full"],
+                        "value": redact_scores.get(label, empty_score)["full"],
                     },
                 )
             ]

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from spacy.tokens import Span
 
 from eds_pseudo.scorer import PseudoScorer
@@ -9,6 +11,7 @@ def test_scorer(nlp):
         rb_spans="pseudo-rb",
         hybrid_spans="pseudo-hybrid",
         main_mode="rb",
+        compute_speed=True,
     )
     text = "Dr. Juan a pour mail don juan@caramail.fr vit a grigny, tel 0607080910."
     doc = nlp.make_doc(text)
@@ -19,17 +22,27 @@ def test_scorer(nlp):
         Span(doc, 16, 17, "MAIL"),  # not a mail but to test the scorer
     ]
     main_scores = scorer(nlp, [doc, nlp.make_doc("")])
-    wps = main_scores.pop("wps")
-    dps = main_scores.pop("dps")
 
-    assert main_scores == {
-        "f": 0.8,
-        "full": 0.5,
-        "p": 6 / 7,
-        "r": 0.75,
-        "redact": 0.875,
+    grouped_metrics = defaultdict(lambda: {})
+    for metric in main_scores:
+        parts = [key.strip() for key in metric["name"].split("/")]
+        value = metric["value"]
+        current = grouped_metrics
+        for key in parts[:-1]:
+            current = current.setdefault(key, {})
+        current[parts[-1]] = value
+
+    assert set(grouped_metrics["Token Scores"]["micro"].keys()) == {
+        "F1",
+        "Redact Full",
+        "Precision",
+        "Recall",
+        "Redact",
     }
-    assert wps > 0 and dps > 0
+    assert (
+        grouped_metrics["Speed"]["Words per second"]["Value"] > 0
+        and grouped_metrics["Speed"]["Docs per second"]["Value"] > 0
+    )
 
     doc_scores = scorer(nlp, [doc, nlp.make_doc("")], per_doc=True)[1]
     assert doc_scores == [
