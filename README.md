@@ -50,34 +50,38 @@ The public pretrained model is available on the HuggingFace model hub at
 (see [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py)). You can also
 test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
 
-```shell
-pip install "edsnlp[ml]"
-```
+1. Install the latest version of edsnlp
 
-Login to huggingface with your token (only once)
+    ```shell
+    pip install "edsnlp[ml]" -U
+    ```
 
-```python
-import huggingface_hub
+2. Get access to the model at [AP-HP/eds-pseudo-public](https://hf.co/AP-HP/eds-pseudo-public)
+3. Create and copy a huggingface token https://huggingface.co/settings/tokens?new_token=true
+4. Register the token (only once) on your machine
 
-huggingface_hub.login(new_session=False)
-```
+    ```python
+    import huggingface_hub
 
-and you are ready to use the model:
+    huggingface_hub.login(token=YOUR_TOKEN, new_session=False, add_to_git_credential=True)
+    ```
 
-```python
-import edsnlp
+5. Load the model
 
-nlp = edsnlp.load("AP-HP/eds-pseudo-public", auto_update=True)
-doc = nlp(
-    "En 2015, M. Charles-François-Bienvenu "
-    "Myriel était évêque de Digne. C’était un vieillard "
-    "d’environ soixante-quinze ans ; il occupait le "
-    "siège de Digne depuis 2006."
-)
+   ```python
+   import edsnlp
 
-for ent in doc.ents:
-    print(ent, ent.label_, str(ent._.date))
-```
+   nlp = edsnlp.load("AP-HP/eds-pseudo-public", auto_update=True)
+   doc = nlp(
+       "En 2015, M. Charles-François-Bienvenu "
+       "Myriel était évêque de Digne. C’était un vieillard "
+       "d’environ soixante-quinze ans ; il occupait le "
+       "siège de Digne depuis 2006."
+   )
+
+   for ent in doc.ents:
+       print(ent, ent.label_, str(ent._.date))
+   ```
 
 To apply the model on many documents using one or more GPUs, refer to the documentation
 of [edsnlp](https://aphp.github.io/edsnlp/latest/tutorials/multiple-texts/).

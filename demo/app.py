@@ -79,8 +79,12 @@ st.sidebar.markdown(
     "Have a look at the "
     "[project](https://github.com/aphp/eds-pseudo/) for "
     "more information.\n"
-    "In particular, this model was trained on fictitious data "
-    "and should be tested on your own data before considering using it."
+    "In particular, the eds-pseudo-public model was trained on fictitious data "
+    "and should be tested on your own data before considering using it.\n"
+    "Since the data is fictitious, the model may produce errors or "
+    "inaccuracies on real-world cases. Consider finetuning it on your own data or "
+    "contributing to the training "
+    "[templates](https://github.com/aphp/eds-pseudo/tree/main/data/templates.txt)"
 )
 
 nlp = load_model()

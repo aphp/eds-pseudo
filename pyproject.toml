@@ -26,6 +26,7 @@ exclude = ["**/*.pyc", "**/__pycache__/*", "**/.ipynb_checkpoints/"]
 # /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
 python = ">=3.8,<4.0"
 edsnlp = { version = ">=0.12.0", extras = ["ml"] }
+transformers = ">=4.40"
 sentencepiece = ">=0.1.96"
 
 [tool.poetry.group.dev.dependencies]
@@ -39,7 +40,6 @@ pandas = [
 ]
 tabulate = "*"
 pyarrow = "^7.0.0"
-fsspec = "^2022.3.0"
 black = "22.6.0"
 flake8 = ">=3.0"
 pre-commit = "^2.18.1"
