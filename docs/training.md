@@ -1,4 +1,7 @@
-# Training
+# Training a custom model
+
+If neither the rule-based model nor the public model are sufficient for your needs, you can
+train your own model. This section will guide you through the process.
 
 ## Requirements
 
@@ -11,9 +14,8 @@ To train a model, you will need to provide:
 In any case, you will need to modify the
 [configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) file to
 reflect these changes. This configuration already contains the rule-based components of
-the previous section, feel free to add or remove them as you see fit. You may also want
-to modify the [pyproject.toml](https://github.com/aphp/eds-pseudo/blob/main/pyproject.toml) file to change the name of packaged model
-(defaults to `eds-pseudo-aphp`).
+the previous section, feel free to add or remove them as you see fit. The [configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) file also contains
+the name of the package model in the `[package]` section (defaults to `eds-pseudo-public`).
 
 ## DVC
 
@@ -49,10 +51,10 @@ dvc repro
     python scripts/package.py
     ```
 
-You should now be able to install and publish it:
+You should now be able to install and use it:
 
 ```{: .shell data-md-color-scheme="slate" }
-pip install dist/eds_pseudo_aphp-0.3.0-*
+pip install dist/eds_pseudo_your_eds-0.3.0-*
 ```
 
 ## Use it
@@ -62,10 +64,10 @@ To test it, execute
 === "Loading the packaged model"
 
     ```python
-    import eds_pseudo_aphp
+    import eds_pseudo_your_eds
 
     # Load the model
-    nlp = eds_pseudo_aphp.load()
+    nlp = eds_pseudo_your_eds.load()
     ```
 
 === "Loading from the folder"
@@ -106,3 +108,5 @@ existing_nlp = ...
 
 existing_nlp.add_pipe(nlp.get_pipe("ner"), name="ner")
 ```
+
+To apply the model in parallel on many documents using one or more GPUs, refer to the [Inference](/inference) page.

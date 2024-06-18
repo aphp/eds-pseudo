@@ -12,7 +12,7 @@
 
 # EDS-Pseudo
 
-This project aims at detecting identifying entities documents, and was primarily tested
+The EDS-Pseudo project aims at detecting identifying entities in clinical documents, and was primarily tested
 on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 
 The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
@@ -84,7 +84,7 @@ test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
    ```
 
 To apply the model on many documents using one or more GPUs, refer to the documentation
-of [edsnlp](https://aphp.github.io/edsnlp/latest/tutorials/multiple-texts/).
+of [edsnlp](https://aphp.github.io/eds-pseudo/main/inference).
 
 <!-- metrics -->
 

@@ -1,4 +1,4 @@
-# Quickstart
+# Rule-based model
 
 ## Installation
 
@@ -18,10 +18,9 @@ poetry install
 If you face issues with the installation, try to lower the maximum python version to
 <= 3.10 (in `pyproject.toml`).
 
-## Without machine learning
+## Rule-based model definition
 
-If you do not have a labelled dataset, you can still use the rule-based components of the
-model.
+A simple option consists in using the rule-based components of the model.
 
 ```python
 import edsnlp

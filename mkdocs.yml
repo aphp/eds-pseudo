@@ -28,11 +28,13 @@ theme:
 
 nav:
   - index.md
-  - quickstart.md
+  - Demo: https://eds-pseudo-public.streamlit.app" target="_blank
+  - dataset.md
+  - rule-based.md
+  - pretrained.md
   - training.md
   - inference.md
   - reproducibility.md
-  - dataset.md
   - results.md
   - changelog.md
 

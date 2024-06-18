@@ -1,6 +1,4 @@
-# Inference
-
-## Parallelizing inference
+# Parallelized Inference
 
 When processing multiple documents, we can optimize the inference by parallelizing the
 computation on multiple cores and GPUs.
