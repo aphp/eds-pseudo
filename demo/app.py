@@ -78,13 +78,18 @@ st.sidebar.markdown(
     "EDS-Pseudo is a contributive effort maintained by AP-HP's Data Science team. "
     "Have a look at the "
     "[project](https://github.com/aphp/eds-pseudo/) for "
-    "more information.\n"
+    "more information.\n\n"
     "In particular, the eds-pseudo-public model was trained on fictitious data "
-    "and should be tested on your own data before considering using it.\n"
+    "and should be tested on your own data before considering using it.\n\n"
     "Since the data is fictitious, the model may produce errors or "
     "inaccuracies on real-world cases. Consider finetuning it on your own data or "
     "contributing to the training "
     "[templates](https://github.com/aphp/eds-pseudo/tree/main/data/templates.txt)"
+    "\n\n"
+    "A few links:\n"
+    "- [Documentation](https://aphp.github.io/eds-pseudo/)\n"
+    "- [GitHub](https://github.com/aphp/eds-pseudo/)\n"
+    "- [Model card](https://huggingface.co/AP-HP/eds-pseudo-public)\n"
 )
 
 nlp = load_model()
