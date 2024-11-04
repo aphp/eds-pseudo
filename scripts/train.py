@@ -331,7 +331,7 @@ def train(
 
     preprocessed = list(
         nlp.preprocess_many(train_docs, supervision=True).set_processing(
-            backend="multiprocessing", show_progress=True
+            show_progress=True
         )
     )
     print(f"TRAINING DATASET SIZE: {len(preprocessed)}")
