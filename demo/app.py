@@ -11,16 +11,27 @@ d’environ soixante-quinze ans ; il occupait le
 siège de Digne depuis 2006."""
 
 
-@st.cache_resource()
-def load_model():
+@st.cache_resource
+def load_model(use_rule_based=False):
     model_load_state = st.info("Loading model...")
-    nlp = edsnlp.load("AP-HP/eds-pseudo-public")
+    if use_rule_based:
+        nlp = edsnlp.blank("eds")
+        nlp.add_pipe("eds.normalizer")
+        nlp.add_pipe(
+            "eds_pseudo.simple_rules",
+            config={"pattern_keys": ["TEL", "MAIL", "SECU", "PERSON", "RPPS"]},
+        )
+        nlp.add_pipe("eds_pseudo.addresses")
+        nlp.add_pipe("eds_pseudo.dates")
+        nlp.add_pipe("eds_pseudo.context")
+    else:
+        nlp = edsnlp.load("AP-HP/eds-pseudo-public")
     model_load_state.empty()
     return nlp
 
 
 @st.cache_data(max_entries=64)
-def apply_model(text):
+def apply_model(text, use_rule_based):
     doc = nlp(text)
     html = displacy.render(
         doc,
@@ -39,6 +50,7 @@ def apply_model(text):
                 "SECU": "#c5b0d5",
                 "TEL": "#8c564b",
                 "VILLE": "#c49c94",
+                "RPPS": "#e377c2",
             }
         },
     )
@@ -91,8 +103,10 @@ st.sidebar.markdown(
     "- [GitHub](https://github.com/aphp/eds-pseudo/)\n"
     "- [Model card](https://huggingface.co/AP-HP/eds-pseudo-public)\n"
 )
+# Rule-based vs pretrained switch
+use_rule_based = st.sidebar.checkbox("Use rule-based model", value=False)
 
-nlp = load_model()
+nlp = load_model(use_rule_based)
 
 st.header("Enter a text to analyse:")
 text = st.text_area(
@@ -102,9 +116,9 @@ text = st.text_area(
     max_chars=512,
 )
 
-data, html = apply_model(text)
+data, html = apply_model(text, use_rule_based)
 
-st.header("Visualisation")
+st.header("Visualisation" + (" (rule-based model)" if use_rule_based else ""))
 
 st.write(html, unsafe_allow_html=True)
 
