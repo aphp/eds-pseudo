@@ -19,7 +19,7 @@ class MergeEntities(BaseNERComponent):
 
     def __init__(
         self,
-        nlp: PipelineProtocol = None,
+        nlp: PipelineProtocol,
         name: str = None,
         *,
         span_getter: SpanGetterArg = {"pseudo-rb": True, "pseudo-ml": True},

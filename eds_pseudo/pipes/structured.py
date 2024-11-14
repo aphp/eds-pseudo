@@ -31,7 +31,7 @@ class ContextMatcher(BaseNERComponent):
 
     def __init__(
         self,
-        nlp: PipelineProtocol = None,
+        nlp: PipelineProtocol,
         name: str = None,
         *,
         span_setter: SpanSetterArg = {

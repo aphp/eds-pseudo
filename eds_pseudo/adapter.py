@@ -52,6 +52,7 @@ class PseudoDict2DocConverter:
     def __init__(
         self,
         nlp: Optional[PipelineProtocol] = None,
+        name: str = "pseudo_dict2doc",
         *,
         tokenizer: Optional[PipelineProtocol] = None,
         span_setter: SpanSetterArg = {"ents": True, "*": True},
