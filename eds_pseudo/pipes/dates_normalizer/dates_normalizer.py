@@ -1,6 +1,6 @@
 import datetime
 import string
-from typing import List, Optional
+from typing import List
 
 import regex
 from spacy.tokens import Span
@@ -77,7 +77,7 @@ class DatesNormalizer(BaseComponent):
 
     def __init__(
         self,
-        nlp: Optional[PipelineProtocol],
+        nlp: PipelineProtocol,
         name: str = "dates_normalizer",
         span_getter: SpanGetterArg = {"ents": ["DATE", "DATE_NAISSANCE"]},
         format: Literal["strftime", "java"] = "strftime",

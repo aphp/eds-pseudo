@@ -19,7 +19,7 @@ from .patterns import patterns, person_patterns
 class Pseudonymisation(BaseNERComponent):
     def __init__(
         self,
-        nlp: PipelineProtocol = None,
+        nlp: PipelineProtocol,
         name: str = None,
         *,
         attr: str = "NORM",

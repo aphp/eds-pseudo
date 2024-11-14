@@ -34,7 +34,7 @@ class DateString(BaseModel):
 class PseudonymisationDates(DatesMatcher):
     def __init__(
         self,
-        nlp: Optional[PipelineProtocol] = None,
+        nlp: PipelineProtocol,
         name: str = None,
         *,
         absolute: Optional[List[str]] = None,
