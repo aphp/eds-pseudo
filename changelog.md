@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add RPPS pattern to the `pseudonymisation-rules` pipeline
+
 ## v0.4.0 - 2024-24-05
 
 - Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
