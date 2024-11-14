@@ -100,10 +100,20 @@ person_patterns = [
 """,
 ]
 
+# RPPS (doctor identifier)
+# Matches cases like:
+# - N° RPPS : 10009876543
+# - or RPPS = 10009876543
+rpps_pattern = r"""(?xi)
+(?<=\b(?:RPPS\s*[:=]?\s*))
+\d{7,11}
+"""
+
 patterns = dict(
     IPP=ipp_pattern,
     MAIL=mail_pattern,
     TEL=phone_pattern,
     NDA=nda_pattern,
     SECU=nss_pattern,
+    RPPS=rpps_pattern,
 )
