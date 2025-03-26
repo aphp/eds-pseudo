@@ -9,8 +9,8 @@ jobs:
   Documentation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
 
       - name: Set PY variable
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
@@ -21,7 +21,7 @@ jobs:
           pip install poetry
           poetry config cache-dir ~/.cache/poetry
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/poetry
           key: poetry|${{ env.PY }}|${{ hashFiles('poetry.lock') }}
