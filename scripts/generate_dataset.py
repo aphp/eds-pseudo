@@ -552,14 +552,14 @@ def generate_fake_phone_number():
     return fake_phone
 
 
-def load_insee_deces(path="data/deces-2024-m03.txt"):
+def load_insee_deces(path="data/deces-2024-m12.txt"):
     path = Path(path)
 
     # download if path doesn't exist
     if not path.exists():
         import requests
 
-        url = "https://www.data.gouv.fr/fr/datasets/r/227743d3-434f-4659-8b0f-6af8b1c802f3"
+        url = "https://www.data.gouv.fr/fr/datasets/r/1929abae-12dd-4172-8533-d04825643638"
         response = requests.get(url)
         path.write_text(response.text)
     data = path.read_text()
