@@ -26,6 +26,7 @@ def load_model(use_rule_based=False):
         nlp.add_pipe("eds_pseudo.context")
     else:
         nlp = edsnlp.load("AP-HP/eds-pseudo-public")
+        nlp.pipes.ner.compute_confidence_score = True
     model_load_state.empty()
     return nlp
 
@@ -68,7 +69,8 @@ def apply_model(text, use_rule_based):
             label=ent.label_,
             normalized_value=str(ent._.value or ""),
         )
-
+        if not use_rule_based:
+            d["confidence_score"] = ent._.confidence_score
         data.append(d)
     return data, html
 
