@@ -70,7 +70,7 @@ def apply_model(text, use_rule_based):
             normalized_value=str(ent._.value or ""),
         )
         if not use_rule_based:
-            d["confidence_score"] = ent._.confidence_score
+            d["ner_confidence_score"] = ent._.ner_confidence_score
         data.append(d)
     return data, html
 
@@ -129,7 +129,7 @@ st.header("Entities")
 if data:
     df = pd.DataFrame.from_records(data)
     df.normalized_value = df.normalized_value.replace({"None": ""})
-    st.dataframe(df)
+    st.dataframe(df, use_container_width=True)
 
 else:
     st.markdown("The model did not match any entity...")
