@@ -1,13 +1,18 @@
+# ruff: noqa: I001
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
 from confit import Config
 from confit.utils.random import set_seed
-
 from eds_pseudo.adapter import PseudoReader
 from eds_pseudo.scorer import PseudoScorer
+
 from edsnlp import registry
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from scripts.generate_dataset import generate_dataset  # noqa: E402
 from scripts.package import package  # noqa: E402
 from scripts.train import train  # noqa: E402
