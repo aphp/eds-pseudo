@@ -1,12 +1,22 @@
-[tool.poetry]
+[project]
 name = "eds-pseudo"
 version = "0.4.0"
 description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
-authors = ["Perceval Wajsburt <perceval.wajsburt@aphp.fr>", "Alice Calliger <alice.calliger@aphp.fr>", "Basile Dura <basile.dura-ext@aphp.fr>"]
 readme = "README.md"
-exclude = ["**/*.pyc", "**/__pycache__/*", "**/.ipynb_checkpoints/"]
+requires-python = ">=3.8,<4.0"
+authors = [
+  { name = "Perceval Wajsburt", email = "perceval.wajsburt@aphp.fr" },
+  { name = "Alice Calliger", email = "alice.calliger@aphp.fr" },
+  { name = "Basile Dura", email = "basile.dura-ext@aphp.fr" },
+]
+dependencies = [
+  "edsnlp[ml]>=0.17.0",
+  "transformers>=4.40",
+  "sentencepiece>=0.1.96",
+  "torch<2.5.0; python_version < '3.9'",
+]
 
-[tool.poetry.plugins."spacy_factories"]
+[project.entry-points."spacy_factories"]
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
 "eds_pseudo.addresses"       = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
 "eds_pseudo.dates"           = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
@@ -15,72 +25,47 @@ exclude = ["**/*.pyc", "**/__pycache__/*", "**/.ipynb_checkpoints/"]
 "eds_pseudo.context"         = "eds_pseudo.pipes.structured:ContextMatcher"
 "eds_pseudo.merge"           = "eds_pseudo.pipes.merge_entities:MergeEntities"
 
-# Deprecated
+# Deprecated entry points
 "structured-data-matcher"    = "eds_pseudo.pipes.structured:ContextMatcher"
 "pseudonymisation-rules"     = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
 "pseudonymisation-dates"     = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
 "pseudonymisation-addresses" = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
 "clean-entities"             = "eds_pseudo.pipes.clean_entities:CleanEntities"
 
-[tool.poetry.dependencies]
-# /!\ Do not hesitate to adjust python's version to fit your training and deployment environments
-python = ">=3.8,<4.0"
-edsnlp = { version = ">=0.12.0", extras = ["ml"] }
-transformers = ">=4.40"
-sentencepiece = ">=0.1.96"
-
-[tool.poetry.group.dev.dependencies]
-dvc = { version = "^2.37.0", markers = "python_version >= '3.8'" }
-loguru = ">=0.6.0"
-typer = ">=0.6.1"
-polars = "*"
-pandas = [
-    { version = ">=1.1.0,<2.0.0", markers = "python_version < '3.8'" },
-    { version = ">=1.4.0,<2.0.0", markers = "python_version >= '3.8'" }
+[project.optional-dependencies]
+dev = [
+  "dvc>=2.37.0,<3.0.0; python_version >= '3.8'",
+  "loguru>=0.6.0",
+  "typer>=0.6.1",
+  "polars",
+  "pandas>=1.4.0",
+  "tabulate",
+  "pyarrow>=7.0.0",
+  "pre-commit>=2.18.1",
+  "pytest>=7.1.1",
+  "pytest-cov>=3.0.0",
+  "toml>=0.10.2",
+  "wheel>=0.40.0",
+  "babel",
+  "accelerate>=0.21.0",
+  "rich-logger>=0.3.0",
+  "torch",
 ]
-tabulate = "*"
-pyarrow = "^7.0.0"
-black = "22.6.0"
-flake8 = ">=3.0"
-pre-commit = "^2.18.1"
-pytest = "^7.1.1"
-pytest-cov = "^3.0.0"
-mypy = "^0.950"
-coverage = "^6.5.0"
-toml = "^0.10.2"
-wheel = "^0.40.0"
-babel = "*"
-accelerate = { version = "^0.21.0", markers = "python_version >= '3.8'" }
-rich-logger = "^0.3.0"
-scipy = [
-    { version = "*", markers = "python_version >= '3.8'" },
-    { version = "*", markers = "python_version < '3.8'" }
-]
-torch = [
-    { version = "*", markers = "python_version >= '3.8'" },
-    { version = "*", markers = "python_version < '3.8'" }
+docs = [
+  "mike>=1.1.2",
+  "mkdocs-bibtex>=2.0.3",
+  "mkdocs-gen-files>=0.3.4",
+  "mkdocs-literate-nav>=0.4.1",
+  "mkdocs-material>=9.2.0",
+  "mkdocstrings>=0.20.0",
+  "mkdocstrings-python>=1.1.0",
+  "mkdocs-glightbox>=0.1.6",
+  "mkdocs-autorefs>=0.4.1",
+  "mkdocs-charts-plugin>=0.0.8",
 ]
 
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-mike = "~1.1.2"
-mkdocs-bibtex = "^2.0.3"
-mkdocs-gen-files = "^0.3.4"
-mkdocs-literate-nav = "^0.4.1"
-mkdocs-material = ">=9.2.0"
-mkdocstrings = "~0.20.0"
-mkdocstrings-python = "~1.1.0"
-mkdocs-glightbox = "^0.1.6"
-mkdocs-autorefs = "^0.4.1"
-mkdocs-charts-plugin = "^0.0.8"
-
-[tool.poetry.group.spark]
-optional = true
-
-[tool.poetry.group.spark.dependencies]
-pyspark = "2.4.3"
+[tool.uv.pip]
+torch-backend = "auto"
 
 [tool.interrogate]
 ignore-init-method = true
@@ -163,6 +148,9 @@ exclude_lines = [
     "Token.set_extension.*",
 ]
 
+[tool.setuptools]
+packages = ["eds_pseudo"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0", "pypandoc<1.8.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
