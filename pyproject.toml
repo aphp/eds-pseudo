@@ -149,7 +149,7 @@ exclude_lines = [
 ]
 
 [tool.setuptools.packages]
-find = {where = ["eds_pseudo"], include = ["eds_pseudo*"], namespaces = false}
+find = {where = ["."], include = ["eds_pseudo*"], namespaces = false}
 
 [build-system]
 requires = ["setuptools>=61.0"]
