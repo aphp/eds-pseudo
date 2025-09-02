@@ -148,8 +148,8 @@ exclude_lines = [
     "Token.set_extension.*",
 ]
 
-[tool.setuptools]
-packages = ["eds_pseudo"]
+[tool.setuptools.packages]
+find = {where = ["."], include = ["eds_pseudo*"]}
 
 [build-system]
 requires = ["setuptools>=61.0"]
