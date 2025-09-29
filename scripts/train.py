@@ -424,7 +424,6 @@ def train(
             for step in bar:
                 if (step % validation_interval) == 0:
                     metrics = {m["name"]: m["value"] for m in scorer(nlp, val_docs)}
-                    cumulated_data = defaultdict(lambda: 0.0, count=0)
                     all_metrics.append(
                         {
                             "step": step,
@@ -433,6 +432,7 @@ def train(
                             **cumulated_data,
                         }
                     )
+                    cumulated_data = defaultdict(lambda: 0.0, count=0)
                     logger.log_metrics(all_metrics[-1])
                     train_metrics_path.write_text(json.dumps(all_metrics, indent=2))
                     nlp.to_disk(model_path)

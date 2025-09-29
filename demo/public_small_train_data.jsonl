@@ -1,0 +1,80 @@
+{"note_id":"synthetic_11831851499","note_text":"krier franck rivaill59be@clinique-lyon.fr","entities":[{"start":0,"end":5,"label":"NOM"},{"start":6,"end":12,"label":"PRENOM"},{"start":13,"end":41,"label":"MAIL"}]}
+{"note_id":"synthetic_90977958602","note_text":"mavoungou bouanga cecile Admission en service de gériatrie Besoin d'aide matérielle urgent","entities":[{"start":0,"end":17,"label":"NOM"},{"start":18,"end":24,"label":"PRENOM"}]}
+{"note_id":"synthetic_96867744544","note_text":"maria","entities":[{"start":0,"end":5,"label":"PRENOM"}]}
+{"note_id":"synthetic_91580847409","note_text":"Situation de précarité énergétique (certificat de reprise du travail édité) lors de la visite du SAM 20 FÉVR 2083","entities":[{"start":97,"end":113,"label":"DATE"}]}
+{"note_id":"synthetic_55838113796","note_text":"Lespilette, abdulkadir, 8\/07\/76","entities":[{"start":0,"end":10,"label":"NOM"},{"start":12,"end":22,"label":"PRENOM"},{"start":24,"end":31,"label":"DATE_NAISSANCE"}]}
+{"note_id":"synthetic_95127193798","note_text":"À ce jour Bilan social réalisé Antécédents chirurgicaux multiples Le laboratoire a appelé pour une anémie Situation préoccupante","entities":[]}
+{"note_id":"synthetic_28574110087","note_text":"Hémopéritoine étiologie non retrouvée (demande d'aide FSL déposée) hier","entities":[]}
+{"note_id":"synthetic_78540192324","note_text":"Décision de la commission MDPH: Visite à domicile d'une infirmière 2x\/jour","entities":[]}
+{"note_id":"synthetic_26795933505","note_text":"Hôpital centre cardiologique du nord, Montbazon, standard : +33226370104.","entities":[{"start":8,"end":36,"label":"HOPITAL"},{"start":38,"end":47,"label":"VILLE"},{"start":60,"end":72,"label":"TEL"}]}
+{"note_id":"synthetic_77982386441","note_text":"Bernard","entities":[{"start":0,"end":7,"label":"PRENOM"}]}
+{"note_id":"synthetic_99006557321","note_text":"Consultation de cardiologie de nimes","entities":[{"start":31,"end":36,"label":"VILLE"}]}
+{"note_id":"synthetic_37952247422","note_text":"Cas de Mme LARA BARBECHO, admise à l'bct","entities":[{"start":11,"end":24,"label":"NOM"},{"start":37,"end":40,"label":"HOPITAL"}]}
+{"note_id":"synthetic_48946420996","note_text":"Aubin gaston","entities":[{"start":0,"end":5,"label":"NOM"},{"start":6,"end":12,"label":"PRENOM"}]}
+{"note_id":"synthetic_92921940432","note_text":"Au début du suivi Dossier en ordre Refus de soins antérieur Le tuteur a donné son accord Demande en cours de traitement","entities":[]}
+{"note_id":"synthetic_39809076472","note_text":"0103306676","entities":[{"start":0,"end":10,"label":"TEL"}]}
+{"note_id":"synthetic_88075254270","note_text":"Cas de Mme Bertinet, admise à l'Léopold Bellan","entities":[{"start":11,"end":19,"label":"NOM"},{"start":32,"end":46,"label":"HOPITAL"}]}
+{"note_id":"synthetic_47194483832","note_text":"Madame rossin Yvette , 33 ans, tabagisme actif à 15 PA, hospitalisé en soins intensifs le MAR 8 JUILLET 2025 pour un épisode confusionnel.","entities":[{"start":7,"end":13,"label":"NOM"},{"start":14,"end":20,"label":"PRENOM"},{"start":90,"end":108,"label":"DATE"}]}
+{"note_id":"synthetic_19932645117","note_text":"Depuis son admission Paramètres vitaux dans les normes Situation d'isolement social connue Convocation au tribunal reçue le 30\/07\/32 Besoin d'un suivi rapproché","entities":[{"start":124,"end":132,"label":"DATE"}]}
+{"note_id":"synthetic_15266139350","note_text":"kaci Burrett (26) 0 32 70 72 62","entities":[{"start":0,"end":4,"label":"PRENOM"},{"start":5,"end":12,"label":"NOM"},{"start":13,"end":31,"label":"TEL"}]}
+{"note_id":"synthetic_93168542761","note_text":"Situation au 1 0 0 4 2 0 5 3 État général conservé Dossier de surendettement en cours Avis du spécialiste concordant La situation s'améliore","entities":[{"start":13,"end":28,"label":"DATE"}]}
+{"note_id":"synthetic_71081876574","note_text":"Rendez-vous de suivi avec le Dr Deloumeau G déroulement normal Examen clinique sans particularité Pas d'urgence sociale immédiate, situation maîtrisée Prescription de kinésithérapie Fin de la prise en charge, dossier clos","entities":[{"start":32,"end":41,"label":"NOM"}]}
+{"note_id":"synthetic_60621192716","note_text":"bougeard","entities":[{"start":0,"end":8,"label":"NOM"}]}
+{"note_id":"synthetic_79998991259","note_text":"Le patient LASVEAUX maeron , 37 ans, avec des allergies connues, pris en charge par le SAMU le 1 2 0 6 2 0 8 1 pour la gestion d'une douleur abdominale.","entities":[{"start":11,"end":19,"label":"NOM"},{"start":20,"end":26,"label":"PRENOM"},{"start":95,"end":110,"label":"DATE"}]}
+{"note_id":"synthetic_13565923605","note_text":"Note du VEN 25 MAI 2035 : Dossier APL Visiter l'appartement au 44, rue charles, 63570 sainte édouard pour le 23.12.60","entities":[{"start":8,"end":23,"label":"DATE"},{"start":63,"end":100,"label":"ADRESSE"},{"start":109,"end":117,"label":"DATE"}]}
+{"note_id":"synthetic_65455889439","note_text":"Protocole du service de cardiologie: Inscription à une formation, mise à jour du CV","entities":[]}
+{"note_id":"synthetic_99759718585","note_text":"Usager Troupe RAMON Bilan sanguin prélevé En attente de la décision de la commission","entities":[{"start":7,"end":13,"label":"NOM"},{"start":14,"end":19,"label":"PRENOM"}]}
+{"note_id":"synthetic_92674740748","note_text":"Mme Devedjian MICHEL , 19 ans, arrivé ce matin après une semaine de symptômes dans un contexte de menace d'accouchement prématuré.","entities":[{"start":4,"end":13,"label":"NOM"},{"start":14,"end":20,"label":"PRENOM"}]}
+{"note_id":"synthetic_35543862037","note_text":"Conclusion de l'assistante sociale, Mme GOUTY: Mise en place d'une aide-ménagère","entities":[{"start":40,"end":45,"label":"NOM"}]}
+{"note_id":"synthetic_23954143907","note_text":"Check-list : Plan d'aide Organiser le retour à domicile LE Ven., 9 Juin 2056","entities":[{"start":59,"end":76,"label":"DATE"}]}
+{"note_id":"synthetic_31645881809","note_text":"Compte-rendu du Dr MADLEEN BEDENES Quotient familial calculé : 650.","entities":[{"start":19,"end":26,"label":"PRENOM"},{"start":27,"end":34,"label":"NOM"}]}
+{"note_id":"synthetic_19303918335","note_text":"Le résident de la chambre 12 Passage au bloc opératoire pour appendicectomie Glycémie capillaire à 1.10 g\/L","entities":[]}
+{"note_id":"synthetic_13111962147","note_text":"Mère Découverte d'une pathologie chronique -> Demande d'ALD faite Entretien avec les parents et l'enseignant Contrôle radio à S+1 : pas de déplacement du foyer de fracture Angioplastie réalisée avec succès","entities":[]}
+{"note_id":"synthetic_51857329291","note_text":"85, Boulevard De Gimenez, 15253 Boutin-Sur-Mer, 08 333 RUIAN","entities":[{"start":0,"end":46,"label":"ADRESSE"},{"start":48,"end":54,"label":"ZIP"},{"start":55,"end":60,"label":"VILLE"}]}
+{"note_id":"synthetic_27705564398","note_text":"ATCD de césarienne Découverte de la grossesse à 20SA Stagnation de la dilatation à 6cm pds : 3120g révision utérine effectuée dossier clos","entities":[]}
+{"note_id":"synthetic_41895463184","note_text":"HIAUME","entities":[{"start":0,"end":6,"label":"NOM"}]}
+{"note_id":"synthetic_83791190536","note_text":"Mme BENOIST GERARD , 28 ans, primigeste, arrivé ce matin à 10h00 suite à un accident de la voie publique.","entities":[{"start":4,"end":11,"label":"NOM"},{"start":12,"end":18,"label":"PRENOM"}]}
+{"note_id":"synthetic_56378339621","note_text":"AUBRY","entities":[{"start":0,"end":5,"label":"NOM"}]}
+{"note_id":"synthetic_42038132118","note_text":"Situation au 22.10.2027 \n Pas de changement Paramètres vitaux normaux. Situation financière Ictère résolutif Orientation vers un bilan orthophonique","entities":[{"start":13,"end":23,"label":"DATE"}]}
+{"note_id":"synthetic_35008447973","note_text":"Date d'entrée : 21-5-2076 , Fin de contrat : 14 JUILLET 2017 , État : en cours de traitement ;","entities":[{"start":16,"end":25,"label":"DATE"},{"start":45,"end":60,"label":"DATE"}]}
+{"note_id":"synthetic_75623895126","note_text":"6, AVENUE LÉVÊQUE, 10182 SAINTE CHANTALVILLE","entities":[{"start":0,"end":44,"label":"ADRESSE"}]}
+{"note_id":"synthetic_65782325230","note_text":"le lendemain en fin de journée","entities":[]}
+{"note_id":"synthetic_40184286328","note_text":"Usager : meric, lorene , 82 ans, résidant au 15, Rue Texier, 83250 Boutin, a été orienté vers l'A.CHENEVIER le Jeu, 17 Avr 2098 en post-opératoire immédiat en raison d'une phlébite.","entities":[{"start":9,"end":14,"label":"NOM"},{"start":16,"end":22,"label":"PRENOM"},{"start":45,"end":73,"label":"ADRESSE"},{"start":96,"end":107,"label":"HOPITAL"},{"start":111,"end":127,"label":"DATE"}]}
+{"note_id":"synthetic_23756249774","note_text":"PADALDI12@LABO-123.FR","entities":[{"start":0,"end":21,"label":"MAIL"}]}
+{"note_id":"synthetic_56558232252","note_text":"Post-op J2 \n Patiente fatiguée Le logement est propre, mais des travaux sont à prévoir. Fils aîné Le plan d'aide est fonctionnel Pesée et mesure hebdomadaire","entities":[]}
+{"note_id":"synthetic_61159679696","note_text":"demain le matin","entities":[]}
+{"note_id":"synthetic_32947081190","note_text":"Proposition du service logement: Orientation vers un centre d'addictologie","entities":[]}
+{"note_id":"synthetic_35641536774","note_text":"Au début du suivi Paramètres vitaux dans les normes ATCD probable d'APLV chez la patiente Ordonnance récupérée à la pharmacie Besoin d'un suivi rapproché","entities":[]}
+{"note_id":"synthetic_45271417699","note_text":"Contact : 02.67.75.36.02.","entities":[{"start":10,"end":24,"label":"TEL"}]}
+{"note_id":"synthetic_15508824614","note_text":"BEAUJARD Frederic , 19 ans, a été orienté vers l'Necker le MAR 24 MAI 2061 après une semaine de symptômes pour un épisode confusionnel.","entities":[{"start":0,"end":8,"label":"NOM"},{"start":9,"end":17,"label":"PRENOM"},{"start":49,"end":55,"label":"HOPITAL"},{"start":59,"end":74,"label":"DATE"}]}
+{"note_id":"synthetic_43426069879","note_text":"Centre de PMI de la région","entities":[]}
+{"note_id":"synthetic_69385553034","note_text":"Patiente : Aubrun, Jean-Luc , 37 ans, allergique à la pénicilline, admis aux urgences le 13-8-91 au terme de 39 SA et 0 jour pour un bilan pré-opératoire.","entities":[{"start":11,"end":17,"label":"NOM"},{"start":19,"end":27,"label":"PRENOM"},{"start":89,"end":96,"label":"DATE"}]}
+{"note_id":"synthetic_10377796428","note_text":"Baque, TIFAINE, 6.01.79","entities":[{"start":0,"end":5,"label":"NOM"},{"start":7,"end":14,"label":"PRENOM"},{"start":16,"end":23,"label":"DATE_NAISSANCE"}]}
+{"note_id":"synthetic_80070613363","note_text":"Prescription du Dr ben barka: Hospitalisation, bilan infectieux, protocole Adalate","entities":[{"start":19,"end":28,"label":"NOM"}]}
+{"note_id":"synthetic_96195593717","note_text":"Service de cardiologie de l'PAUL BROUSSE Saturation en O2 : 97% sous air ambiant.","entities":[{"start":28,"end":40,"label":"HOPITAL"}]}
+{"note_id":"synthetic_86621923554","note_text":"Patient : CAVARLE, ANDRE , 41 ans, G1P1, arrivé ce matin à 10h00 dans un contexte de menace d'accouchement prématuré.","entities":[{"start":10,"end":17,"label":"NOM"},{"start":19,"end":24,"label":"PRENOM"}]}
+{"note_id":"synthetic_62866763806","note_text":"Mme krajewski patrice , 68 ans, en ALD pour une pathologie rénale, arrivé ce matin à 10h00 pour la gestion d'une douleur abdominale.","entities":[{"start":4,"end":13,"label":"NOM"},{"start":14,"end":21,"label":"PRENOM"}]}
+{"note_id":"synthetic_91010519421","note_text":"Le numéro à appeler est le 0665472010.","entities":[{"start":27,"end":37,"label":"TEL"}]}
+{"note_id":"synthetic_82691181397","note_text":"Bilan à 3 mois Cicatrisation en bonne voie ATCD familiaux de cardiopathie Pas de retour du service logement Le patient est stable","entities":[]}
+{"note_id":"synthetic_67547028762","note_text":"Le bénéficiaire lascaud , mère débit de filtration glomérulaire 60 ml\/min conscient et orienté","entities":[{"start":16,"end":23,"label":"NOM"}]}
+{"note_id":"synthetic_71190385979","note_text":"pour le 1 7 1 2 2 0 3 8 à 20:00","entities":[{"start":8,"end":23,"label":"DATE"}]}
+{"note_id":"synthetic_66963135031","note_text":"Le cas de Mme VERDIER , père 98% SaO2 suivi par le Dr DUDT","entities":[{"start":14,"end":21,"label":"NOM"},{"start":54,"end":58,"label":"NOM"}]}
+{"note_id":"synthetic_58234440665","note_text":"Situation de l'enfant ZACH Conflit familial -> Médiation familiale proposée Examen du champ visuel, fond d'oeil Bilirubine en baisse après photothérapie pas de récidive de fièvre au 10-3-2056","entities":[{"start":22,"end":26,"label":"PRENOM"},{"start":182,"end":191,"label":"DATE"}]}
+{"note_id":"synthetic_34477249221","note_text":"Avis CDG Dr Moya Atencia: Mise sous curatelle renforcée","entities":[{"start":12,"end":24,"label":"NOM"}]}
+{"note_id":"synthetic_78689314936","note_text":"Yvonne gille FAYHENRIETTEJE@PARISSEINE.COM","entities":[{"start":0,"end":6,"label":"PRENOM"},{"start":7,"end":12,"label":"NOM"},{"start":13,"end":42,"label":"MAIL"}]}
+{"note_id":"synthetic_21446663762","note_text":"0137777207","entities":[{"start":0,"end":10,"label":"TEL"}]}
+{"note_id":"synthetic_31528057662","note_text":"Décision du 05\/3\/57 : Gestion budgétaire Appeler l'école la semaine prochaine","entities":[{"start":12,"end":19,"label":"DATE"}]}
+{"note_id":"synthetic_41813059101","note_text":"Post-op J2 \n Patiente fatiguée Les documents demandés ont été fournis. Le plan d'aide Le conjoint a signé un CDI le Mer 13 Décembre 2000 Démarches APL à faire pour le couple","entities":[{"start":116,"end":136,"label":"DATE"}]}
+{"note_id":"synthetic_60323422644","note_text":"Décision de la commission MDPH: Inscription à une formation, mise à jour du CV","entities":[]}
+{"note_id":"synthetic_87675211996","note_text":"02 32 70 73 46","entities":[{"start":0,"end":14,"label":"TEL"}]}
+{"note_id":"synthetic_69500751748","note_text":"J5 \n Va bien Logement trouvé via le contingent préfectoral. Aspect juridique Le conjoint a signé un CDI le 19 DÉCEMBRE 2024 Orientation vers un bilan orthophonique","entities":[{"start":107,"end":123,"label":"DATE"}]}
+{"note_id":"synthetic_12307051222","note_text":"Service de gériatrie de PARIS 7 – DENIS DIDEROT","entities":[{"start":24,"end":47,"label":"HOPITAL"}]}
+{"note_id":"synthetic_28157610337","note_text":"Post-opératoire immédiat Aucun effet secondaire noté Refus de soins antérieur La famille a confirmé le rendez-vous Demande en cours de traitement","entities":[]}
+{"note_id":"synthetic_38839836136","note_text":"Petite barrière de langue Aucune complication durant la grossesse Accouchement sans analgésie péridurale obtention d'une place en crèche mise au sein précoce réussie RAS","entities":[]}
+{"note_id":"synthetic_26862193724","note_text":"Service des urgences, Clinique Pervenche Saturation en O2 : 97% sous air ambiant.","entities":[{"start":22,"end":40,"label":"HOPITAL"}]}
+{"note_id":"synthetic_50084676051","note_text":"Mme Modeste lopez","entities":[{"start":4,"end":11,"label":"PRENOM"},{"start":12,"end":17,"label":"NOM"}]}
+{"note_id":"synthetic_13952218027","note_text":"27\/10\/2046","entities":[{"start":0,"end":10,"label":"DATE"}]}
+{"note_id":"synthetic_25857760116","note_text":"Entretien du jour \n Moral en baisse Mobilité conservée. Dossier du conjoint L'enfant est scolarisé à PARIS Suivi PMI à organiser","entities":[{"start":101,"end":106,"label":"VILLE"}]}
+{"note_id":"synthetic_73239472939","note_text":"39, Rue De Carlier, 13348 Lucasbourg","entities":[{"start":0,"end":36,"label":"ADRESSE"}]}
+{"note_id":"synthetic_83326907670","note_text":"nattan","entities":[{"start":0,"end":6,"label":"PRENOM"}]}
+{"note_id":"synthetic_70987084893","note_text":"Dupont Jean , 78 ans, connu pour HTA, reçu en entretien le Mar, 13 Novembre 2046 au bout de 15 jours d'arrêt de travail suite à une chute.","entities":[{"start":0,"end":6,"label":"NOM"},{"start":7,"end":11,"label":"PRENOM"},{"start":59,"end":80,"label":"DATE"}]}
