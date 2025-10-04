@@ -10,7 +10,7 @@ authors = [
   { name = "Basile Dura", email = "basile.dura-ext@aphp.fr" },
 ]
 dependencies = [
-  "edsnlp[ml]>=0.17.0",
+  "edsnlp[ml] @ git+https://github.com/aphp/edsnlp.git@master#egg=edsnlp",
   "transformers>=4.40",
   "sentencepiece>=0.1.96",
   "torch<2.5.0; python_version < '3.9'",
