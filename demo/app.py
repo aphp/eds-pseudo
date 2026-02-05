@@ -11,7 +11,6 @@ from faker import Faker
 from spacy import displacy
 
 import edsnlp
-from eds_pseudo.pipes.dates_normalizer.dates_normalizer import DatesNormalizer
 
 DEFAULT_TEXT = (
     "En 2015, M. Charles-François-Bienvenu "
@@ -467,6 +466,8 @@ def _format_shifted_date(base_date, shift_days, date_format):
 
 
 def pseudonymize_doc(doc):
+    from eds_pseudo.pipes.dates_normalizer.dates_normalizer import DatesNormalizer
+
     faker = load_faker()
     fake_names, fake_cities = load_fake_names_and_cities()
     normalizer = DatesNormalizer(None, format="java")
