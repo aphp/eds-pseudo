@@ -2,3 +2,4 @@
 torch
 edsnlp[ml]>=0.13.0
 streamlit
+babel
