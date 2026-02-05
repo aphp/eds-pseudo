@@ -151,9 +151,6 @@ exclude_lines = [
 [tool.setuptools.packages]
 find = {where = ["."], include = ["eds_pseudo*"]}
 
-[tool.sonar]
-sonar.cpd.exclusions = "demo/app.py"
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
