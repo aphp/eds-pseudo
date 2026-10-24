@@ -1,14 +1,14 @@
 import re
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Union
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 from spacy.tokens import Doc, Span
+from typing_extensions import Literal
 
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
-from edsnlp.pipes.base import SpanSetterArg
+from edsnlp.pipes.base import SpanGetterArg, SpanSetterArg
 from edsnlp.pipes.misc.dates.dates import DatesMatcher
-from edsnlp.pipes.misc.dates.models import AbsoluteDate
 
 from . import patterns
 
@@ -17,118 +17,74 @@ if not Span.has_extension("date_string"):
 
 
 class DateString(BaseModel):
+    """
+    Keep the matched date fields before EDS-NLP converts them to integers
+    """
+
     day: Optional[str] = None
     month: Optional[str] = None
     year: Optional[str] = None
 
-    @root_validator(pre=True)
-    def normalise_keys(cls, d: Dict[str, Optional[str]]) -> Dict[str, str]:
-        normalised = {k.split("_")[0]: v for k, v in d.items() if v is not None}
-        return normalised
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_keys(cls, values: Dict[str, Optional[str]]) -> Dict[str, str]:
+        return {key.split("_", 1)[0]: value for key, value in values.items() if value is not None}
 
 
-@registry.factory.register(
-    "eds_pseudo.dates",
-    deprecated=["pseudonymisation-dates"],
-)
+@registry.factory.register("eds_pseudo.dates", deprecated=["pseudonymisation-dates"])
 class PseudonymisationDates(DatesMatcher):
+    """
+    Detect absolute identifying dates for the rules-only pipeline
+    """
+
     def __init__(
         self,
         nlp: PipelineProtocol,
-        name: str = None,
+        name: str = "dates",
         *,
         absolute: Optional[List[str]] = None,
         relative: Optional[List[str]] = [],
         duration: Optional[List[str]] = [],
         false_positive: Optional[List[str]] = None,
-        on_ents_only: Union[bool, str, Iterable[str]] = False,
+        on_ents_only: Optional[Union[bool, str, Iterable[str]]] = None,
+        span_getter: Optional[SpanGetterArg] = None,
+        merge_mode: Literal["intersect", "align"] = "intersect",
         detect_periods: bool = False,
         detect_time: bool = False,
         attr: str = "LOWER",
-        span_setter: SpanSetterArg = {
-            "ents": True,
-            "pseudo-rb": True,
-            "*": True,
-        },
+        span_setter: SpanSetterArg = {"ents": True, "pseudo-rb": True, "*": True},
     ):
-        if absolute is None:
-            absolute = patterns.pseudo_date_pattern
-        if false_positive is None:
-            false_positive = patterns.false_positive_pattern
         super().__init__(
             nlp=nlp,
             name=name,
-            absolute=absolute,
+            absolute=patterns.pseudo_date_pattern if absolute is None else absolute,
             relative=relative,
             duration=duration,
-            false_positive=false_positive,
+            false_positive=patterns.false_positive_pattern if false_positive is None else false_positive,
             on_ents_only=on_ents_only,
+            span_getter=span_getter,
+            merge_mode=merge_mode,
             detect_periods=detect_periods,
             detect_time=detect_time,
-            span_setter=span_setter,
             attr=attr,
+            span_setter=span_setter,
         )
 
-    def parse(self, dates: List[Tuple[Span, Dict[str, str]]]) -> List[Span]:
-        """
-        Parse dates using the groupdict returned by the matcher.
-
-        Parameters
-        ----------
-        dates : List[Tuple[Span, Dict[str, str]]]
-            List of tuples containing the spans and groupdict
-            returned by the matcher.
-
-        Returns
-        -------
-        List[Span]
-            List of processed spans, with the date parsed.
-        """
-
-        spans = []
-
-        for span, groupdict in dates:
-            if span.label_ == "absolute":
-                parsed = AbsoluteDate.parse_obj(groupdict)
-
-                span._.date = parsed
-                span._.date_string = DateString.parse_obj(groupdict)
-
-                spans.append(span)
-
-        return spans
+    def parse(self, matches):
+        date_strings = [DateString.model_validate(groups) for _, groups in matches]
+        dates = super().parse(matches)
+        for span, date_string in zip(dates, date_strings):
+            span._.date_string = date_string
+        return dates
 
     def __call__(self, doc: Doc) -> Doc:
-        """
-        Tags dates.
-
-        Parameters
-        ----------
-        doc : Doc
-            spaCy Doc object
-
-        Returns
-        -------
-        doc : Doc
-            spaCy Doc object, annotated for dates
-        """
-        matches = self.process(doc)
-        dates = []
-
-        birth_date = None
-        for date in matches:
+        dates = self.process(doc)
+        birth_dates = set()
+        for date in dates:
             snippet = doc[max(0, date.start - 5) : date.end + 5].text
             if re.search(r"\b(né|n[ée]e|naissance)\b", snippet, flags=re.IGNORECASE):
-                date.label_ = "DATE_NAISSANCE"
-                birth_date = date._.date
-            else:
-                date.label_ = "DATE"
-            dates.append(date)
-
+                birth_dates.add(str(date._.date))
         for date in dates:
-            if date._.date == birth_date:
-                date.label_ = "DATE_NAISSANCE"
-
+            date.label_ = "DATE_NAISSANCE" if str(date._.date) in birth_dates else "DATE"
         self.set_spans(doc, dates)
-
         return doc
