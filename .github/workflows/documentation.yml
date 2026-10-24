@@ -19,11 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/poetry
-          key: poetry|${{ env.PY }}|${{ hashFiles('poetry.lock') }}
-
       - name: Install dependencies
         run: uv sync --extra docs
 

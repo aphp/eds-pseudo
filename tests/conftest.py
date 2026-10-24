@@ -7,7 +7,7 @@ import edsnlp
 @fixture()
 def blank_nlp() -> Language:
     nlp = edsnlp.blank("eds")
-    nlp.add_pipe("eds.remove-lowercase", name="remove-lowercase")
+    nlp.add_pipe("eds.remove_lowercase", name="remove-lowercase")
     nlp.add_pipe("eds.accents", name="accents")
     nlp.add_pipe("eds.sentences")
     return nlp

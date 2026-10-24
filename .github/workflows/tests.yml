@@ -1,84 +1,58 @@
-name: Tests and Linting
+name: Tests and distributions
 
 on:
   workflow_dispatch:
+    inputs:
+      huggingface_ref:
+        description: Hugging Face git URL to test after an authorized push
+        required: false
+        type: string
   pull_request:
   push:
     branches: [main]
 
-env:
-  UV_SYSTEM_PYTHON: 1
-
 jobs:
-  Linting:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      - name: Set PY variable
-        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
-          pre-commit install
-      - name: Run pre-commit
-        run: SKIP=no-commit-to-branch pre-commit run --all-files
-
-  Pytest:
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Set PY variable
-        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: uv sync --extra dev
-
-      - name: Test with Pytest on Python ${{ matrix.python-version }}
-        run: uv run pytest --cov --cov-report xml
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
-        if: matrix.python-version == '3.10'
-
-  Documentation:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync --extra docs
-
-      - name: Build documentation
-        run: |
-          uv run mkdocs build --clean
-
-  Installation:
+  test:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install library
-        run: |
-          pip install .
+      - run: uv sync --extra dev
+      - run: uv run ruff check --no-fix eds_pseudo tests
+      - run: uv run pytest --cov --cov-report xml
+      - uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.11'
+
+  distributions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv build
+      - run: uv venv --python 3.11 wheel-env
+      - run: uv pip install --python wheel-env/bin/python dist/eds_pseudo-*.whl
+      - run: wheel-env/bin/python -c "import eds_pseudo, tomllib; assert eds_pseudo.__version__ == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']"
+      - run: wheel-env/bin/eds-pseudo --help
+      - run: uv venv --python 3.11 sdist-env
+      - run: uv pip install --python sdist-env/bin/python dist/eds_pseudo-*.tar.gz
+      - run: sdist-env/bin/python -c "import eds_pseudo"
+
+  huggingface-install:
+    if: github.event_name == 'workflow_dispatch' && inputs.huggingface_ref != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv venv --python 3.11 hf-env
+      - run: uv pip install --python hf-env/bin/python "$HUGGINGFACE_REF"
+        env:
+          HUGGINGFACE_REF: ${{ inputs.huggingface_ref }}
+      - run: hf-env/bin/python -c "import eds_pseudo_public; nlp = eds_pseudo_public.load(); assert nlp('Contact test') is not None"

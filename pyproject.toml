@@ -3,17 +3,14 @@ name = "eds-pseudo"
 version = "0.4.0"
 description = "EDS-Pseudo is a hybrid model for detecting personally identifying entities in clinical reports"
 readme = "README.md"
-requires-python = ">=3.8,<4.0"
+requires-python = ">=3.10"
 authors = [
   { name = "Perceval Wajsburt", email = "perceval.wajsburt@aphp.fr" },
   { name = "Alice Calliger", email = "alice.calliger@aphp.fr" },
   { name = "Basile Dura", email = "basile.dura-ext@aphp.fr" },
 ]
 dependencies = [
-  "edsnlp[ml]>=0.17.0",
-  "transformers>=4.40",
-  "sentencepiece>=0.1.96",
-  "torch<2.5.0; python_version < '3.9'",
+  "edsnlp[ml]>=0.23.1.dev0",
 ]
 
 [project.scripts]
@@ -22,9 +19,9 @@ eds-pseudo = "eds_pseudo.cli:main"
 [project.entry-points."spacy_factories"]
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
 "eds_pseudo.addresses"       = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
+"eds_pseudo.simple_rules"    = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
 "eds_pseudo.dates"           = "eds_pseudo.pipes.dates.dates:PseudonymisationDates"
 "eds_pseudo.dates_normalizer"= "eds_pseudo.pipes.dates_normalizer.dates_normalizer:DatesNormalizer"
-"eds_pseudo.simple_rules"    = "eds_pseudo.pipes.pseudonymisation.pseudonymisation:Pseudonymisation"
 "eds_pseudo.context"         = "eds_pseudo.pipes.structured:ContextMatcher"
 "eds_pseudo.merge"           = "eds_pseudo.pipes.merge_entities:MergeEntities"
 
@@ -39,25 +36,36 @@ eds-pseudo = "eds_pseudo.cli:main"
 "eds_pseudo.dict2doc" = "eds_pseudo.data:Dict2DocConverter"
 "eds_pseudo.doc2dict" = "eds_pseudo.data:Doc2DictConverter"
 
+[project.entry-points."spacy_scorers"]
+"eds_pseudo.redact" = "eds_pseudo.metrics:RedactMetric"
+"eds_pseudo.privacy" = "eds_pseudo.metrics:PrivacyMetric"
+"eds_pseudo.population" = "eds_pseudo.metrics:PopulationMetric"
+"eds_pseudo.final" = "eds_pseudo.metrics:FinalMetric"
+
 [project.optional-dependencies]
-dev = [
-  "faker>=30",
-  "dvc>=2.37.0,<3.0.0; python_version >= '3.8'",
+training = [
+  "accelerate>=0.21.0",
+  "sentencepiece>=0.1.96",
+  "transformers>=4.40",
+]
+analysis = [
   "loguru>=0.6.0",
-  "typer>=0.6.1",
   "polars",
   "pandas>=1.4.0",
   "tabulate",
   "pyarrow>=7.0.0",
+]
+data = [
+  "faker>=30",
+]
+dev = [
+  "eds-pseudo[training,analysis,data]",
   "pre-commit>=2.18.1",
   "pytest>=7.1.1",
   "pytest-cov>=3.0.0",
-  "toml>=0.10.2",
+  "ruff>=0.9",
+  "hatchling",
   "wheel>=0.40.0",
-  "babel",
-  "accelerate>=0.21.0",
-  "rich-logger>=0.3.0",
-  "torch",
 ]
 docs = [
   "mike>=1.1.2",

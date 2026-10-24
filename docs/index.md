@@ -6,12 +6,12 @@ on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
 hybrid model (rule-based + deep learning) for which we provide
 rules ([`eds-pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds_pseudo/pipes))
-and a training recipe [`train.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/train.py).
+and a training recipe [`configs/config.yml`](https://github.com/aphp/eds-pseudo/blob/main/configs/config.yml).
 
 We also provide some fictitious
-templates ([`templates.txt`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.txt)) and a script to
+templates ([`templates.jsonl`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.jsonl)) and a command to
 generate a synthetic
-dataset [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py).
+dataset (`eds-pseudo prepare-data`).
 
 The entities that are detected are listed below.
 

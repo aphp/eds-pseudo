@@ -1,6 +1,8 @@
 from datetime import date
+from pathlib import Path
 
 import pytest
+from confit import Config
 
 import edsnlp
 from eds_pseudo.augment import format_date, format_name, generate_records, load_values
@@ -10,6 +12,14 @@ from eds_pseudo.data import Dict2DocConverter, normalize_record
 
 def write_records(path, records):
     edsnlp.data.write_json(records, path, lines=True, overwrite=True)
+
+
+def test_public_templates_separate_list_items_by_newlines():
+    # Since confit keeps the quotes of a double-quoted YAML string ("\n" gives three characters), the config writes the
+    # separators with single quotes, which confit reads as a newline
+    config = Config.from_disk(Path(__file__).parents[1] / "configs/config.yml")
+    templates = config["prepare-data"]["sources"][0]["generation"]["templates"]
+    assert {template["separator"] for template in templates if "separator" in template} == {"\n"}
 
 
 def test_conversion_stretches_entities_to_tokens(tmp_path):

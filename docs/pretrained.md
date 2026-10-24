@@ -8,10 +8,10 @@ This model is available on the HuggingFace model hub at
 
 ## Installation
 
-1. Install the latest version of edsnlp
+1. Install the latest version of eds-pseudo
 
     ```shell
-    pip install "edsnlp[ml]" -U
+    pip install "eds-pseudo" -U
     ```
 
 2. Get access to the model at [AP-HP/eds-pseudo-public](https://hf.co/AP-HP/eds-pseudo-public)
@@ -23,7 +23,6 @@ This model is available on the HuggingFace model hub at
 
     huggingface_hub.login(
         token=YOUR_TOKEN,
-        new_session=False,
         add_to_git_credential=True,
     )
     ```

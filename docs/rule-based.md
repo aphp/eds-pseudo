@@ -12,7 +12,7 @@ cd eds-pseudo
 And install the dependencies:
 
 ```{: .shell data-md-color-scheme="slate" }
-poetry install
+uv sync
 ```
 
 If you face issues with the installation, try to lower the maximum python version to

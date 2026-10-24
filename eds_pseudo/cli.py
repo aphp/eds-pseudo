@@ -1,15 +1,29 @@
 import hashlib
 import json
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from confit import Cli
 
 import edsnlp
 from eds_pseudo.data import file_hash, normalize_record, text_hash
+from edsnlp.core.pipeline import Pipeline
+from edsnlp.core.stream import Stream
+from edsnlp.training.trainer import GenericScorer
 
 app = Cli(pretty_exceptions_show_locals=False)
+
+
+@dataclass
+class Evaluation:
+    """
+    One dataset scored by `eds-pseudo evaluate`, and the scorer that runs on it
+    """
+
+    data: Stream
+    scorer: GenericScorer
 
 
 def source_group(record: Mapping[str, Any], group_field: Optional[str]) -> str:
@@ -204,6 +218,35 @@ def prepare_data(
     return info
 
 
+@app.command(name="evaluate", registry=edsnlp.registry)
+def evaluate(
+    nlp: Pipeline,
+    evaluations: Dict[str, Evaluation],
+    output_dir: Path = Path("artifacts"),
+    device: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Score a pipeline on each dataset of `evaluations` and write its metrics to `<output_dir>/<name>-metrics.json`,
+    which `eds-pseudo experiments` gathers
+    """
+    if device is None:
+        import torch
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    nlp.to(device)
+    results = {}
+    for name, settings in evaluations.items():
+        with nlp.select_pipes(enable=[]):
+            docs = list(settings.data.map_pipeline(nlp))
+        metrics = settings.scorer(nlp, docs)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / f"{name}-metrics.json").write_text(
+            json.dumps(metrics, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        )
+        results[name] = metrics
+    return results
+
+
 @app.command(name="stats", registry=edsnlp.registry)
 def stats(sources: List[Path], output_path: Optional[Path] = None) -> Dict[str, Any]:
     """
@@ -234,6 +277,97 @@ def stats(sources: List[Path], output_path: Optional[Path] = None) -> Dict[str, 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         Path(output_path).write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     return result
+
+
+@app.command(name="experiments", registry=edsnlp.registry)
+def experiments(
+    runs_dir: Path = Path("artifacts"),
+    output_path: Path = Path("artifacts/experiments.csv"),
+) -> List[Dict[str, Any]]:
+    """
+    Gather the `<evaluation>-metrics.json` files that `evaluate` wrote in each run folder of `runs_dir` into the CSV
+    `output_path`, one row per run and one `<evaluation>/<metric path>` column per score, so that we can compare runs
+    side by side
+    """
+    import pandas as pd
+
+    rows = []
+    for run in sorted(path for path in runs_dir.iterdir() if path.is_dir()):
+        row = {"run": run.name}
+        for metrics_path in sorted(run.glob("*-metrics.json")):
+            evaluation = metrics_path.name.removesuffix("-metrics.json")
+            scores = pd.json_normalize(json.loads(metrics_path.read_text()), sep="/").iloc[0].to_dict()
+            row.update({f"{evaluation}/{key}": value for key, value in scores.items()})
+        if len(row) > 1:
+            rows.append(row)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_path, index=False)
+    return rows
+
+
+@app.command(name="package", registry=edsnlp.registry)
+def package(
+    pipeline: Union[Path, Pipeline],
+    name: str,
+    version: str = "1.0.0",
+    root_dir: Path = Path("."),
+    dist_dir: Path = Path("dist"),
+    distributions: List[str] = ["wheel"],
+    code_dependency: str = "eds-pseudo>=1,<2",
+    code_check: str = "error",
+    publish_index: Optional[str] = None,
+    isolation: bool = True,
+    skip_build_dependency_check: bool = False,
+    metadata: Dict[str, Any] = {},
+    readme_replacements: Dict[str, str] = {},
+):
+    """
+    Package a pipeline so that the package depends on `code_dependency` (`eds-pseudo>=1,<2` by default) instead of
+    holding a copy of the eds_pseudo code
+    """
+    if not hasattr(pipeline, "package"):
+        pipeline = edsnlp.load(pipeline)
+    return pipeline.package(
+        name=name,
+        version=version,
+        root_dir=root_dir,
+        dist_dir=dist_dir,
+        distributions=distributions,
+        code="dependency",
+        code_dependency=code_dependency,
+        code_check=code_check,
+        publish_index=publish_index,
+        isolation=isolation,
+        skip_build_dependency_check=skip_build_dependency_check,
+        metadata=metadata,
+        readme_replacements=readme_replacements,
+    )
+
+
+@app.command(name="infer", registry=edsnlp.registry)
+def infer(
+    nlp: Union[Path, Pipeline],
+    input_path: Path,
+    output_path: Path,
+    span_getter: Any = "ents",
+    batch_size: Any = "32 docs",
+) -> None:
+    """
+    Predict the entities of each record of `input_path` and write the records to `output_path` with their `entities`
+    replaced by the predictions, keeping the `note_text` and the `DOC_FIELDS` of `eds_pseudo.data`
+    """
+    if not hasattr(nlp, "pipe"):
+        nlp = edsnlp.load(nlp)
+    # The empty span setter leaves the input entities out of the docs, so that the pipeline starts from blank docs
+    docs = edsnlp.data.read_json(input_path, converter="eds_pseudo.dict2doc", tokenizer=nlp.tokenizer, span_setter={})
+    edsnlp.data.write_json(
+        docs.map_pipeline(nlp).set_processing(batch_size=batch_size),
+        output_path,
+        converter="eds_pseudo.doc2dict",
+        span_getter=span_getter,
+        lines=True,
+        overwrite=True,
+    )
 
 
 def main() -> None:

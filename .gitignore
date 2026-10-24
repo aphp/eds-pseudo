@@ -82,6 +82,4 @@ data/**/*.jsonl
 # MkDocs output
 site/
 
-# DVC
-.dvc/tmp
-.dvc/cache
+/artifacts/

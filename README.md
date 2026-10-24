@@ -4,8 +4,6 @@
 [<img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/tests.yml?branch=main&label=tests&style=flat-square" alt="Tests">]()
 [<img style="display: inline" src="https://img.shields.io/github/actions/workflow/status/aphp/eds-pseudo/documentation.yml?branch=main&label=docs&style=flat-square" alt="Documentation">](https://aphp.github.io/eds-pseudo/latest/)
 [<img style="display: inline" src="https://img.shields.io/codecov/c/github/aphp/eds-pseudo?logo=codecov&style=flat-square" alt="Codecov">](https://codecov.io/gh/aphp/eds-pseudo)
-[<img style="display: inline" src="https://img.shields.io/badge/repro-poetry-blue?style=flat-square" alt="Poetry">](https://python-poetry.org)
-[<img style="display: inline" src="https://img.shields.io/badge/repro-dvc-blue?style=flat-square" alt="DVC">](https://dvc.org)
 [<img style="display: inline" src="https://img.shields.io/badge/demo%20%F0%9F%9A%80-streamlit-purple?style=flat-square" alt="Demo">](https://eds-pseudo-public.streamlit.app/)
 
 </div>
@@ -18,12 +16,12 @@ on clinical reports at AP-HP's Clinical Data Warehouse (EDS).
 The model is built on top of [edsnlp](https://github.com/aphp/edsnlp), and consists in a
 hybrid model (rule-based + deep learning) for which we provide
 rules ([`eds-pseudo/pipes`](https://github.com/aphp/eds-pseudo/tree/main/eds_pseudo/pipes))
-and a training recipe [`train.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/train.py).
+and a training recipe [`configs/config.yml`](https://github.com/aphp/eds-pseudo/blob/main/configs/config.yml).
 
 We also provide some fictitious
-templates ([`templates.txt`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.txt)) and a script to
+templates ([`templates.jsonl`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.jsonl)) and a command to
 generate a synthetic
-dataset [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py).
+dataset (`eds-pseudo prepare-data`).
 
 The entities that are detected are listed below.
 
@@ -47,13 +45,13 @@ The entities that are detected are listed below.
 
 The public pretrained model is available on the HuggingFace model hub at
 [AP-HP/eds-pseudo-public](https://hf.co/AP-HP/eds-pseudo-public) and was trained on synthetic data
-(see [`generate_dataset.py`](https://github.com/aphp/eds-pseudo/blob/main/scripts/generate_dataset.py)). You can also
+(see [`templates.jsonl`](https://github.com/aphp/eds-pseudo/blob/main/data/templates.jsonl)). You can also
 test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
 
-1. Install the latest version of edsnlp
+1. Install the latest version of eds-pseudo
 
     ```shell
-    pip install "edsnlp[ml]" -U
+    pip install "eds-pseudo" -U
     ```
 
 2. Get access to the model at [AP-HP/eds-pseudo-public](https://hf.co/AP-HP/eds-pseudo-public)
@@ -63,7 +61,7 @@ test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
     ```python
     import huggingface_hub
 
-    huggingface_hub.login(token=YOUR_TOKEN, new_session=False, add_to_git_credential=True)
+    huggingface_hub.login(token=YOUR_TOKEN, add_to_git_credential=True)
     ```
 
 5. Load the model
@@ -98,10 +96,10 @@ cd eds-pseudo
 ```
 
 And install the dependencies. We recommend pinning the library version in your projects, or use a strict package manager
-like [Poetry](https://python-poetry.org/).
+like [uv](https://docs.astral.sh/uv/).
 
 ```shell
-poetry install
+uv sync
 ```
 
 ## How to use without machine learning
@@ -149,33 +147,37 @@ for ent in doc.ents:
 ## How to train
 
 Before training a model, you should update the
-[configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) and
+[configs/config.yml](https://github.com/aphp/eds-pseudo/blob/main/configs/config.yml) and
 [pyproject.toml](https://github.com/aphp/eds-pseudo/blob/main/pyproject.toml) files to
 fit your needs.
 
-Put your data in the `data/dataset` folder (or edit the paths `configs/config.cfg` file to point
-to `data/gen_dataset/train.jsonl`).
-
-Then, run the training script
+Put your data in the `data/prepared` folder (or edit the `vars` paths of the `configs/config.yml` file), or generate
+the synthetic dataset there with
 
 ```shell
-python scripts/train.py --config configs/config.cfg --seed 43
+eds-pseudo prepare-data --config configs/config.yml
 ```
 
-This will train a model and save it in `artifacts/model-last`. You can evaluate it on the test set (defaults
-to `data/dataset/test.jsonl`) with:
+Then, run the training command
 
 ```shell
-python scripts/evaluate.py --config configs/config.cfg
+python -m edsnlp.train --config configs/config.yml --vars.seed=43
+```
+
+This will train a model and save it in `artifacts/model-last`. You can evaluate it on the validation set (defaults
+to `data/prepared/public-dev.jsonl`) with:
+
+```shell
+eds-pseudo evaluate --config configs/config.yml
 ```
 
 To package it, run:
 
 ```shell
-python scripts/package.py
+eds-pseudo package --config configs/config.yml
 ```
 
-This will create a `dist/eds-pseudo-aphp-***.whl` file that you can install with `pip install dist/eds-pseudo-aphp-***`.
+This will create a `dist/eds_pseudo_public-***.tar.gz` file that you can install with `pip install dist/eds_pseudo_public-***`.
 
 You can use it in your code:
 
@@ -185,10 +187,10 @@ import edsnlp
 # Either from the model path directly
 nlp = edsnlp.load("artifacts/model-last")
 
-# Or from the wheel file
-import eds_pseudo_aphp
+# Or from the installed package
+import eds_pseudo_public
 
-nlp = eds_pseudo_aphp.load()
+nlp = eds_pseudo_public.load()
 ```
 
 ## Documentation
