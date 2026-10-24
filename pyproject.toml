@@ -16,6 +16,9 @@ dependencies = [
   "torch<2.5.0; python_version < '3.9'",
 ]
 
+[project.scripts]
+eds-pseudo = "eds_pseudo.cli:main"
+
 [project.entry-points."spacy_factories"]
 "eds_pseudo.clean"           = "eds_pseudo.pipes.clean_entities:CleanEntities"
 "eds_pseudo.addresses"       = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
@@ -32,8 +35,13 @@ dependencies = [
 "pseudonymisation-addresses" = "eds_pseudo.pipes.addresses.addresses:PseudonymisationAddresses"
 "clean-entities"             = "eds_pseudo.pipes.clean_entities:CleanEntities"
 
+[project.entry-points."edsnlp_factories"]
+"eds_pseudo.dict2doc" = "eds_pseudo.data:Dict2DocConverter"
+"eds_pseudo.doc2dict" = "eds_pseudo.data:Doc2DictConverter"
+
 [project.optional-dependencies]
 dev = [
+  "faker>=30",
   "dvc>=2.37.0,<3.0.0; python_version >= '3.8'",
   "loguru>=0.6.0",
   "typer>=0.6.1",

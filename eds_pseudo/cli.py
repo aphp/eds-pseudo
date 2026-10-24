@@ -1,0 +1,244 @@
+import hashlib
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional
+
+from confit import Cli
+
+import edsnlp
+from eds_pseudo.data import file_hash, normalize_record, text_hash
+
+app = Cli(pretty_exceptions_show_locals=False)
+
+
+def source_group(record: Mapping[str, Any], group_field: Optional[str]) -> str:
+    """
+    Group of a record (its `group_field`, `group_id` or `source_id`, else the hash of its text), so that the records
+    of one note or one person always land in the same split
+    """
+    for field in (group_field, "group_id", "source_id"):
+        if field and record.get(field) not in (None, ""):
+            return str(record[field])
+    return text_hash(record["note_text"])
+
+
+def assigned_split(group: str, seed: int, dev_fraction: float) -> str:
+    """
+    Put a group in dev with probability `dev_fraction`, from a hash of the seed and the group, so that the split of a
+    group doesn't depend on the order of the records or on the other groups
+    """
+    value = int(hashlib.sha256(f"{seed}:{group}".encode()).hexdigest()[:16], 16) / 2**64
+    return "dev" if value < dev_fraction else "train"
+
+
+@app.command(name="prepare-data", registry=edsnlp.registry)
+def prepare_data(
+    sources: List[Dict[str, Any]],
+    output_dir: Path,
+    reserved_sources: List[Dict[str, Any]] = [],
+    leakage_check_sources: List[Dict[str, Any]] = [],
+    seed: int = 42,
+    real_dev_fraction: float = 0.15,
+    dataset_info_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """
+    Build the train and dev JSONL files read by the training configs, e.g. `data/prepared/public-train.jsonl` for
+    `configs/config.yml`.
+
+    1. Read the `reserved_sources` (test sets), whose texts and groups must not appear in train or dev.
+    2. Check that the `leakage_check_sources`, which we read but don't rewrite, contain no reserved text or group.
+    3. Split each of the `sources` into train and dev by group, or generate synthetic records from its seeds when it
+       has a `generation` section, and check that no group or text ends up in two splits.
+    4. Write one file per source and split.
+    5. Write the counts and SHA256 of every input and output file to `dataset-info.json`.
+    """
+    if not 0 <= real_dev_fraction <= 1:
+        raise ValueError("real_dev_fraction must be between zero and one")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    input_info = []
+    reserved_hashes = set()
+    reserved_groups = set()
+    prepared = defaultdict(list)
+
+    # 1. Read the reserved test sets
+    for spec in reserved_sources:
+        path = Path(spec["path"])
+        records = list(edsnlp.data.read_json(path).map(normalize_record))
+        input_info.append({"path": str(path), "sha256": file_hash(path), "records": len(records), "role": "reserved"})
+        for record in records:
+            group = source_group(record, spec.get("group_field"))
+            record.update(
+                source=record.get("source", spec.get("source", path.stem)),
+                split="test",
+                group_id=group,
+            )
+            reserved_hashes.add(text_hash(record["note_text"]))
+            reserved_groups.add(group)
+            prepared[(spec.get("output_source", spec.get("source", path.stem)), "test")].append(record)
+
+    # 2. Check the sources we don't rewrite against the reserved texts and groups
+    for spec in leakage_check_sources:
+        path = Path(spec["path"])
+        records = list(edsnlp.data.read_json(path).map(normalize_record))
+        input_info.append(
+            {"path": str(path), "sha256": file_hash(path), "records": len(records), "role": "leakage-check"}
+        )
+        for record in records:
+            group = source_group(record, spec.get("group_field"))
+            if text_hash(record["note_text"]) in reserved_hashes or group in reserved_groups:
+                raise ValueError(f"Reserved text or group occurs in leakage check source {path}, group {group}")
+
+    # 3. Split or generate each source
+    seen_splits = {}
+    for source_idx, spec in enumerate(sources):
+        path = Path(spec["path"])
+        records = list(edsnlp.data.read_json(path).map(normalize_record))
+        kind = spec.get("kind", "original")
+        source = spec.get("source", path.stem)
+        input_info.append({"path": str(path), "sha256": file_hash(path), "records": len(records), "role": kind})
+        if "generation" in spec:
+            from eds_pseudo.augment import generate_records
+
+            generation = spec["generation"]
+            values_path = Path(generation["values_path"]) if generation.get("values_path") else None
+            people_path = Path(generation["people_path"]) if generation.get("people_path") else None
+            # Since the templates sit in the config, we copy them to the dataset info, so that it tells how the records
+            # were generated
+            input_info.append({"source": source, "templates": generation["templates"], "role": "templates"})
+            if values_path:
+                input_info.append({"path": str(values_path), "sha256": file_hash(values_path), "role": "values"})
+            if people_path:
+                input_info.append({"path": str(people_path), "sha256": file_hash(people_path), "role": "people"})
+            # We split the seeds before generating, so that no train record comes from a dev seed
+            split_seeds = defaultdict(list)
+            for record in records:
+                group = source_group(record, spec.get("group_field"))
+                split = spec.get("split") or record.get("split") or assigned_split(group, seed, real_dev_fraction)
+                split_seeds[split].append({**record, "group_id": group, "split": split})
+            records = []
+            generated_hashes = set()
+            for split, target_words in generation["target_words"].items():
+                generated = generate_records(
+                    seeds=split_seeds[split],
+                    target_words=target_words,
+                    templates=generation["templates"],
+                    seed=seed + source_idx + list(generation["target_words"]).index(split),
+                    document_prefix=f"{source}-{split}",
+                    values_path=values_path,
+                    people_path=people_path,
+                    people_probability=generation.get("people_probability", 1),
+                    excluded_hashes=reserved_hashes
+                    | generated_hashes
+                    | {
+                        text_hash(record["note_text"])
+                        for other_split, seed_records in split_seeds.items()
+                        if other_split != split
+                        for record in seed_records
+                    },
+                )
+                records.extend({**record, "split": split} for record in generated)
+                generated_hashes.update(text_hash(record["note_text"]) for record in generated)
+        for record in records:
+            group = source_group(record, spec.get("group_field"))
+            split = spec.get("split") or record.get("split")
+            normalized_hash = text_hash(record["note_text"])
+            if kind in {"real", "synthetic"} and split is None:
+                split = assigned_split(group, seed, real_dev_fraction)
+            if split not in {"train", "dev", "test"}:
+                raise ValueError(f"Source {source} needs a train, dev or test split")
+
+            if split in {"train", "dev"} and (normalized_hash in reserved_hashes or group in reserved_groups):
+                raise ValueError(f"Reserved text or group occurs in {split}, source {source}, group {group}")
+            if kind in {"real", "synthetic"}:
+                previous = seen_splits.setdefault(("group", group), split)
+                if previous != split:
+                    raise ValueError(f"Group {group} is in both {previous} and {split}")
+                previous = seen_splits.setdefault(("text", normalized_hash), split)
+                if previous != split:
+                    raise ValueError("The same text is in two splits")
+            record_source = record.get("source", source) if spec.get("preserve_source") else source
+            record.update(source=record_source, split=split, group_id=group)
+            prepared[(record_source, split)].append(record)
+
+    # 4. Write one file per source and split
+    outputs = []
+    tokenizer = edsnlp.blank("eds").tokenizer
+    for (source, split), records in sorted(prepared.items()):
+        safe_source = "".join(character if character.isalnum() or character in "-_" else "-" for character in source)
+        path = output_dir / f"{safe_source}-{split}.jsonl"
+        edsnlp.data.write_json(records, path, lines=True, overwrite=True)
+        outputs.append(
+            {
+                "path": str(path),
+                "sha256": file_hash(path),
+                "source": source,
+                "split": split,
+                "records": len(records),
+                "words": sum(len(tokenizer(record["note_text"])) for record in records),
+                "entities": sum(len(record["entities"]) for record in records),
+                "labels": dict(
+                    sorted(Counter(entity["label"] for record in records for entity in record["entities"]).items())
+                ),
+                "templates": dict(
+                    sorted(Counter(record["template"] for record in records if "template" in record).items())
+                ),
+            }
+        )
+
+    # 5. Write the counts and SHA256 of every input and output file
+    info = {
+        "schema": 1,
+        "seed": seed,
+        "real_dev_fraction": real_dev_fraction,
+        "inputs": input_info,
+        "outputs": outputs,
+        "reserved": {
+            "text_hashes": len(reserved_hashes),
+            "groups": len(reserved_groups),
+        },
+    }
+    dataset_info_path = dataset_info_path or output_dir / "dataset-info.json"
+    dataset_info_path.parent.mkdir(parents=True, exist_ok=True)
+    dataset_info_path.write_text(json.dumps(info, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    return info
+
+
+@app.command(name="stats", registry=edsnlp.registry)
+def stats(sources: List[Path], output_path: Optional[Path] = None) -> Dict[str, Any]:
+    """
+    Count the records, entities, characters and labels of each file, and the texts found twice in one file or in
+    several files
+    """
+    distributions = {}
+    hashes = defaultdict(set)
+    hash_counts = Counter()
+    for source in sources:
+        path = Path(source)
+        counts = Counter()
+        for record in edsnlp.data.read_json(path):
+            counts["records"] += 1
+            counts["entities"] += len(record["entities"])
+            counts["characters"] += len(record["note_text"])
+            normalized_hash = text_hash(record["note_text"])
+            hashes[normalized_hash].add(str(path))
+            hash_counts[normalized_hash] += 1
+            counts.update(f"label:{entity['label']}" for entity in record["entities"])
+        distributions[str(path)] = dict(sorted(counts.items()))
+    result = {
+        "sources": distributions,
+        "duplicate_texts": sum(count > 1 for count in hash_counts.values()),
+        "cross_source_overlaps": sum(len(paths) > 1 for paths in hashes.values()),
+    }
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        Path(output_path).write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    return result
+
+
+def main() -> None:
+    app()
+
+
+if __name__ == "__main__":
+    main()
