@@ -4,3 +4,4 @@ edsnlp[ml]>=0.13.0
 streamlit
 babel
 faker
+transformers<5
