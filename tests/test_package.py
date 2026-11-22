@@ -1,3 +1,4 @@
+import json
 import tarfile
 import zipfile
 from pathlib import Path
@@ -12,6 +13,16 @@ ROOT = Path(__file__).parents[1]
 
 def test_dependency_package_contains_loader_without_architecture(tmp_path):
     nlp = edsnlp.blank("eds")
+    # A run folder with the metric file of one evaluation, as written by `eds-pseudo evaluate`
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    prf = {"p": 0.9, "r": 0.8, "f": 0.85}
+    scores = {
+        "exact": {"micro": prf},
+        "token": {"NOM": prf, "PRENOM": prf, "micro": prf},
+        "redact": {"micro": {"token_r": 0.95, "full": 0.5, "documents": 688}},
+    }
+    (run_dir / "original-test-metrics.json").write_text(json.dumps({"final": scores}))
     package(
         pipeline=nlp,
         name="eds-pseudo-public",
@@ -20,7 +31,10 @@ def test_dependency_package_contains_loader_without_architecture(tmp_path):
         distributions=["wheel", "sdist"],
         code_check="off",
         isolation=False,
-        readme_replacements={"<!-- metrics -->": "## Public model metrics"},
+        card_metadata={"license": "bsd-3-clause"},
+        results_dir=run_dir,
+        results={"original-test": "AP-HP test notes"},
+        label_results=["original-test"],
     )
 
     wheel = tmp_path / "eds_pseudo_public-1.0.0-py3-none-any.whl"
@@ -37,7 +51,11 @@ def test_dependency_package_contains_loader_without_architecture(tmp_path):
             if line.startswith("Requires-Dist: ")
         }
         assert Requirement("eds-pseudo>=1,<2") in requirements
-        assert "## Public model metrics" in metadata
+        readme = metadata[metadata.index("\n\n") + 2 :]
+        assert readme.startswith("---\nlicense: bsd-3-clause\nmodel-index:\n")
+        assert "name: Token Scores / NOM / F1" in readme
+        assert "| AP-HP test notes | 688 | 0.900 | 0.800 | 0.850 | 0.950 | 0.500 |" in readme
+        assert "<!-- metrics -->" not in readme
     with tarfile.open(source) as archive:
         names = archive.getnames()
         assert any(name.endswith("/eds_pseudo_public/__init__.py") for name in names)

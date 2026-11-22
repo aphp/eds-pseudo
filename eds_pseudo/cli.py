@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 
-from confit import Cli
+from confit import Cli, Config
 
 import edsnlp
 from eds_pseudo.data import file_hash, normalize_record, text_hash
@@ -14,6 +14,8 @@ from edsnlp.core.stream import Stream
 from edsnlp.training.trainer import GenericScorer
 
 app = Cli(pretty_exceptions_show_locals=False)
+# Name, Hugging Face metric type and metric file key of the scores that `package` writes in the model card
+SCORES = (("Precision", "precision", "p"), ("Recall", "recall", "r"), ("F1", "f1", "f"))
 
 
 @dataclass
@@ -320,13 +322,105 @@ def package(
     skip_build_dependency_check: bool = False,
     metadata: Dict[str, Any] = {},
     readme_replacements: Dict[str, str] = {},
+    card_metadata: Dict[str, Any] = {},
+    results_dir: Optional[Path] = None,
+    results: Dict[str, str] = {},
+    label_results: List[str] = [],
 ):
     """
     Package a pipeline so that the package depends on `code_dependency` (`eds-pseudo>=1,<2` by default) instead of
-    holding a copy of the eds_pseudo code
+    holding a copy of the eds_pseudo code.
+
+    The README is the model card of the package: we write `card_metadata` as its front matter in place of
+    `<!-- modelcard -->`. When `results_dir` is a run folder, we add the scores of its metric files to that front
+    matter as the `model-index` that Hugging Face shows as evaluation results, and as tables in place of
+    `<!-- metrics -->`.
+
+    Parameters
+    ----------
+    card_metadata
+        Front matter of the model card, e.g. its license, tags and gating fields
+    results_dir
+        Run folder with the `<evaluation>-metrics.json` files of `eds-pseudo evaluate`, e.g. the archived run of the
+        packaged model
+    results
+        Evaluations of `results_dir` to report and the name we show for each, e.g. `{"original-test": "AP-HP test
+        notes"}`. Each gets the micro NER strict match P/R/F1 and the redaction rates of the whole pipeline
+    label_results
+        Evaluations of `results` that also get the NER token match P/R/F1 of each label
     """
     if not hasattr(pipeline, "package"):
         pipeline = edsnlp.load(pipeline)
+    front_matter = dict(card_metadata)
+    if results_dir is not None:
+        # The `final` key of a metric file holds the scores of the whole pipeline (rules and NER model)
+        model_results = []
+        rows = [
+            "| Evaluation set | Documents | Precision | Recall | F1 | Redacted tokens | Fully redacted documents |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+        label_tables = []
+        for evaluation, dataset in results.items():
+            scores = json.loads((results_dir / f"{evaluation}-metrics.json").read_text())["final"]
+            exact, redact = scores["exact"]["micro"], scores["redact"]["micro"]
+            metrics = [
+                {"type": kind, "name": f"Exact Scores / micro / {name}", "value": round(exact[key], 4)}
+                for name, kind, key in SCORES
+            ]
+            metrics.append({"type": "recall", "name": "Redaction / Tokens", "value": round(redact["token_r"], 4)})
+            metrics.append(
+                {"type": "accuracy", "name": "Redaction / Full documents", "value": round(redact["full"], 4)}
+            )
+            rows.append(
+                f"| {dataset} | {redact['documents']:,} | {exact['p']:.3f} | {exact['r']:.3f} | {exact['f']:.3f} "
+                f"| {redact['token_r']:.3f} | {redact['full']:.3f} |"
+            )
+            if evaluation in label_results:
+                labels = {label: value for label, value in scores["token"].items() if label != "micro"}
+                metrics += [
+                    {"type": kind, "name": f"Token Scores / {label} / {name}", "value": round(value[key], 4)}
+                    for label, value in labels.items()
+                    for name, kind, key in SCORES
+                ]
+                label_tables.append(
+                    "\n".join(
+                        [
+                            f"NER token match on {dataset}:",
+                            "",
+                            "| Label | Precision | Recall | F1 |",
+                            "| --- | ---: | ---: | ---: |",
+                        ]
+                        + [f"| `{label}` | {v['p']:.3f} | {v['r']:.3f} | {v['f']:.3f} |" for label, v in labels.items()]
+                    )
+                )
+            model_results.append(
+                {
+                    "task": {"type": "token-classification"},
+                    "dataset": {"name": dataset, "type": evaluation},
+                    "metrics": metrics,
+                }
+            )
+        front_matter["model-index"] = [{"name": name, "results": model_results}]
+        readme_replacements = {
+            **readme_replacements,
+            "<!-- metrics -->": "\n\n".join(
+                [
+                    "## Metrics",
+                    "Scores of the whole pipeline on internal AP-HP data, which is not distributed. NER strict match "
+                    "counts the entities with the same boundaries and label, NER token match counts their tokens, and "
+                    "redaction counts the gold tokens (or the documents with all their gold tokens) that the pipeline "
+                    "redacts whatever their predicted label.",
+                    "\n".join(rows),
+                    *label_tables,
+                ]
+            ),
+        }
+    if front_matter:
+        readme_replacements = {
+            **readme_replacements,
+            # Config.to_yaml_str also writes the nested sections that confit gives as Config objects
+            "<!-- modelcard -->": "---\n" + Config(front_matter).to_yaml_str() + "---",
+        }
     return pipeline.package(
         name=name,
         version=version,

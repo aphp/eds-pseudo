@@ -6,6 +6,7 @@
 - eds-pseudo can now be installed with pip and provides the `eds-pseudo` command (`prepare-data`, `evaluate`, `stats`, `experiments`, `package` and `infer`), while training now goes through the `python -m edsnlp.train` command of EDS-NLP
 - `data/templates.txt` is replaced by the annotated templates of `data/templates.jsonl`, from which `eds-pseudo prepare-data` generates the synthetic dataset
 - Models are now packaged with a dependency on `eds-pseudo>=1,<2` instead of a copy of the `eds_pseudo` code
+- `eds-pseudo package` now writes the scores of a run folder (`--package.results_dir`) in the model card, as tables and as the `model-index` that Hugging Face shows as evaluation results
 - `eds_pseudo.dates` now builds on the `eds.dates` matcher of EDS-NLP, and still labels birth dates as `DATE_NAISSANCE`
 - New `eds_pseudo.redact` metric, which counts the redacted characters and tokens of the gold entities whatever their predicted label, and `eds_pseudo.final`, which runs it with the exact, token and overlap NER metrics of EDS-NLP on the whole pipeline
 - Poetry and DVC are removed, and the experiments of the results page are now in `experiments/`, with the scripts that build their data and figures in `scripts/`

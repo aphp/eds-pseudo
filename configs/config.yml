@@ -199,47 +199,30 @@ package:
   distributions: [sdist]
   metadata:
     license: BSD-3-Clause
-  # The project README becomes the Hugging Face model card
-  readme_replacements:
-    '<!-- modelcard -->': |-
-      ---
-      language: [fr]
-      license: bsd-3-clause
-      library_name: edsnlp
-      pipeline_tag: token-classification
-      base_model: doctolib-lab/doctobert-fr-base
-      tags: [medical, ner, nlp, pseudonymisation]
-      extra_gated_fields:
-        Organisation: text
-        Intended use of the model:
-          type: select
-          options:
-            - NLP Research
-            - Education
-            - Commercial Product
-            - Clinical Data Warehouse
-            - label: Other
-              value: other
-      ---
-    '<!-- metrics -->': |-
-      ## Public model 2.0
-
-      The model fine-tunes `doctolib-lab/doctobert-fr-base` (Apache-2.0) on 71,085 synthetic records (2,000,142 words)
-      generated from the 345 public templates of `data/templates.jsonl`, with Faker values and the public hospital names
-      of `data/replacement-values.jsonl`. It trains for 4,000 updates of 4,000 words (80% complete examples, 20% line
-      views), bf16, encoder LR 2e-5, head LR 5e-5, seed 42, and keeps the final checkpoint. No AP-HP record is used for
-      training, but templates were revised by looking at errors on internal AP-HP data.
-
-      Final hybrid exact entity scores excluding `HOPITAL`, on internal AP-HP data that is not distributed:
-
-      | Evaluation set | Documents | Precision | Recall | F1 |
-      | --- | ---: | ---: | ---: | ---: |
-      | Original AP-HP test notes | 688 | 0.957 | 0.956 | 0.956 |
-      | Hard context-free short field development | 534 | 0.866 | 0.880 | 0.873 |
-      | Representative question-conditioned short field test | 3,339 | 0.884 | 0.922 | 0.903 |
-      | Answer-unseen subset of that short field test | 2,690 | 0.894 | 0.923 | 0.909 |
-
-      The released 0.4 model reaches 0.893, 0.817 and 0.841 F1 on the first three sets. The short field development set
-      deliberately holds difficult examples, and none of these sets were held out from model development. These scores
-      do not guarantee complete removal of identifying information, `HOPITAL` is less reliable than the other labels,
-      and on short fields the model favours recall over precision.
+  # Since the project README is the model card, `eds-pseudo package` writes this front matter at its top, and adds the
+  # scores of these evaluations when `--package.results_dir` names the run folder of the packaged model
+  card_metadata:
+    language: [fr]
+    license: bsd-3-clause
+    library_name: edsnlp
+    pipeline_tag: token-classification
+    base_model: doctolib-lab/doctobert-fr-base
+    tags: [medical, ner, nlp, pseudonymisation]
+    extra_gated_fields:
+      Organisation: text
+      Intended use of the model:
+        type: select
+        options:
+          - NLP Research
+          - Education
+          - Commercial Product
+          - Clinical Data Warehouse
+          - label: Other
+            value: other
+  results_dir: null
+  results:
+    original-test: AP-HP test notes
+    real-short-dev: Hard context-free form answer development
+    real-short-test: Representative question-conditioned form answer test
+    real-short-answer-unseen: Answer-unseen subset of that form answer test
+  label_results: [original-test]

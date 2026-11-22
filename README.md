@@ -84,6 +84,16 @@ test it directly on the **[demo](https://eds-pseudo-public.streamlit.app/)**.
 To apply the model on many documents using one or more GPUs, refer to the documentation
 of [edsnlp](https://aphp.github.io/eds-pseudo/main/inference).
 
+## Public model 2.0
+
+The model fine-tunes `doctolib-lab/doctobert-fr-base` (Apache-2.0) on 74,127 synthetic records (2,000,015 words)
+generated from the 396 public templates of `data/templates.jsonl`, with Faker values and the public hospital names of
+`data/replacement-values.jsonl`. It trains for 4,000 updates of 4,000 words (80% complete examples, 20% line views),
+bf16, encoder LR 2e-5, head LR 5e-5, seed 42, and keeps the final checkpoint. No AP-HP record is used for training,
+but we revised the templates by looking at errors on internal AP-HP data, so none of the AP-HP evaluation sets were
+held out from model development, and the form answer development set deliberately holds difficult examples. These
+scores don't guarantee the complete removal of identifying information.
+
 <!-- metrics -->
 
 ## Installation to reproduce
