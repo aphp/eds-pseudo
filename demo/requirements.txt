@@ -3,4 +3,3 @@ torch
 eds-pseudo[data]>=1,<2
 streamlit
 babel
-transformers<5
