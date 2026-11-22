@@ -10,7 +10,7 @@ authors = [
   { name = "Basile Dura", email = "basile.dura-ext@aphp.fr" },
 ]
 dependencies = [
-  "edsnlp[ml]>=0.23.1.dev0",
+  "edsnlp[ml]>=0.24.0",
 ]
 
 [project.scripts]
