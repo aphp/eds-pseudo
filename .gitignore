@@ -74,6 +74,7 @@ coverage.xml
 *.jpg
 *.png
 *.html
+!docs/assets/figures/*.html
 *.pickle
 *.joblib
 *.pdf

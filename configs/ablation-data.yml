@@ -1,0 +1,8 @@
+# The ablation experiments of the results page read these subsets of the gold files
+make:
+  original_train: data/dataset/aphp-clean/train.jsonl
+  original_test: data/dataset/aphp-clean/test.jsonl
+  real_short_train: data/dataset/prepared/real-short-train.jsonl
+  real_short_dev: data/dataset/prepared/real-short-dev.jsonl
+  real_short_test: data/dataset/prepared/real-short-test.jsonl
+  output_dir: data/dataset/ablations

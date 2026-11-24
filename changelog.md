@@ -8,7 +8,7 @@
 - Models are now packaged with a dependency on `eds-pseudo>=1,<2` instead of a copy of the `eds_pseudo` code
 - `eds_pseudo.dates` now builds on the `eds.dates` matcher of EDS-NLP, and still labels birth dates as `DATE_NAISSANCE`
 - New `eds_pseudo.redact` metric, which counts the redacted characters and tokens of the gold entities whatever their predicted label, and `eds_pseudo.final`, which runs it with the exact, token and overlap NER metrics of EDS-NLP on the whole pipeline
-- Poetry, DVC and the `scripts` folder are removed
+- Poetry and DVC are removed, and the experiments of the results page are now in `experiments/`, with the scripts that build their data and figures in `scripts/`
 
 ## v0.4.0 (2024-05-24)
 

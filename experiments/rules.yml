@@ -1,0 +1,158 @@
+vars:
+  # We run this config from the root of the AP-HP training project, so its data paths are relative to that root,
+  # and the training job of that project overrides output_dir and skips training, since this config has no train
+  # section (see docs/reproducibility.md)
+  output_dir: artifacts/rules-42
+  original_test_lt_ordo: data/dataset/ablations/original-test-lt-ordo.jsonl
+  original_test_cr_cons: data/dataset/ablations/original-test-cr-cons.jsonl
+  original_test_cr_image: data/dataset/ablations/original-test-cr-image.jsonl
+  original_test_cr_urge: data/dataset/ablations/original-test-cr-urge.jsonl
+  original_test_pdfbox: data/dataset/ablations/original-test-pdfbox.jsonl
+  original_test_edspdf: data/dataset/ablations/original-test-edspdf.jsonl
+  real_short_test_answer_unseen: data/dataset/ablations/real-short-test-answer-unseen.jsonl
+  original_test: data/dataset/aphp-clean/test.jsonl
+  real_short_test: data/dataset/prepared/real-short-test.jsonl
+  real_short_population: data/dataset/aphp-short-field/personne_rencontre_question_reponse_statistiques.parquet
+  real_short_dev: data/dataset/prepared/real-short-dev.jsonl
+  # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
+  scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+
+# Rule-based pipeline alone, as in docs/rule-based.md
+nlp:
+  '@core': pipeline
+  lang: eds
+  components:
+    normalizer:
+      '@factory': eds.normalizer
+    simple_rules:
+      '@factory': eds_pseudo.simple_rules
+      pattern_keys: [TEL, MAIL, SECU, PERSON]
+    addresses:
+      '@factory': eds_pseudo.addresses
+    dates:
+      '@factory': eds_pseudo.dates
+    context:
+      '@factory': eds_pseudo.context
+    # Like the trained pipelines, we merge the rule spans into pseudo-hybrid, so that the scores read the same group
+    merge:
+      '@factory': eds_pseudo.merge
+      span_getter: [pseudo-rb]
+      span_setter: [ents, pseudo-hybrid, '*']
+
+original_test:
+  '@readers': json
+  path: ${vars.original_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_lt_ordo:
+  '@readers': json
+  path: ${vars.original_test_lt_ordo}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_cons:
+  '@readers': json
+  path: ${vars.original_test_cr_cons}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_image:
+  '@readers': json
+  path: ${vars.original_test_cr_image}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_urge:
+  '@readers': json
+  path: ${vars.original_test_cr_urge}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_pdfbox:
+  '@readers': json
+  path: ${vars.original_test_pdfbox}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_edspdf:
+  '@readers': json
+  path: ${vars.original_test_edspdf}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test_answer_unseen:
+  '@readers': json
+  path: ${vars.real_short_test_answer_unseen}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test:
+  '@readers': json
+  path: ${vars.real_short_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_dev:
+  '@readers': json
+  path: ${vars.real_short_dev}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+final_scorer:
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+
+real_short_test_scorer:
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+    population_path: ${vars.real_short_population}
+
+evaluate:
+  nlp: ${nlp}
+  evaluations:
+    original-test:
+      data: ${original_test}
+      scorer: ${final_scorer}
+    real-short-dev:
+      data: ${real_short_dev}
+      scorer: ${final_scorer}
+    real-short-test:
+      data: ${real_short_test}
+      scorer: ${real_short_test_scorer}
+    test-lt-ordo:
+      data: ${original_test_lt_ordo}
+      scorer: ${final_scorer}
+    test-cr-cons:
+      data: ${original_test_cr_cons}
+      scorer: ${final_scorer}
+    test-cr-image:
+      data: ${original_test_cr_image}
+      scorer: ${final_scorer}
+    test-cr-urge:
+      data: ${original_test_cr_urge}
+      scorer: ${final_scorer}
+    test-pdfbox:
+      data: ${original_test_pdfbox}
+      scorer: ${final_scorer}
+    test-edspdf:
+      data: ${original_test_edspdf}
+      scorer: ${final_scorer}
+    real-short-answer-unseen:
+      data: ${real_short_test_answer_unseen}
+      scorer: ${final_scorer}
+  output_dir: ${vars.output_dir}

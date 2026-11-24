@@ -1,0 +1,319 @@
+vars:
+  # We run this config from the root of the AP-HP training project, so its data paths are relative to that root,
+  # and the training job of that project overrides name, seed, output_dir and model_dir (see
+  # docs/reproducibility.md)
+  name: aphp-docs-300-42
+  seed: 42
+  output_dir: artifacts/aphp-docs-300-42
+  model_dir: artifacts/aphp-docs-300-42/model
+  original_train: data/dataset/ablations/original-train-notes-300.jsonl
+  original_dev: data/dataset/aphp-clean/dev.jsonl
+  original_test_lt_ordo: data/dataset/ablations/original-test-lt-ordo.jsonl
+  original_test_cr_cons: data/dataset/ablations/original-test-cr-cons.jsonl
+  original_test_cr_image: data/dataset/ablations/original-test-cr-image.jsonl
+  original_test_cr_urge: data/dataset/ablations/original-test-cr-urge.jsonl
+  original_test_pdfbox: data/dataset/ablations/original-test-pdfbox.jsonl
+  original_test_edspdf: data/dataset/ablations/original-test-edspdf.jsonl
+  real_short_test_answer_unseen: data/dataset/ablations/real-short-test-answer-unseen.jsonl
+  original_test: data/dataset/aphp-clean/test.jsonl
+  real_short_dev: data/dataset/prepared/real-short-dev.jsonl
+  real_short_test: data/dataset/prepared/real-short-test.jsonl
+  real_short_population: data/dataset/aphp-short-field/personne_rencontre_question_reponse_statistiques.parquet
+  # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
+  scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+
+nlp:
+  '@core': pipeline
+  lang: eds
+  components:
+    normalizer:
+      '@factory': eds.normalizer
+    simple_rules:
+      '@factory': eds_pseudo.simple_rules
+      pattern_keys: [TEL, MAIL, SECU]
+      span_setter: pseudo-rb
+    addresses:
+      '@factory': eds_pseudo.addresses
+      span_setter: pseudo-rb
+    context:
+      '@factory': eds_pseudo.context
+      span_setter: pseudo-rb
+    ner:
+      '@factory': eds.ner_crf
+      mode: independent
+      # We decode each doc with the CRF, which keeps the BIOUL tags of a span consistent
+      window: 0
+      target_span_getter: pseudo-ml
+      span_setter: pseudo-ml
+      embedding:
+        '@factory': eds.text_cnn
+        kernel_sizes: [3]
+        embedding:
+          '@factory': eds.transformer
+          model: data/models/camembert-aphp
+          window: 128
+          stride: 96
+          new_tokens:
+            - ['(?:\n\s*)*\n', '⏎']
+    merge:
+      '@factory': eds_pseudo.merge
+      span_getter: [pseudo-rb, pseudo-ml]
+      span_setter: [ents, pseudo-hybrid, '*']
+    clean:
+      '@factory': eds_pseudo.clean
+      span_getter: [ents, pseudo-hybrid, pseudo-rb, pseudo-ml]
+    dates_normalizer:
+      '@factory': eds_pseudo.dates_normalizer
+      span_getter:
+        ents: [DATE, DATE_NAISSANCE]
+
+original_train:
+  '@readers': json
+  path: ${vars.original_train}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_long_views:
+  '@readers': json
+  path: ${vars.original_train}
+  converter:
+    - '@factory': eds_pseudo.dict2doc
+      span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+    - '@factory': eds.split
+      max_length: 256
+      regex: null
+      randomize: 0.3
+      span_getter: pseudo-ml
+
+original_line_views:
+  '@readers': json
+  path: ${vars.original_train}
+  converter:
+    - '@factory': eds_pseudo.dict2doc
+      span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+    - '@factory': eds.split
+      max_length: 0
+      regex: '\n+'
+      span_getter: pseudo-ml
+
+original_dev:
+  '@readers': json
+  path: ${vars.original_dev}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+real_short_dev:
+  '@readers': json
+  path: ${vars.real_short_dev}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test:
+  '@readers': json
+  path: ${vars.original_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_lt_ordo:
+  '@readers': json
+  path: ${vars.original_test_lt_ordo}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_cr_cons:
+  '@readers': json
+  path: ${vars.original_test_cr_cons}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_cr_image:
+  '@readers': json
+  path: ${vars.original_test_cr_image}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_cr_urge:
+  '@readers': json
+  path: ${vars.original_test_cr_urge}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_pdfbox:
+  '@readers': json
+  path: ${vars.original_test_pdfbox}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+original_test_edspdf:
+  '@readers': json
+  path: ${vars.original_test_edspdf}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+real_short_test_answer_unseen:
+  '@readers': json
+  path: ${vars.real_short_test_answer_unseen}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+real_short_test:
+  '@readers': json
+  path: ${vars.real_short_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+scorer:
+  batch_size: 32 docs
+  autocast: bf16
+  speed: true
+  exact:
+    '@metrics': eds.ner_exact
+    span_getter:
+      pseudo-ml: ${vars.scored_labels}
+  token:
+    '@metrics': eds.ner_token
+    span_getter:
+      pseudo-ml: ${vars.scored_labels}
+  overlap:
+    '@metrics': eds.ner_overlap
+    span_getter:
+      pseudo-ml: ${vars.scored_labels}
+
+final_scorer:
+  batch_size: 32 docs
+  autocast: bf16
+  speed: true
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+  final-ml:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-ml: ${vars.scored_labels}
+
+real_short_test_scorer:
+  batch_size: 32 docs
+  autocast: bf16
+  speed: true
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+    population_path: ${vars.real_short_population}
+  final-ml:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-ml: ${vars.scored_labels}
+    population_path: ${vars.real_short_population}
+optimizer:
+  '@core': optimizer
+  optim: adamw
+  module: ${nlp}
+  groups:
+    - selector: bias|norm(|_1|_2)[.]weight
+      weight_decay: 0
+    # Encoder weights warm up from 0 then decay linearly
+    - selector: ^ner[.]embedding[.]embedding[.]
+      lr:
+        '@schedules': linear
+        start_value: 0
+        max_value: 0.00002
+        warmup_rate: 0.1
+    - selector: .*
+      lr:
+        '@schedules': linear
+        start_value: 0
+        max_value: 0.0001
+        warmup_rate: 0.1
+      weight_decay: 0.01
+  total_steps: ${train.max_steps}
+
+train:
+  nlp: ${nlp}
+  train_data:
+    - data: ${original_train}
+      shuffle: dataset
+      batch_size: 2000 ner_words
+      sub_batch_size: 800 ner_words
+      pipe_names: [ner]
+    - data: ${original_long_views}
+      shuffle: dataset
+      batch_size: 800 ner_words
+      sub_batch_size: 800 ner_words
+      pipe_names: [ner]
+    - data: ${original_line_views}
+      shuffle: dataset
+      batch_size: 400 ner_words
+      sub_batch_size: 400 ner_words
+      pipe_names: [ner]
+  val_data:
+    - ${original_dev}
+  scorer: ${scorer}
+  seed: ${vars.seed}
+  max_steps: 4000
+  validation_interval: 500
+  checkpoint_interval: 4000
+  num_workers: 2
+  mixed_precision: bf16
+  optimizer: ${optimizer}
+  output_dir: ${vars.output_dir}
+  output_model_dir: ${vars.model_dir}
+  project_name: ${vars.name}
+  logger:
+    - rich
+    - json
+    - '@loggers': clearml
+      project_name: ${vars.name}
+      auto_resource_monitoring: false
+      reuse_last_task_id: false
+
+evaluate:
+  nlp:
+    '@core': load
+    model: ${vars.model_dir}
+  device: cuda
+  evaluations:
+    original-test:
+      data: ${original_test}
+      scorer: ${final_scorer}
+    real-short-dev:
+      data: ${real_short_dev}
+      scorer: ${final_scorer}
+    real-short-test:
+      data: ${real_short_test}
+      scorer: ${real_short_test_scorer}
+    test-lt-ordo:
+      data: ${original_test_lt_ordo}
+      scorer: ${final_scorer}
+    test-cr-cons:
+      data: ${original_test_cr_cons}
+      scorer: ${final_scorer}
+    test-cr-image:
+      data: ${original_test_cr_image}
+      scorer: ${final_scorer}
+    test-cr-urge:
+      data: ${original_test_cr_urge}
+      scorer: ${final_scorer}
+    test-pdfbox:
+      data: ${original_test_pdfbox}
+      scorer: ${final_scorer}
+    test-edspdf:
+      data: ${original_test_edspdf}
+      scorer: ${final_scorer}
+    real-short-answer-unseen:
+      data: ${real_short_test_answer_unseen}
+      scorer: ${final_scorer}
+  output_dir: ${vars.output_dir}

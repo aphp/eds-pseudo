@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --extra dev
-      - run: uv run ruff check --no-fix eds_pseudo tests
+      - run: uv run ruff check --no-fix eds_pseudo tests scripts
       - run: uv run pytest --cov --cov-report xml
       - uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.11'
