@@ -10,7 +10,7 @@
 - New `eds_pseudo.redact` metric, which counts the redacted characters and tokens of the gold entities whatever their predicted label, and `eds_pseudo.final`, which runs it with the exact, token and overlap NER metrics of EDS-NLP on the whole pipeline
 - Poetry, DVC and the `scripts` folder are removed
 
-## v0.4.0 - 2024-24-05
+## v0.4.0 (2024-05-24)
 
 - Added `eds_pseudo.dates_normalizer` to parse ML detected dates and extract their value and format.
 - Support empty `doc._.context` field
@@ -24,7 +24,7 @@
 - Update the README with the instructions to download the public pre-trained model.
 - Improve packaging to add evaluation results to the model's meta field and packaged model README (for HF)
 
-## v0.3.0 - 2023-12-01
+## v0.3.0 (2023-12-01)
 
 - Refactoring and fixes to use [edsnlp](https://github.com/aphp/edsnlp) instead of spaCy.
 - Renamed `eds_pseudonymisation` to `eds_pseudo` and default model name to `eds_pseudo_aphp`.
@@ -38,7 +38,7 @@ Some fixes to enable training the model:
 - default to cpu training
 - allow for missing metadata (i.e. omop's `note_class_source_value`)
 
-## v0.2.0 - 2023-05-04
+## v0.2.0 (2023-05-04)
 
 Many fixes along the publication of our [article](https://arxiv.org/pdf/2303.13451.pdf):
 
@@ -47,7 +47,7 @@ Many fixes along the publication of our [article](https://arxiv.org/pdf/2303.134
 - Experiment and analysis scripts
 - Charts and tables in the Results page of our documentation
 
-## v0.1.0 - 2022-05-13
+## v0.1.0 (2022-05-13)
 
 Inception ! :tada:
 

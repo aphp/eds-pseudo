@@ -1,0 +1,71 @@
+# Runs when a GitHub release is published, ie when release-from-pr.yml creates it after a release PR is merged
+
+name: Upload Python Package and Build Release Docs
+
+on:
+  workflow_dispatch:
+  release:
+    types: [ published ]
+
+jobs:
+
+  Build:
+    name: Build package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: |
+            dist/*.tar.gz
+            dist/*.whl
+
+  PyPI:
+    name: Upload to PyPI
+
+    needs: [Build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: artifact
+        path: dist
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@v1.13.0
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
+  Documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: uv sync --extra docs
+    - name: Set up Git
+      run: |
+        git config user.name ${{ github.actor }}
+        git config user.email ${{ github.actor }}@users.noreply.github.com
+    - name: Build documentation
+      env:
+        PRERELEASE: ${{ github.event.release.prerelease }}
+      run: |
+        git fetch origin gh-pages
+        uv run pip install setuptools
+        if [ "$PRERELEASE" = "true" ]; then
+          uv run mike deploy --push "$GITHUB_REF_NAME"
+        else
+          uv run mike deploy --push --alias-type=copy --update-aliases "$GITHUB_REF_NAME" latest
+        fi
