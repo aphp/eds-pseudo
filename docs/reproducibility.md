@@ -36,8 +36,8 @@ project that checks out eds-pseudo under `eds-pseudo/`, so their paths are relat
 | Path | Content |
 | --- | --- |
 | `data/dataset/aphp-clean` | AP-HP train, dev and test notes |
-| `data/dataset/aphp-short-field` | AP-HP short field notes |
-| `data/dataset/prepared` | Short field examples, split by source group |
+| `data/dataset/aphp-short-field` | AP-HP form answers (short fields) |
+| `data/dataset/prepared` | Form answer examples, split by source group |
 | `data/dataset/ablations` | Filtered views of the above, written by `scripts/make_ablation_data.py` |
 | `data/dataset/public` | Synthetic notes written by `eds-pseudo prepare-data --config configs/config.yml` |
 | `data/models/camembert-aphp` | CamemBERT model trained on AP-HP notes |
@@ -46,15 +46,17 @@ The results page compares these experiments, on seed 42 unless noted:
 
 | Section | Experiments |
 | --- | --- |
-| General results | `aphp-camembert-aphp` and `public-doctobert` (seeds 42, 13, 123), `rules` (rules only, no training) |
+| General results | `aphp-camembert-aphp` and `public-doctobert` (seeds 42, 13, 123), `rules` (rules only, no training), `public-0.4` (model 0.4 of Hugging Face, no training) |
 | Language model | `aphp-camembert-aphp` against `aphp-camembert` and `aphp-doctobert` |
-| Number of training examples | `aphp-notes-10`, `aphp-notes-25`, `aphp-notes-50` |
+| Training size | `aphp-docs-<N>` (AP-HP documents only) and `aphp-docs-<N>-synthetic` (with the synthetic notes) for N = 10 and 30 (seeds 42, 13, 123), 100, 300, 1000 and 3373 |
 | Missing document types | `aphp-without-lt-ordo`, `aphp-without-cr-cons`, `aphp-without-cr-image`, `aphp-without-cr-urge` |
 | PDF extraction | `aphp-camembert-aphp`, on the 340 test notes extracted by both pdfbox and edspdf |
 
-A run of an experiment and a seed trains with `python -m edsnlp.train` (except `rules`), evaluates with
-`eds-pseudo evaluate` and writes its metrics to `artifacts/<experiment>-<seed>`, with the eds-pseudo commit it ran in
-`source-state/source-state.json`. From the root of the training project:
+A run of an experiment and a seed trains with `python -m edsnlp.train` (except `rules` and `public-0.4`), evaluates
+with `eds-pseudo evaluate` and writes its metrics to `artifacts/<experiment>-<seed>`, with the eds-pseudo commit it ran
+in `source-state/source-state.json`. Since model 0.4 holds its own copy of `eds_pseudo` 0.4, which can't share a
+process with eds-pseudo 1.0, `public-0.4` first writes the predictions of the model with `scripts/predict_package.py`,
+then `eds-pseudo evaluate` scores these predictions. From the root of the training project:
 
 ```{: .shell data-md-color-scheme="slate" }
 python eds-pseudo/scripts/make_ablation_data.py --config eds-pseudo/configs/ablation-data.yml

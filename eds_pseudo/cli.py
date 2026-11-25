@@ -21,11 +21,14 @@ SCORES = (("Precision", "precision", "p"), ("Recall", "recall", "r"), ("F1", "f1
 @dataclass
 class Evaluation:
     """
-    One dataset scored by `eds-pseudo evaluate`, and the scorer that runs on it
+    One dataset scored by `eds-pseudo evaluate`, and the scorer that runs on it. With `predictions` (docs predicted
+    in another process by `scripts/predict_package.py`, in the order of `data`), the metrics of the scorer compare
+    them with `data` and no pipeline runs.
     """
 
     data: Stream
     scorer: GenericScorer
+    predictions: Optional[Stream] = None
 
 
 def source_group(record: Mapping[str, Any], group_field: Optional[str]) -> str:
@@ -222,25 +225,33 @@ def prepare_data(
 
 @app.command(name="evaluate", registry=edsnlp.registry)
 def evaluate(
-    nlp: Pipeline,
     evaluations: Dict[str, Evaluation],
+    nlp: Optional[Pipeline] = None,
     output_dir: Path = Path("artifacts"),
     device: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Score a pipeline on each dataset of `evaluations` and write its metrics to `<output_dir>/<name>-metrics.json`,
-    which `eds-pseudo experiments` gathers
+    Score a pipeline on each dataset of `evaluations`, or the `predictions` of an evaluation when it has some, and
+    write the metrics to `<output_dir>/<name>-metrics.json`, which `eds-pseudo experiments` gathers
     """
-    if device is None:
-        import torch
+    if nlp is not None:
+        if device is None:
+            import torch
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    nlp.to(device)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        nlp.to(device)
     results = {}
     for name, settings in evaluations.items():
-        with nlp.select_pipes(enable=[]):
-            docs = list(settings.data.map_pipeline(nlp))
-        metrics = settings.scorer(nlp, docs)
+        if settings.predictions is None:
+            with nlp.select_pipes(enable=[]):
+                docs = list(settings.data.map_pipeline(nlp))
+            metrics = settings.scorer(nlp, docs)
+        else:
+            golds, preds = list(settings.data), list(settings.predictions)
+            # The metrics pair the gold and predicted docs by position, so both files must hold the same texts
+            if [doc.text for doc in golds] != [doc.text for doc in preds]:
+                raise ValueError(f"The predictions of {name} don't follow the texts of its data")
+            metrics = {key: metric(golds, preds) for key, metric in settings.scorer.metrics.items()}
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"{name}-metrics.json").write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

@@ -10,6 +10,7 @@
 - `eds_pseudo.dates` now builds on the `eds.dates` matcher of EDS-NLP, and still labels birth dates as `DATE_NAISSANCE`
 - New `eds_pseudo.redact` metric, which counts the redacted characters and tokens of the gold entities whatever their predicted label, and `eds_pseudo.final`, which runs it with the exact, token and overlap NER metrics of EDS-NLP on the whole pipeline
 - Poetry and DVC are removed, and the experiments of the results page are now in `experiments/`, with the scripts that build their data and figures in `scripts/`
+- The results page compares the public model with model 0.4 of Hugging Face, whose predictions `scripts/predict_package.py` writes in a separate process, since `eds-pseudo evaluate` can now score the `predictions` of an evaluation instead of running a pipeline
 
 ## v0.4.0 (2024-05-24)
 

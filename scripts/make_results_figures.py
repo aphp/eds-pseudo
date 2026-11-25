@@ -3,6 +3,7 @@ Build the figures and tables of the results page (`docs/results.md`) from the `<
 `eds-pseudo evaluate` wrote in the run folders of the experiments listed in `docs/reproducibility.md`
 """
 
+import itertools
 import json
 import math
 import subprocess
@@ -37,20 +38,45 @@ TRANSFORMERS = {
     "aphp-camembert": "CamemBERT base",
     "aphp-doctobert": "DoctoBERT",
 }
-# Share of the training notes of each experiment of the training size section
-TRAINING_NOTES = {"aphp-notes-10": 10, "aphp-notes-25": 25, "aphp-notes-50": 50, "aphp-camembert-aphp": 100}
-NOTE_TYPES = ["lt-ordo", "cr-cons", "cr-image", "cr-urge"]
-EXPERIMENTS = {*TRANSFORMERS, *TRAINING_NOTES, "rules", "public-doctobert"} | {f"aphp-without-{t}" for t in NOTE_TYPES}
-METRICS = ["Precision", "Recall", "F1", "Redact", "Full redact"]
-# Evaluations shown by the charts, all the test notes and the test notes extracted by both pdfbox and edspdf
-TEST_EVALUATIONS = ["original-test", "test-edspdf", "test-pdfbox"]
-# Evaluations of the short field table, the representative short field test set and its answers unseen in training
-SHORT_EVALUATIONS = {"real-short-test": "Short field test", "real-short-answer-unseen": "Unseen answers"}
-# Share of the encounters and persons whose short field answers all get redacted, per form source, which the
-# `eds_pseudo.population` metric only gives for the short field test set
+# Words of the AP-HP training documents of the training size section, keyed by their number of documents, i.e. the
+# subsets of `scripts/make_ablation_data.py` and all 3,373 documents, with words split on whitespace
+TRAINING_DOCUMENTS = {10: 2318, 30: 7229, 100: 31973, 300: 102530, 1000: 320482, 3373: 1033612}
+# Experiments of the training size section, trained on these documents alone or with the synthetic notes of the public
+# templates, with their number of documents and training data
+TRAINING_SIZES = {
+    f"aphp-docs-{n}{suffix}": (n, data)
+    for n in TRAINING_DOCUMENTS
+    for suffix, data in (("", "AP-HP documents only"), ("-synthetic", "AP-HP documents and synthetic notes"))
+}
+# Note types of the missing note type section, with their names on the results page
+NOTE_TYPES = {
+    "lt-ordo": "Prescriptions",
+    "cr-cons": "Consultation reports",
+    "cr-image": "Imaging reports",
+    "cr-urge": "Emergency reports",
+}
+# Experiments that the tables show as one model, their whole pipeline (`final` key), keyed by experiment
+SINGLE_MODELS = {"rules": "RB", "public-doctobert": "Public v2", "public-0.4": "Public 0.4"}
+MODELS = ["RB", "ML", "Hybrid", "Public v2", "Public 0.4"]
+EXPERIMENTS = {*TRANSFORMERS, *TRAINING_SIZES, *SINGLE_MODELS} | {f"aphp-without-{t}" for t in NOTE_TYPES}
+METRICS = ["F1", "Redact", "Full redact", "Precision", "Recall"]
+# Evaluations of the chart menus with their names on the results page: all the test documents, the test notes
+# extracted by both edspdf and pdfbox, and the form answer test set
+TEST_EVALUATIONS = {
+    "original-test": "All test documents",
+    "test-edspdf": "edspdf text",
+    "test-pdfbox": "pdfbox text",
+    "real-short-test": "Form answers",
+}
+# NER matchings of the chart menus, an identifier counts once per token or once per entity (same bounds and label)
+MATCHINGS = {"token": "token", "exact": "entity"}
+# Evaluations of the form answer table, the representative form answer test set and its answers unseen in training
+SHORT_EVALUATIONS = {"real-short-test": "Form answer test", "real-short-answer-unseen": "Unseen answers"}
+# Share of the encounters and persons whose form answers all get redacted, per form source, which the
+# `eds_pseudo.population` metric only gives for the form answer test set, with their headers in the population table
 POPULATION = {
-    (source, group): f"{group.capitalize()}s, {name}"
-    for source, name in (("urgence", "emergency"), ("maternite", "maternity"))
+    (source, group): (name, f"{group.capitalize()}s")
+    for source, name in (("urgence", "Emergency"), ("maternite", "Maternity"))
     for group in ("encounter", "person")
 }
 
@@ -108,30 +134,33 @@ def read_scores(run_dirs: List[Path]) -> pd.DataFrame:
         One row per experiment, seed, evaluation, model, matching (`exact` or `token` NER matching, the `overlap`
         scores of EDS-NLP 0.24 change between runs of the same code) and label, with the `METRICS` in percent. The
         `Model` is `Hybrid` for the `final` key (whole pipeline), `ML` for `final-ml` (NER model alone), `RB` for the
-        rules run and `Public` for the hybrid public model. The `ALL` label sums the counts of every label but
-        `HOPITAL`, like the model card, and is the only label with the redaction scores, `Redact` (gold tokens redacted
-        whatever their predicted label) and `Full redact` (documents with every gold token redacted)
+        rules run, `Public v2` for the public model and `Public 0.4` for model 0.4 of Hugging Face. Since the
+        experiment configs score every label but `HOPITAL`, the `ALL` label sums the counts of the other labels. The
+        redaction scores are `Redact` (share of the gold tokens covered by a prediction whatever its label) and `Full
+        redact` (share of the documents whose gold tokens are all covered by predictions), per label and for `ALL`,
+        and only `ALL` has the `POPULATION` columns on the form answer test set
     """
     rows = []
     for metrics_path in [path for run_dir in run_dirs for path in sorted(run_dir.glob("*-metrics.json"))]:
         experiment, _, seed = metrics_path.parent.name.rpartition("-")
         for key, scores in json.loads(metrics_path.read_text()).items():
-            # Since the rules run has no ML model and we only show the hybrid pipeline of the public model, we skip
+            # Since the rules run has no ML model and we only show the whole pipeline of the public models, we skip
             # their `final-ml` scores
-            if key not in ("final", "final-ml") or (experiment in ("rules", "public-doctobert") and key != "final"):
+            if key not in ("final", "final-ml") or (experiment in SINGLE_MODELS and key != "final"):
                 continue
             row = {
                 "experiment": experiment,
                 "seed": int(seed),
                 "evaluation": metrics_path.name.removesuffix("-metrics.json"),
-                "Model": {"rules": "RB", "public-doctobert": "Public"}.get(experiment)
-                or {"final": "Hybrid", "final-ml": "ML"}[key],
+                "Model": SINGLE_MODELS.get(experiment) or {"final": "Hybrid", "final-ml": "ML"}[key],
             }
             for matching in ("exact", "token"):
                 counts = {LABELS[label]: scores[matching][label] for label in LABELS if label in scores[matching]}
                 counts["ALL"] = {
                     name: sum(value[name] for value in counts.values()) for name in ("tp", "positives", "support")
                 }
+                # Redaction scores per label, a label without gold tokens in this evaluation has none
+                redact = {"ALL" if key == "micro" else LABELS[key]: value for key, value in scores["redact"].items()}
                 for label, value in counts.items():
                     tp, positives, support = value["tp"], value["positives"], value["support"]
                     rows.append(
@@ -142,15 +171,15 @@ def read_scores(run_dirs: List[Path]) -> pd.DataFrame:
                             "Precision": 100 * tp / positives if positives else math.nan,
                             "Recall": 100 * tp / support if support else math.nan,
                             "F1": 200 * tp / (positives + support) if positives + support else math.nan,
-                            "Redact": 100 * scores["redact"]["micro"]["token_r"] if label == "ALL" else math.nan,
-                            "Full redact": 100 * scores["redact"]["micro"]["full"] if label == "ALL" else math.nan,
-                            # Population shares and the bounds of their 95% interval, e.g. `Encounters, maternity low`
+                            "Redact": 100 * redact[label]["token_r"] if label in redact else math.nan,
+                            "Full redact": 100 * redact[label]["full"] if label in redact else math.nan,
+                            # Population shares and the bounds of their 95% interval, e.g. `Maternity, Encounters low`
                             **{
                                 name: 100 * value if label == "ALL" else math.nan
-                                for (source, group), column in POPULATION.items()
+                                for (source, group), header in POPULATION.items()
                                 if "population" in scores
                                 for name, value in zip(
-                                    (column, f"{column} low", f"{column} high"),
+                                    (", ".join(header), f"{', '.join(header)} low", f"{', '.join(header)} high"),
                                     (
                                         scores["population"]["population"]["source"][source]["covered"][group],
                                         *scores["population"]["population"]["ci95"][source]["covered"][group],
@@ -172,6 +201,26 @@ def mean_std(values: pd.Series) -> str:
     return f"{values.mean():.1f} ± {values.std(ddof=0):.1f}" if len(values) > 1 else f"{values.mean():.1f}"
 
 
+def write_table(table: pd.DataFrame, path: Path) -> None:
+    """
+    Write `table` as an HTML table of the results page, with its index as first columns and one `<colgroup>` per
+    top level column (e.g. all the models of one metric), which `docs/assets/stylesheets/extra.css` separates by a
+    vertical line
+    """
+    table = table.reset_index()
+    names = [column[0] if isinstance(column, tuple) else column for column in table.columns]
+    groups = [len(list(group)) for _, group in itertools.groupby(names)]
+    # Since the index is written as plain columns, every header cell heads a column, and the merged cells of the top
+    # level head a group of columns, so we give them a `scope` for screen readers
+    html = (
+        table.to_html(border=0, index=False, na_rep="", float_format="{:.1f}".format)
+        .replace("<th>", '<th scope="col">')
+        .replace("<th colspan", '<th scope="colgroup" colspan')
+    )
+    colgroups = "".join(f'<colgroup span="{span}"></colgroup>' for span in groups)
+    path.write_text(html.replace(">", ">" + colgroups, 1))
+
+
 def interactive_chart(chart: alt.Chart, data: pd.DataFrame, selectors: Dict[str, str]) -> tuple:
     """
     Add one drop-down per `selectors` column (with its default value) that chooses the rows of `data` shown by
@@ -180,7 +229,8 @@ def interactive_chart(chart: alt.Chart, data: pd.DataFrame, selectors: Dict[str,
     params = []
     for column, default in selectors.items():
         options = sorted(data[column].dropna().unique().tolist())
-        params.append(alt.param(name=column, value=default, bind=alt.binding_select(options=options, name=column)))
+        bind = alt.binding_select(options=options, name=f"{column.lower()} : ")
+        params.append(alt.param(name=column.replace(" ", "_"), value=default, bind=bind))
         chart = chart.transform_filter(alt.datum[column] == params[-1])
     return chart, params
 
@@ -191,14 +241,30 @@ def bar_chart(
     """
     Bars of the mean `value` of each `x`, faceted by `facet`, with the 95% bootstrap interval over seeds. The label,
     language model and note type charts of the results page use it.
+
+    Since the scores of most models are within a few points of each other, the bars start at 90, or a bit below the
+    lowest score shown when it is under 90 (e.g. the recall of the rules on CITY) but never below 0, so that their
+    differences stay visible without making a small gap look large. An invisible rule at that value sets the bottom
+    of the y scale, and each facet gets its own scale, so that the low scores of the rules on one label don't flatten
+    the other labels.
     """
-    base, params = interactive_chart(alt.Chart(data).encode(x=alt.X(f"{x}:N", title=None)), data, selectors)
-    bars = base.mark_bar().encode(y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False)), color=f"{x}:N")
+    order = [value for value in [*MODELS, "with", "without"] if value in set(data[x])]
+    base, params = interactive_chart(alt.Chart(data).encode(x=alt.X(f"{x}:N", axis=None, sort=order)), data, selectors)
+    bars = base.mark_bar().encode(
+        y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False)),
+        color=alt.Color(f"{x}:N", sort=order, legend=alt.Legend(title=None)),
+    )
     errors = base.mark_errorbar(extent="ci").encode(y="value:Q", strokeWidth=alt.value(2))
+    bottom = (
+        base.transform_calculate(bottom="max(0, min(90, floor(datum.value) - 1))")
+        .mark_rule(opacity=0)
+        .encode(y="min(bottom):Q")
+    )
     return (
-        alt.layer(bars, errors)
+        alt.layer(bars, errors, bottom)
         .properties(width=150, height=300)
         .facet(alt.Facet(f"{facet}:N", title=None), columns=columns, title=title)
+        .resolve_scale(y="independent")
         .add_params(*params)
     )
 
@@ -215,48 +281,55 @@ def make(
 
     1. Check the eds-pseudo commit of every run of the results page and read their scores.
     2. General results: per label scores of the rules, of the ML model and of the hybrid pipeline of
-       `aphp-camembert-aphp` (seeds 42, 13 and 123), and of the hybrid public model `public-doctobert`.
+       `aphp-camembert-aphp` (seeds 42, 13 and 123), and of the public model `public-doctobert` next to model 0.4 of
+       Hugging Face `public-0.4`.
     3. Language model: the hybrid pipeline trained from each language model of `TRANSFORMERS`.
     4. PDF extraction: the 340 test notes extracted by both pdfbox and edspdf.
-    5. Number of training examples: 10, 25, 50 and 100 percent of the training notes.
+    5. Training size: 10 to 3,373 AP-HP training documents, alone or with the synthetic notes, 3 seeds for 10 and 30
+       documents and 1 above.
     6. Missing note types: training without the notes of one type, scored on the test notes of that type.
-    7. Short fields: the models of the general results on the short field test set and on its unseen answers.
+    7. Form answers: the models of the general results on the form answer test set and on its unseen answers.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     alt.data_transformers.disable_max_rows()
 
-    # 1. Check the runs, read the scores (one row per seed for the tables), then one row per metric for the charts
+    # 1. Check the runs, read the scores (one row per seed for the tables), then one row per metric for the charts,
+    # whose menus show the names of the results page for the evaluations and matchings
     run_dirs = [
         run_dir
         for run_dir in sorted(runs_dir.iterdir())
         if run_dir.name.rpartition("-")[0] in EXPERIMENTS and run_dir.name.rpartition("-")[2].isdigit()
     ]
-    commits = read_commits(run_dirs, branch)
-    (output_dir / "runs_table.html").write_text(commits.to_html(classes="dataframe", border=0, index=False))
+    write_table(read_commits(run_dirs, branch).set_index("Experiment"), output_dir / "runs_table.html")
     scores = read_scores(run_dirs)
     keys = ["experiment", "seed", "evaluation", "Model", "matching", "label"]
-    long = scores.melt(id_vars=keys, value_vars=METRICS, var_name="metric").dropna(subset="value")
+    long = (
+        scores[scores.evaluation.isin(list(TEST_EVALUATIONS))]
+        .melt(id_vars=keys, value_vars=METRICS, var_name="metric")
+        .dropna(subset="value")
+        .assign(evaluation=lambda x: x.evaluation.map(TEST_EVALUATIONS), matching=lambda x: x.matching.map(MATCHINGS))
+    )
     is_all = long.label == "ALL"
-    is_test = long.evaluation.isin(TEST_EVALUATIONS)
+    menus = {"metric": "F1", "matching": "token", "evaluation": TEST_EVALUATIONS["original-test"]}
 
-    # 2. General results, the table uses token matching on all the test notes like the article
-    general = scores[scores.experiment.isin(["aphp-camembert-aphp", "rules", "public-doctobert"])]
+    # 2. General results, the table gives the mean over seeds with token matching on all the test documents, since
+    # the spread over seeds stays within a few tenths of a point
+    general = scores[scores.experiment.isin(["aphp-camembert-aphp", *SINGLE_MODELS])]
     table = (
         general[(general.evaluation == "original-test") & (general.matching == "token")]
         .groupby(["label", "Model"])[METRICS]
-        .agg(mean_std)
+        .mean()
         .unstack("Model")
-        .reindex(columns=pd.MultiIndex.from_product([METRICS, ["RB", "ML", "Hybrid", "Public"]]))
+        .reindex(columns=pd.MultiIndex.from_product([METRICS, MODELS]))
         .reindex([*sorted(set(LABELS.values()) & set(general.label)), "ALL"])
-        .fillna("")
         .rename_axis("Label")
     )
-    (output_dir / "ml_vs_rb_table.html").write_text(table.to_html(classes="dataframe", border=0))
+    write_table(table, output_dir / "ml_vs_rb_table.html")
     bar_chart(
-        long[is_test & long.experiment.isin(general.experiment.unique()) & long.metric.isin(METRICS[:3])],
+        long[long.experiment.isin(general.experiment.unique())],
         x="Model",
         facet="label",
-        selectors={"metric": "F1", "matching": "token", "evaluation": "original-test"},
+        selectors=menus,
         title="Scores per label",
         columns=4,
     ).save(output_dir / "label_scores.json")
@@ -264,20 +337,20 @@ def make(
     # 3. Language model, the table compares the hybrid pipelines while the chart also shows the ML models
     is_hybrid_test = (scores.evaluation == "original-test") & (scores.Model == "Hybrid") & (scores.label == "ALL")
     table = (
-        scores[scores.experiment.isin(list(TRANSFORMERS)) & is_hybrid_test & (scores.matching == "exact")]
-        .assign(Transformer=lambda x: x.experiment.map(TRANSFORMERS))
-        .groupby("Transformer")[METRICS]
+        scores[scores.experiment.isin(list(TRANSFORMERS)) & is_hybrid_test & (scores.matching == "token")]
+        .assign(**{"Language model": lambda x: x.experiment.map(TRANSFORMERS)})
+        .groupby("Language model")[METRICS]
         .agg(mean_std)
         .reindex(list(TRANSFORMERS.values()))
     )
-    (output_dir / "bert_ablation_table.html").write_text(table.to_html(classes="dataframe", border=0))
+    write_table(table, output_dir / "bert_ablation_table.html")
     bar_chart(
-        long[is_test & long.experiment.isin(list(TRANSFORMERS))].assign(
-            Transformer=lambda x: x.experiment.map(TRANSFORMERS)
+        long[long.experiment.isin(list(TRANSFORMERS))].assign(
+            **{"Language model": lambda x: x.experiment.map(TRANSFORMERS)}
         ),
         x="Model",
-        facet="Transformer",
-        selectors={"metric": "F1", "matching": "exact", "evaluation": "original-test", "label": "ALL"},
+        facet="Language model",
+        selectors={**menus, "label": "ALL"},
         title="Language model",
     ).save(output_dir / "bert_ablation.json")
 
@@ -286,80 +359,100 @@ def make(
     table = (
         scores[(scores.experiment == "aphp-camembert-aphp") & (scores.Model == "ML") & (scores.matching == "token")]
         .loc[is_pdf_test]
-        .assign(**{"PDF extractor": lambda x: x.evaluation.str.removeprefix("test-")})
-        .groupby("PDF extractor")[METRICS]
+        .assign(**{"PDF text": lambda x: x.evaluation.map(TEST_EVALUATIONS)})
+        .groupby("PDF text")[METRICS]
         .agg(mean_std)
     )
-    (output_dir / "pdf_comparison_table.html").write_text(table.to_html(classes="dataframe", border=0))
+    write_table(table, output_dir / "pdf_comparison_table.html")
 
-    # 5. Number of training examples, with the rules as a flat line since they don't train
-    rules = long[(long.experiment == "rules") & is_all & is_test]
+    # 5. Training size, the mean over seeds of the models trained on the AP-HP documents alone or with the synthetic
+    # notes, against the words of these documents, with the rules as a flat line since they don't train
+    rules = long[(long.experiment == "rules") & is_all].assign(**{"Training data": "Rules, no training"})
     limit_data = pd.concat(
         [
-            long[long.experiment.isin(list(TRAINING_NOTES)) & is_all & is_test].assign(
-                notes=lambda x: x.experiment.map(TRAINING_NOTES)
+            long[long.experiment.isin(list(TRAINING_SIZES)) & is_all].assign(
+                documents=lambda x: x.experiment.map(lambda name: TRAINING_SIZES[name][0]),
+                **{"Training data": lambda x: x.experiment.map(lambda name: TRAINING_SIZES[name][1])},
             ),
-            rules.assign(notes=10),
-            rules.assign(notes=100),
+            rules.assign(documents=min(TRAINING_DOCUMENTS)),
+            rules.assign(documents=max(TRAINING_DOCUMENTS)),
         ]
-    )
+    ).assign(words=lambda x: x.documents.map(TRAINING_DOCUMENTS))
     base = alt.Chart(limit_data).encode(
-        x=alt.X("notes:Q", title="Training notes (%)", scale=alt.Scale(domain=(10, 100))), color="Model:N"
+        x=alt.X("words:Q", title="Words of the annotated AP-HP training documents", scale=alt.Scale(type="log")),
+        color=alt.Color("Model:N", sort=MODELS),
+        strokeDash=alt.StrokeDash("Training data:N"),
     )
-    base, params = interactive_chart(
-        base, limit_data, {"metric": "F1", "matching": "token", "evaluation": "original-test"}
-    )
-    alt.layer(
-        base.mark_line(point=True).encode(y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False))),
-        base.mark_errorband(extent="ci").encode(y="value:Q"),
-    ).properties(width=400, height=400, title="Number of training examples").add_params(*params).save(
+    base, params = interactive_chart(base, limit_data, menus)
+    base.mark_line(point=True).encode(
+        y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False)),
+        tooltip=["Model:N", "Training data:N", "documents:Q", "words:Q", alt.Tooltip("mean(value):Q", format=".1f")],
+    ).properties(width=400, height=400, title="Training size").add_params(*params).save(
         output_dir / "limit_ablation.json"
     )
 
     # 6. Missing note types, each type scored by the model trained with and without its notes
     note_type_data = pd.concat(
         [
-            long[
-                is_all
-                & (long.evaluation == f"test-{note_type}")
-                & long.experiment.isin(["aphp-camembert-aphp", f"aphp-without-{note_type}"])
-            ].assign(
-                **{"Note type": note_type.upper()},
-                included=lambda x: x.experiment.eq("aphp-camembert-aphp").map({True: "yes", False: "no"}),
+            scores[
+                (scores.label == "ALL")
+                & (scores.evaluation == f"test-{note_type}")
+                & scores.experiment.isin(["aphp-camembert-aphp", f"aphp-without-{note_type}"])
+            ]
+            .melt(id_vars=keys, value_vars=METRICS, var_name="metric")
+            .dropna(subset="value")
+            .assign(
+                **{
+                    "Note type": name,
+                    "Training": lambda x: x.experiment.eq("aphp-camembert-aphp").map({True: "with", False: "without"}),
+                },
+                matching=lambda x: x.matching.map(MATCHINGS),
             )
-            for note_type in NOTE_TYPES
+            for note_type, name in NOTE_TYPES.items()
         ]
     )
     bar_chart(
         note_type_data,
-        x="included",
+        x="Training",
         facet="Note type",
         selectors={"metric": "F1", "matching": "token", "Model": "Hybrid"},
         title="Note types missing from training",
     ).save(output_dir / "doc_type_ablation.json")
 
-    # 7. Short fields, one column group per evaluation, and only the short field test set has population scores
+    # 7. Form answers, the scores of the form answer test set and of its unseen answers, then the encounter and person
+    # shares of the form answer test set with the mean over seeds of their value and of the bounds of their 95%
+    # interval, since this interval is much wider than the spread over seeds
     short = scores[
         scores.experiment.isin(["aphp-camembert-aphp", *SINGLE_MODELS])
         & scores.evaluation.isin(list(SHORT_EVALUATIONS))
         & (scores.matching == "token")
         & (scores.label == "ALL")
     ]
-    tables = {}
-    for evaluation, title in SHORT_EVALUATIONS.items():
-        rows = short[short.evaluation == evaluation].groupby("Model")
-        tables[title] = rows[["F1", "Full redact"]].agg(mean_std)
-        if evaluation == "real-short-test":
-            # A population share gets the mean over seeds of its value and of the bounds of its 95% interval, since
-            # this interval is much wider than the spread over seeds
-            means = rows[[f"{c}{s}" for c in POPULATION.values() for s in ("", " low", " high")]].mean()
-            for column in POPULATION.values():
-                tables[title][column] = [
-                    f"{value:.1f} [{low:.1f}, {high:.1f}]"
-                    for value, low, high in means[[column, f"{column} low", f"{column} high"]].to_numpy()
-                ]
-    table = pd.concat(tables, axis=1).reindex(["RB", "ML", "Hybrid", "Public", "Public 0.4"])
-    (output_dir / "short_field_table.html").write_text(table.to_html(classes="dataframe", border=0))
+    table = pd.concat(
+        {
+            title: short[short.evaluation == evaluation].groupby("Model")[["F1", "Full redact"]].agg(mean_std)
+            for evaluation, title in SHORT_EVALUATIONS.items()
+        },
+        axis=1,
+    )
+    write_table(table.reindex(MODELS), output_dir / "short_field_table.html")
+    columns = [", ".join(header) for header in POPULATION.values()]
+    means = (
+        short[short.evaluation == "real-short-test"]
+        .groupby("Model")[[f"{column}{bound}" for column in columns for bound in ("", " low", " high")]]
+        .mean()
+    )
+    table = pd.DataFrame(
+        {
+            header: [
+                f"{value:.1f} [{low:.1f}, {high:.1f}]"
+                for value, low, high in means[[column, f"{column} low", f"{column} high"]].to_numpy()
+            ]
+            for header, column in zip(POPULATION.values(), columns)
+        },
+        index=means.index,
+    )
+    write_table(table.reindex(MODELS), output_dir / "short_field_population_table.html")
 
 
 if __name__ == "__main__":

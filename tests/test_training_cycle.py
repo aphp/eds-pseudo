@@ -1,4 +1,6 @@
+import importlib.util
 import json
+from pathlib import Path
 
 from transformers import BertConfig, BertModel, BertTokenizer
 
@@ -82,6 +84,24 @@ def test_tiny_train_evaluate_and_infer_cycle(tmp_path, monkeypatch):
     assert json.loads((run_dir / "dev-metrics.json").read_text()) == metrics
     table = experiments(runs_dir=tmp_path / "runs", output_path=tmp_path / "experiments.csv")
     assert table[0]["run"] == "tiny-42" and table[0]["dev/exact/micro/f"] == metrics["exact"]["micro"]["f"]
+
+    # The predictions that scripts/predict_package.py writes for the saved model, once scored by evaluate, give the
+    # scores of evaluate on the model itself
+    spec = importlib.util.spec_from_file_location(
+        "predict_package", Path(__file__).parents[1] / "scripts/predict_package.py"
+    )
+    predict_package = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(predict_package)
+    records_path = tmp_path / "records.jsonl"
+    edsnlp.data.write_json(records, records_path, lines=True)
+    predict_package.predict(model=str(tmp_path / "model"), inputs={"dev": records_path}, output_dir=tmp_path / "pred")
+    evaluation = {
+        "data": edsnlp.data.read_json(records_path).map(converter),
+        "scorer": scorer,
+        "predictions": edsnlp.data.read_json(tmp_path / "pred/dev-predictions.jsonl").map(converter),
+    }
+    scored = evaluate(evaluations={"dev": evaluation}, output_dir=tmp_path / "scored")["dev"]
+    assert scored["exact"] == metrics["exact"]
 
     input_path = tmp_path / "input.jsonl"
     record = {"note_id": "n1", "note_text": "alice works", "entities": [{"start": 0, "end": 5, "label": "PRENOM"}]}
