@@ -24,6 +24,17 @@ vars:
   real_short_population: data/dataset/aphp-short-field/personne_rencontre_question_reponse_statistiques.parquet
   # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
   scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+  # Labels of Presidio that our labels fall into, for the `coarse` scores of the comparison with Presidio
+  coarse_labels:
+    NOM: PERSON
+    PRENOM: PERSON
+    ADRESSE: LOCATION
+    VILLE: LOCATION
+    ZIP: LOCATION
+    DATE: DATE_TIME
+    DATE_NAISSANCE: DATE_TIME
+    MAIL: EMAIL_ADDRESS
+    TEL: PHONE_NUMBER
 
 nlp:
   '@core': pipeline
@@ -227,6 +238,14 @@ final_scorer:
     '@metrics': eds_pseudo.final
     span_getter:
       pseudo-ml: ${vars.scored_labels}
+  coarse:
+    '@metrics': eds_pseudo.coarse
+    span_getter: [pseudo-hybrid]
+    labels: ${vars.coarse_labels}
+  coarse-ml:
+    '@metrics': eds_pseudo.coarse
+    span_getter: [pseudo-ml]
+    labels: ${vars.coarse_labels}
 
 real_short_test_scorer:
   batch_size: 32 docs

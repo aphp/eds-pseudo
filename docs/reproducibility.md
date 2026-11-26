@@ -51,12 +51,17 @@ The results page compares these experiments, on seed 42 unless noted:
 | Training size | `aphp-docs-<N>` (AP-HP documents only) and `aphp-docs-<N>-synthetic` (with the synthetic notes) for N = 10 and 30 (seeds 42, 13, 123), 100, 300, 1000 and 3373 |
 | Missing document types | `aphp-without-lt-ordo`, `aphp-without-cr-cons`, `aphp-without-cr-image`, `aphp-without-cr-urge` |
 | PDF extraction | `aphp-camembert-aphp`, on the 340 test notes extracted by both pdfbox and edspdf |
+| Presidio | `presidio` (Presidio with the `fr_core_news_lg` model of spaCy, no training) against the general results experiments, on the labels of Presidio |
 
-A run of an experiment and a seed trains with `python -m edsnlp.train` (except `rules` and `public-0.4`), evaluates
+A run of an experiment and a seed trains with `python -m edsnlp.train` (except `rules`, `public-0.4` and `presidio`), evaluates
 with `eds-pseudo evaluate` and writes its metrics to `artifacts/<experiment>-<seed>`, with the eds-pseudo commit it ran
 in `source-state/source-state.json`. Since model 0.4 holds its own copy of `eds_pseudo` 0.4, which can't share a
 process with eds-pseudo 1.0, `public-0.4` first writes the predictions of the model with `scripts/predict_package.py`,
-then `eds-pseudo evaluate` scores these predictions. From the root of the training project:
+then `eds-pseudo evaluate` scores these predictions. Likewise, since Presidio doesn't install next to eds-pseudo,
+`presidio` writes its predictions with `uv run scripts/predict_presidio.py`, a script that declares its own
+dependencies. The `coarse` scores of the general results experiments and of `presidio` merge our labels into the
+labels of Presidio (`coarse_labels` of the configs, e.g. `NOM` and `PRENOM` into `PERSON`). From the root of the
+training project:
 
 ```{: .shell data-md-color-scheme="slate" }
 python eds-pseudo/scripts/make_ablation_data.py --config eds-pseudo/configs/ablation-data.yml

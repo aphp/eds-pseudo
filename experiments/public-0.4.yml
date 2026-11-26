@@ -16,6 +16,17 @@ vars:
   real_short_dev: data/dataset/prepared/real-short-dev.jsonl
   # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
   scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+  # Labels of Presidio that our labels fall into, for the `coarse` scores of the comparison with Presidio
+  coarse_labels:
+    NOM: PERSON
+    PRENOM: PERSON
+    ADRESSE: LOCATION
+    VILLE: LOCATION
+    ZIP: LOCATION
+    DATE: DATE_TIME
+    DATE_NAISSANCE: DATE_TIME
+    MAIL: EMAIL_ADDRESS
+    TEL: PHONE_NUMBER
 
 # Model 0.4 of Hugging Face, whose package holds its own copy of eds_pseudo 0.4, which can't share a process with
 # eds-pseudo 1.0, so scripts/predict_package.py writes its predictions and we only score them here
@@ -180,6 +191,10 @@ final_scorer:
     '@metrics': eds_pseudo.final
     span_getter:
       pseudo-hybrid: ${vars.scored_labels}
+  coarse:
+    '@metrics': eds_pseudo.coarse
+    span_getter: [pseudo-hybrid]
+    labels: ${vars.coarse_labels}
 
 real_short_test_scorer:
   final:

@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 import numpy as np
+from spacy.tokens import Span
+from spacy.training import Example
 
 from edsnlp import registry
 from edsnlp.metrics import make_examples
@@ -111,6 +113,38 @@ class RedactMetric:
 
     def __call__(self, *examples):
         return redact_metric(examples, span_getter=self.span_getter)
+
+
+@registry.metrics.register("eds_pseudo.coarse")
+class CoarseMetric:
+    """
+    The `eds_pseudo.coarse` metric gives the exact and token NER metrics of EDS-NLP on coarser labels, so that we can
+    compare our models with a model of other labels (Presidio on the results page). We rename the gold and predicted
+    entities of `span_getter` with `labels`, e.g. `NOM` and `PRENOM` into `PERSON`, keep the entities whose label is
+    already a coarse one (the predictions of Presidio) and drop the others, e.g. `NDA` that Presidio has no label for.
+    """
+
+    def __init__(self, span_getter: SpanGetterArg, labels: Dict[str, str]):
+        self.span_getter = span_getter
+        self.labels = labels
+        self.exact = NerExactMetric({"coarse": True})
+        self.token = NerTokenMetric({"coarse": True})
+
+    def __call__(self, *examples) -> Dict[str, Any]:
+        # We write the renamed entities in a `coarse` group of copies of the docs, which the other metrics of the
+        # evaluation keep reading
+        coarse = set(self.labels.values())
+        renamed = []
+        for example in make_examples(examples):
+            reference, predicted = example.reference.copy(), example.predicted.copy()
+            for doc in (reference, predicted):
+                doc.spans["coarse"] = [
+                    Span(doc, entity.start, entity.end, label=self.labels.get(entity.label_, entity.label_))
+                    for entity in get_spans(doc, self.span_getter)
+                    if self.labels.get(entity.label_, entity.label_) in coarse
+                ]
+            renamed.append(Example(reference=reference, predicted=predicted))
+        return {"exact": self.exact(renamed), "token": self.token(renamed)}
 
 
 @registry.metrics.register("eds_pseudo.privacy")

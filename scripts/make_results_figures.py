@@ -56,8 +56,8 @@ NOTE_TYPES = {
     "cr-urge": "Emergency reports",
 }
 # Experiments that the tables show as one model, their whole pipeline (`final` key), keyed by experiment
-SINGLE_MODELS = {"rules": "RB", "public-doctobert": "Public v2", "public-0.4": "Public 0.4"}
-MODELS = ["RB", "ML", "Hybrid", "Public v2", "Public 0.4"]
+SINGLE_MODELS = {"rules": "RB", "public-doctobert": "Public v2", "public-0.4": "Public 0.4", "presidio": "Presidio"}
+MODELS = ["RB", "ML", "Hybrid", "Public v2", "Public 0.4", "Presidio"]
 EXPERIMENTS = {*TRANSFORMERS, *TRAINING_SIZES, *SINGLE_MODELS} | {f"aphp-without-{t}" for t in NOTE_TYPES}
 METRICS = ["F1", "Redact", "Full redact", "Precision", "Recall"]
 # Evaluations of the chart menus with their names on the results page: all the test documents, the test notes
@@ -134,7 +134,8 @@ def read_scores(run_dirs: List[Path]) -> pd.DataFrame:
         One row per experiment, seed, evaluation, model, matching (`exact` or `token` NER matching, the `overlap`
         scores of EDS-NLP 0.24 change between runs of the same code) and label, with the `METRICS` in percent. The
         `Model` is `Hybrid` for the `final` key (whole pipeline), `ML` for `final-ml` (NER model alone), `RB` for the
-        rules run, `Public v2` for the public model and `Public 0.4` for model 0.4 of Hugging Face. Since the
+        rules run, `Public v2` for the public model, `Public 0.4` for model 0.4 of Hugging Face and `Presidio`, which
+        only has redaction scores since it predicts other labels. Since the
         experiment configs score every label but `HOPITAL`, the `ALL` label sums the counts of the other labels. The
         redaction scores are `Redact` (share of the gold tokens covered by a prediction whatever its label) and `Full
         redact` (share of the documents whose gold tokens are all covered by predictions), per label and for `ALL`,
@@ -154,6 +155,9 @@ def read_scores(run_dirs: List[Path]) -> pd.DataFrame:
                 "evaluation": metrics_path.name.removesuffix("-metrics.json"),
                 "Model": SINGLE_MODELS.get(experiment) or {"final": "Hybrid", "final-ml": "ML"}[key],
             }
+            # Since Presidio predicts its own labels, it only gets redaction scores on our labels, and the NER
+            # scores of the Presidio section on its labels
+            ner = experiment != "presidio"
             for matching in ("exact", "token"):
                 counts = {LABELS[label]: scores[matching][label] for label in LABELS if label in scores[matching]}
                 counts["ALL"] = {
@@ -168,9 +172,9 @@ def read_scores(run_dirs: List[Path]) -> pd.DataFrame:
                             **row,
                             "matching": matching,
                             "label": label,
-                            "Precision": 100 * tp / positives if positives else math.nan,
-                            "Recall": 100 * tp / support if support else math.nan,
-                            "F1": 200 * tp / (positives + support) if positives + support else math.nan,
+                            "Precision": 100 * tp / positives if ner and positives else math.nan,
+                            "Recall": 100 * tp / support if ner and support else math.nan,
+                            "F1": 200 * tp / (positives + support) if ner and positives + support else math.nan,
                             "Redact": 100 * redact[label]["token_r"] if label in redact else math.nan,
                             "Full redact": 100 * redact[label]["full"] if label in redact else math.nan,
                             # Population shares and the bounds of their 95% interval, e.g. `Maternity, Encounters low`
@@ -282,13 +286,14 @@ def make(
     1. Check the eds-pseudo commit of every run of the results page and read their scores.
     2. General results: per label scores of the rules, of the ML model and of the hybrid pipeline of
        `aphp-camembert-aphp` (seeds 42, 13 and 123), and of the public model `public-doctobert` next to model 0.4 of
-       Hugging Face `public-0.4`.
+       Hugging Face `public-0.4`, and the redaction scores of Presidio `presidio`.
     3. Language model: the hybrid pipeline trained from each language model of `TRANSFORMERS`.
     4. PDF extraction: the 340 test notes extracted by both pdfbox and edspdf.
     5. Training size: 10 to 3,373 AP-HP training documents, alone or with the synthetic notes, 3 seeds for 10 and 30
        documents and 1 above.
     6. Missing note types: training without the notes of one type, scored on the test notes of that type.
     7. Form answers: the models of the general results on the form answer test set and on its unseen answers.
+    8. Presidio: the models of the general results and Presidio on the labels of Presidio.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     alt.data_transformers.disable_max_rows()
@@ -313,7 +318,8 @@ def make(
     menus = {"metric": "F1", "matching": "token", "evaluation": TEST_EVALUATIONS["original-test"]}
 
     # 2. General results, the table gives the mean over seeds with token matching on all the test documents, since
-    # the spread over seeds stays within a few tenths of a point
+    # the spread over seeds stays within a few tenths of a point, and we drop the empty columns (the NER scores of
+    # Presidio on our labels)
     general = scores[scores.experiment.isin(["aphp-camembert-aphp", *SINGLE_MODELS])]
     table = (
         general[(general.evaluation == "original-test") & (general.matching == "token")]
@@ -321,6 +327,7 @@ def make(
         .mean()
         .unstack("Model")
         .reindex(columns=pd.MultiIndex.from_product([METRICS, MODELS]))
+        .dropna(axis="columns", how="all")
         .reindex([*sorted(set(LABELS.values()) & set(general.label)), "ALL"])
         .rename_axis("Label")
     )
@@ -378,15 +385,28 @@ def make(
             rules.assign(documents=max(TRAINING_DOCUMENTS)),
         ]
     ).assign(words=lambda x: x.documents.map(TRAINING_DOCUMENTS))
+    # The log axis stops a bit past the smallest and largest training sets, otherwise it would round up to 10M words
+    words = TRAINING_DOCUMENTS.values()
     base = alt.Chart(limit_data).encode(
-        x=alt.X("words:Q", title="Words of the annotated AP-HP training documents", scale=alt.Scale(type="log")),
+        x=alt.X(
+            "words:Q",
+            title="Words of the annotated AP-HP training documents",
+            scale=alt.Scale(type="log", nice=False, domain=[min(words) / 1.5, max(words) * 1.5]),
+            axis=alt.Axis(values=[10_000, 100_000, 1_000_000]),
+        ),
+        y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False)),
         color=alt.Color("Model:N", sort=MODELS),
-        strokeDash=alt.StrokeDash("Training data:N"),
     )
     base, params = interactive_chart(base, limit_data, menus)
-    base.mark_line(point=True).encode(
-        y=alt.Y("mean(value):Q", title=None, scale=alt.Scale(zero=False)),
-        tooltip=["Model:N", "Training data:N", "documents:Q", "words:Q", alt.Tooltip("mean(value):Q", format=".1f")],
+    # Since a line mark with points shows a point in the legend, we draw the points in their own layer, so that the
+    # legend of the training data shows the dash of each line
+    alt.layer(
+        base.mark_line().encode(
+            strokeDash=alt.StrokeDash("Training data:N", legend=alt.Legend(symbolType="stroke", labelLimit=0))
+        ),
+        base.mark_point(filled=True, opacity=1).encode(
+            tooltip=["Model:N", "Training data:N", "documents:Q", "words:Q", alt.Tooltip("mean(value):Q", format=".1f")]
+        ),
     ).properties(width=400, height=400, title="Training size").add_params(*params).save(
         output_dir / "limit_ablation.json"
     )
@@ -453,6 +473,35 @@ def make(
         index=means.index,
     )
     write_table(table.reindex(MODELS), output_dir / "short_field_population_table.html")
+
+    # 8. Presidio, the token scores on all the test documents of the `coarse` keys, where `eds_pseudo.coarse` merged
+    # our labels into the labels of Presidio, with the mean over seeds
+    rows = []
+    for run_dir in run_dirs:
+        experiment = run_dir.name.rpartition("-")[0]
+        if experiment not in ["aphp-camembert-aphp", *SINGLE_MODELS]:
+            continue
+        for key, metrics in json.loads((run_dir / "original-test-metrics.json").read_text()).items():
+            if key not in ("coarse", "coarse-ml") or (experiment in SINGLE_MODELS and key != "coarse"):
+                continue
+            for label, value in metrics["token"].items():
+                rows.append(
+                    {
+                        "Model": SINGLE_MODELS.get(experiment) or {"coarse": "Hybrid", "coarse-ml": "ML"}[key],
+                        "Label": "ALL" if label == "micro" else label,
+                        "F1": 100 * value["f"],
+                        "Precision": 100 * value["p"],
+                        "Recall": 100 * value["r"],
+                    }
+                )
+    table = (
+        pd.DataFrame(rows)
+        .groupby(["Label", "Model"])[["F1", "Precision", "Recall"]]
+        .mean()
+        .unstack("Model")
+        .reindex(columns=pd.MultiIndex.from_product([["F1", "Precision", "Recall"], MODELS]))
+    )
+    write_table(table.reindex([*sorted(set(table.index) - {"ALL"}), "ALL"]), output_dir / "presidio_table.html")
 
 
 if __name__ == "__main__":
