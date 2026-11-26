@@ -1,0 +1,248 @@
+vars:
+  # We run this config from the root of the AP-HP training project, so its data paths are relative to that root,
+  # and the training job of that project overrides output_dir, skips training since this config has no train
+  # section, and runs scripts/predict_package.py for the predict section (see docs/reproducibility.md)
+  output_dir: artifacts/public-0.4-42
+  original_test_lt_ordo: data/dataset/ablations/original-test-lt-ordo.jsonl
+  original_test_cr_cons: data/dataset/ablations/original-test-cr-cons.jsonl
+  original_test_cr_image: data/dataset/ablations/original-test-cr-image.jsonl
+  original_test_cr_urge: data/dataset/ablations/original-test-cr-urge.jsonl
+  original_test_pdfbox: data/dataset/ablations/original-test-pdfbox.jsonl
+  original_test_edspdf: data/dataset/ablations/original-test-edspdf.jsonl
+  real_short_test_answer_unseen: data/dataset/ablations/real-short-test-answer-unseen.jsonl
+  original_test: data/dataset/aphp-clean/test.jsonl
+  real_short_test: data/dataset/prepared/real-short-test.jsonl
+  real_short_population: data/dataset/aphp-short-field/personne_rencontre_question_reponse_statistiques.parquet
+  real_short_dev: data/dataset/prepared/real-short-dev.jsonl
+  # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
+  scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+  # Labels of Presidio that our labels fall into, for the `coarse` scores of the comparison with Presidio
+  coarse_labels:
+    NOM: PERSON
+    PRENOM: PERSON
+    ADRESSE: LOCATION
+    VILLE: LOCATION
+    ZIP: LOCATION
+    DATE: DATE_TIME
+    DATE_NAISSANCE: DATE_TIME
+    MAIL: EMAIL_ADDRESS
+    TEL: PHONE_NUMBER
+
+# Model 0.4 of Hugging Face, whose package holds its own copy of eds_pseudo 0.4, which can't share a process with
+# eds-pseudo 1.0, so scripts/predict_package.py writes its predictions and we only score them here
+predict:
+  model: AP-HP/eds-pseudo-public
+  revision: bbee3fee8a0bbda3c4fcf222f30c26c752e40196
+  inputs:
+    original-test: ${vars.original_test}
+    real-short-dev: ${vars.real_short_dev}
+    real-short-test: ${vars.real_short_test}
+    test-lt-ordo: ${vars.original_test_lt_ordo}
+    test-cr-cons: ${vars.original_test_cr_cons}
+    test-cr-image: ${vars.original_test_cr_image}
+    test-cr-urge: ${vars.original_test_cr_urge}
+    test-pdfbox: ${vars.original_test_pdfbox}
+    test-edspdf: ${vars.original_test_edspdf}
+    real-short-answer-unseen: ${vars.real_short_test_answer_unseen}
+  output_dir: ${vars.output_dir}
+
+original_test:
+  '@readers': json
+  path: ${vars.original_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_lt_ordo:
+  '@readers': json
+  path: ${vars.original_test_lt_ordo}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_cons:
+  '@readers': json
+  path: ${vars.original_test_cr_cons}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_image:
+  '@readers': json
+  path: ${vars.original_test_cr_image}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_urge:
+  '@readers': json
+  path: ${vars.original_test_cr_urge}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_pdfbox:
+  '@readers': json
+  path: ${vars.original_test_pdfbox}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_edspdf:
+  '@readers': json
+  path: ${vars.original_test_edspdf}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test_answer_unseen:
+  '@readers': json
+  path: ${vars.real_short_test_answer_unseen}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test:
+  '@readers': json
+  path: ${vars.real_short_test}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_dev:
+  '@readers': json
+  path: ${vars.real_short_dev}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/original-test-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_dev_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/real-short-dev-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/real-short-test-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_lt_ordo_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-lt-ordo-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_cons_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-cr-cons-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_image_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-cr-image-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_cr_urge_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-cr-urge-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_pdfbox_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-pdfbox-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+original_test_edspdf_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/test-edspdf-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+real_short_test_answer_unseen_predictions:
+  '@readers': json
+  path: ${vars.output_dir + "/real-short-answer-unseen-predictions.jsonl"}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-hybrid]
+
+final_scorer:
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+  coarse:
+    '@metrics': eds_pseudo.coarse
+    span_getter: [pseudo-hybrid]
+    labels: ${vars.coarse_labels}
+
+real_short_test_scorer:
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+    population_path: ${vars.real_short_population}
+
+evaluate:
+  evaluations:
+    original-test:
+      data: ${original_test}
+      predictions: ${original_test_predictions}
+      scorer: ${final_scorer}
+    real-short-dev:
+      data: ${real_short_dev}
+      predictions: ${real_short_dev_predictions}
+      scorer: ${final_scorer}
+    real-short-test:
+      data: ${real_short_test}
+      predictions: ${real_short_test_predictions}
+      scorer: ${real_short_test_scorer}
+    test-lt-ordo:
+      data: ${original_test_lt_ordo}
+      predictions: ${original_test_lt_ordo_predictions}
+      scorer: ${final_scorer}
+    test-cr-cons:
+      data: ${original_test_cr_cons}
+      predictions: ${original_test_cr_cons_predictions}
+      scorer: ${final_scorer}
+    test-cr-image:
+      data: ${original_test_cr_image}
+      predictions: ${original_test_cr_image_predictions}
+      scorer: ${final_scorer}
+    test-cr-urge:
+      data: ${original_test_cr_urge}
+      predictions: ${original_test_cr_urge_predictions}
+      scorer: ${final_scorer}
+    test-pdfbox:
+      data: ${original_test_pdfbox}
+      predictions: ${original_test_pdfbox_predictions}
+      scorer: ${final_scorer}
+    test-edspdf:
+      data: ${original_test_edspdf}
+      predictions: ${original_test_edspdf_predictions}
+      scorer: ${final_scorer}
+    real-short-answer-unseen:
+      data: ${real_short_test_answer_unseen}
+      predictions: ${real_short_test_answer_unseen_predictions}
+      scorer: ${final_scorer}
+  output_dir: ${vars.output_dir}

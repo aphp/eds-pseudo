@@ -1,3 +1,6 @@
+import edsnlp
+
+
 def test_structured(blank_nlp):
     text = "Marie Élise (marie.elise@mail.com) habite au 2 rue de Jouvence, Paris"
     context = {
@@ -18,4 +21,16 @@ def test_structured(blank_nlp):
         "2 rue de Jouvence",
         "Paris",
         "marie.elise@mail.com",
+    }
+
+
+def test_structured_on_docs_from_another_tokenizer(blank_nlp):
+    # Data converters may build docs with a tokenizer other than the pipeline's
+    blank_nlp.add_pipe("eds_pseudo.context")
+    doc = edsnlp.blank("eds").make_doc("Patient Jean DUPONT, mail jean.dupont@test.fr")
+    doc._.context = {"PRENOM": ["Jean"], "NOM": ["Dupont"], "MAIL": ["jean.dupont@test.fr"]}
+    assert {(ent.text, ent.label_) for ent in blank_nlp(doc).ents} == {
+        ("Jean", "PRENOM"),
+        ("DUPONT", "NOM"),
+        ("jean.dupont@test.fr", "MAIL"),
     }

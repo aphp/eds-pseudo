@@ -1,7 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
-edsnlp[ml]>=0.13.0
+eds-pseudo[data]>=1,<2
 streamlit
 babel
-faker
-transformers<5

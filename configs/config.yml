@@ -1,0 +1,228 @@
+vars:
+  seed: 42
+  train: data/prepared/public-train.jsonl
+  dev: data/prepared/public-dev.jsonl
+  # Labels that the scores count, all but HOPITAL, which we only annotate to show the model what not to redact
+  scored_labels: [ADRESSE, DATE, DATE_NAISSANCE, IPP, MAIL, NDA, NOM, PRENOM, SECU, TEL, VILLE, ZIP]
+
+prepare-data:
+  sources:
+    - path: data/templates.jsonl
+      source: public
+      kind: synthetic
+      generation:
+        # Each template gets its weight as share of the generated words, and draws its seeds from seed_templates
+        templates:
+          - name: note
+            weight: 0.585
+            seed_templates: [note, staff-row, identity-field]
+            has_entities: true
+            duplicate_line_probability: 0.1
+            extra_newline_weights: [100, 15, 10, 5]
+          - name: identity-field
+            generator: note
+            weight: 0.235
+            seed_templates: [identity-field]
+          - name: unchanged
+            generator: note
+            weight: 0.12
+            seed_templates: [note, staff-row, identity-field]
+            replace: false
+          - name: staff-list
+            generator: list
+            weight: 0.055
+            seed_templates: [staff-row]
+            min_items: 2
+            max_items: 20
+            separator: '\n'
+          - name: negative
+            generator: list
+            weight: 0.005
+            seed_templates: [negative]
+            min_items: 1
+            max_items: 8
+            separator: '\n'
+        values_path: data/replacement-values.jsonl
+        target_words:
+          train: 2000000
+          dev: 100000
+  output_dir: data/prepared
+  dataset_info_path: artifacts/dataset-info.json
+  seed: ${vars.seed}
+  real_dev_fraction: 0.15
+
+nlp:
+  '@core': pipeline
+  lang: eds
+  components:
+    normalizer:
+      '@factory': eds.normalizer
+    simple_rules:
+      '@factory': eds_pseudo.simple_rules
+      pattern_keys: [TEL, MAIL, SECU]
+      span_setter: pseudo-rb
+    addresses:
+      '@factory': eds_pseudo.addresses
+      span_setter: pseudo-rb
+    context:
+      '@factory': eds_pseudo.context
+      span_setter: pseudo-rb
+    ner:
+      '@factory': eds.ner_crf
+      mode: independent
+      # We decode each doc with the CRF, which keeps the BIOUL tags of a span consistent
+      window: 0
+      target_span_getter: pseudo-ml
+      span_setter: pseudo-ml
+      embedding:
+        '@factory': eds.text_cnn
+        kernel_sizes: [3]
+        embedding:
+          '@factory': eds.transformer
+          model: doctolib-lab/doctobert-fr-base
+          window: 128
+          stride: 96
+          new_tokens:
+            - ['(?:\n\s*)*\n', '⏎']
+    merge:
+      '@factory': eds_pseudo.merge
+      span_getter: [pseudo-rb, pseudo-ml]
+      span_setter: [ents, pseudo-hybrid, '*']
+    clean:
+      '@factory': eds_pseudo.clean
+      span_getter: [ents, pseudo-hybrid, pseudo-rb, pseudo-ml]
+    dates_normalizer:
+      '@factory': eds_pseudo.dates_normalizer
+
+train_data:
+  - data:
+      '@readers': json
+      path: ${vars.train}
+      converter:
+        '@factory': eds_pseudo.dict2doc
+        span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+    shuffle: dataset
+    batch_size: 3200 words
+    sub_batch_size: 3200 words
+    pipe_names: [ner]
+  - data:
+      '@readers': json
+      path: ${vars.train}
+      converter:
+        - '@factory': eds_pseudo.dict2doc
+          span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+        - '@factory': eds.split
+          max_length: 0
+          regex: '\n+'
+          span_getter: pseudo-ml
+    shuffle: dataset
+    batch_size: 800 words
+    sub_batch_size: 800 words
+    pipe_names: [ner]
+
+val_data:
+  '@readers': json
+  path: ${vars.dev}
+  converter:
+    '@factory': eds_pseudo.dict2doc
+    span_setter: [pseudo-ml, pseudo-rb, pseudo-hybrid]
+
+scorer:
+  exact:
+    '@metrics': eds.ner_exact
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+  token:
+    '@metrics': eds.ner_token
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+  overlap:
+    '@metrics': eds.ner_overlap
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+
+# Exact, redaction and privacy scores of the full hybrid pipeline, computed by eds-pseudo evaluate
+final_scorer:
+  final:
+    '@metrics': eds_pseudo.final
+    span_getter:
+      pseudo-hybrid: ${vars.scored_labels}
+
+optimizer:
+  '@core': optimizer !draft
+  optim: adamw
+  groups:
+    # Transformer weights warm up from 0 then decay linearly
+    - selector: "ner[.]embedding[.]embedding"
+      lr:
+        '@schedules': linear
+        warmup_rate: 0.1
+        start_value: 0
+        max_value: 0.00002
+    # Every other parameter of the NER head
+    - selector: ".*"
+      lr:
+        '@schedules': linear
+        warmup_rate: 0.1
+        start_value: 0.00005
+        max_value: 0.00005
+  total_steps: ${train.max_steps}
+
+train:
+  nlp: ${nlp}
+  train_data: ${train_data}
+  val_data: ${val_data}
+  scorer: ${scorer}
+  seed: ${vars.seed}
+  max_steps: 4000
+  validation_interval: 1000
+  checkpoint_interval: 4000
+  mixed_precision: bf16
+  optimizer: ${optimizer}
+  output_dir: artifacts
+  output_model_dir: artifacts/model-last
+
+evaluate:
+  nlp:
+    '@core': load
+    model: artifacts/model-last
+  evaluations:
+    validation:
+      data: ${val_data}
+      scorer: ${final_scorer}
+  output_dir: artifacts
+
+package:
+  pipeline: artifacts/model-last
+  name: eds-pseudo-public
+  version: 2.0.0
+  distributions: [sdist]
+  metadata:
+    license: BSD-3-Clause
+  # Since the project README is the model card, `eds-pseudo package` writes this front matter at its top, and adds the
+  # scores of these evaluations when `--package.results_dir` names the run folder of the packaged model
+  card_metadata:
+    language: [fr]
+    license: bsd-3-clause
+    library_name: edsnlp
+    pipeline_tag: token-classification
+    base_model: doctolib-lab/doctobert-fr-base
+    tags: [medical, ner, nlp, pseudonymisation]
+    extra_gated_fields:
+      Organisation: text
+      Intended use of the model:
+        type: select
+        options:
+          - NLP Research
+          - Education
+          - Commercial Product
+          - Clinical Data Warehouse
+          - label: Other
+            value: other
+  results_dir: null
+  results:
+    original-test: AP-HP test notes
+    real-short-dev: Hard context-free form answer development
+    real-short-test: Representative question-conditioned form answer test
+    real-short-answer-unseen: Answer-unseen subset of that form answer test
+  label_results: [original-test]

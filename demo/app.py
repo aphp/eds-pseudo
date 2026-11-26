@@ -639,7 +639,7 @@ st.sidebar.markdown(
     "Since the data is fictitious, the model may produce errors or "
     "inaccuracies on real-world cases. Consider finetuning it on your own data or "
     "contributing to the training "
-    "[templates](https://github.com/aphp/eds-pseudo/tree/main/data/templates.txt)"
+    "[templates](https://github.com/aphp/eds-pseudo/blob/main/data/templates.jsonl)"
     "\n\n"
     "A few links:\n"
     "- [Documentation](https://aphp.github.io/eds-pseudo/)\n"
@@ -675,7 +675,7 @@ st.subheader("Identifying entities")
 if data:
     df = pd.DataFrame.from_records(data)
     df.normalized_value = df.normalized_value.replace({"None": ""})
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
 
 else:
     st.markdown("The model did not match any entity...")

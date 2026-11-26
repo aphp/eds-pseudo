@@ -2,6 +2,7 @@ from string import punctuation
 from typing import Dict, List
 
 from spacy.tokens import Doc, Span
+from spacy.vocab import Vocab
 
 from edsnlp import registry
 from edsnlp.core import PipelineProtocol
@@ -57,9 +58,11 @@ class ContextMatcher(BaseNERComponent):
     def matcher_factory(
         self,
         context: Dict[str, List[str]],
+        vocab: Vocab,
     ) -> EDSPhraseMatcher:
+        # The matched doc may come from another tokenizer than the pipeline's, so we use its vocab
         matcher = EDSPhraseMatcher(
-            self.nlp.vocab,
+            vocab,
             attr=self.attr,
             ignore_excluded=self.ignore_excluded,
         )
@@ -100,7 +103,7 @@ class ContextMatcher(BaseNERComponent):
             key: [v for v in values if len(v.translate(self.punct_remover).strip()) > 2]
             for key, values in context.items()
         }
-        matcher = self.matcher_factory(context_patterns)
+        matcher = self.matcher_factory(context_patterns, doc.vocab)
         matches = matcher(doc, as_spans=True)
 
         return list(matches)
@@ -119,7 +122,6 @@ class ContextMatcher(BaseNERComponent):
         doc:
             spaCy Doc object, annotated for extracted terms.
         """
-        assert doc.vocab is self.nlp.vocab
         matches = self.process(doc)
 
         for span in matches:

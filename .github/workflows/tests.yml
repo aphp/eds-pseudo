@@ -1,84 +1,113 @@
-name: Tests and Linting
+name: Tests and distributions
 
 on:
   workflow_dispatch:
+    inputs:
+      huggingface_ref:
+        description: Hugging Face git URL to test after an authorized push
+        required: false
+        type: string
   pull_request:
   push:
     branches: [main]
 
-env:
-  UV_SYSTEM_PYTHON: 1
-
 jobs:
-  Linting:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      - name: Set PY variable
-        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
-          pre-commit install
-      - name: Run pre-commit
-        run: SKIP=no-commit-to-branch pre-commit run --all-files
-
-  Pytest:
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Set PY variable
-        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: uv sync --extra dev
-
-      - name: Test with Pytest on Python ${{ matrix.python-version }}
-        run: uv run pytest --cov --cov-report xml
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
-        if: matrix.python-version == '3.10'
-
-  Documentation:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync --extra docs
-
-      - name: Build documentation
-        run: |
-          uv run mkdocs build --clean
-
-  Installation:
+  test:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install library
+      - run: uv sync --extra dev
+      - run: uv run ruff check --no-fix eds_pseudo tests scripts
+      - run: uv run pytest --cov --cov-report xml
+      - uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.11'
+
+  documentation:
+    # Like EDS-NLP, we deploy the docs of each PR to its own Vercel project and link it in the PR, while the docs of
+    # main are deployed by documentation.yml (fork PRs get no secrets, so they get no preview)
+    if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      BRANCH_NAME: ${{ github.head_ref }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv sync --extra docs
+
+      - name: Compute the preview name
+        id: docs_meta
         run: |
-          pip install .
+          # ie, the branch name without /, upper case or other separators than -, and under 80 characters
+          preview_name=$(printf '%s' "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g' | cut -c1-80)
+          echo "preview_name=${preview_name:-preview}" >> "$GITHUB_OUTPUT"
+
+      - name: Build the documentation
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          uv run mike deploy --alias-type=copy --update-aliases ${{ steps.docs_meta.outputs.preview_name }} latest
+          uv run mike set-default ${{ steps.docs_meta.outputs.preview_name }}
+          rm -rf public && mkdir public && git archive gh-pages | tar -x -C ./public/
+
+      - name: Deploy to Vercel
+        run: |
+          set -euo pipefail
+          npm install --global vercel@latest
+          vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+          vercel project add eds-pseudo-${{ steps.docs_meta.outputs.preview_name }} --token=$VERCEL_TOKEN
+          vercel link --cwd public --project eds-pseudo-${{ steps.docs_meta.outputs.preview_name }} --yes --token=$VERCEL_TOKEN
+          vercel deploy public/ --yes --token=$VERCEL_TOKEN --archive=tgz --prod 2>&1 | tee vercel-deploy.log
+          URL=$(sed -nE 's/^.*Aliased[[:space:]:]+(https:\/\/[^[:space:]]+).*/\1/p' vercel-deploy.log | tail -n 1)
+          URL=${URL:-$(sed -nE 's/^.*Production[[:space:]:]+(https:\/\/[^[:space:]]+).*/\1/p' vercel-deploy.log | tail -n 1)}
+          test -n "$URL"
+          echo "DOCS_PREVIEW_URL=$URL" >> "$GITHUB_ENV"
+
+      - name: Post the documentation link
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --edit-last \
+            --create-if-none --body "## Docs preview URL
+
+          <a href=\"$DOCS_PREVIEW_URL\" target=\"_blank\" rel=\"noopener noreferrer\">$DOCS_PREVIEW_URL</a>"
+
+  distributions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv build
+      - run: uv venv --python 3.11 wheel-env
+      - run: uv pip install --python wheel-env/bin/python dist/eds_pseudo-*.whl
+      - run: wheel-env/bin/python -c "import eds_pseudo, tomllib; assert eds_pseudo.__version__ == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']"
+      - run: wheel-env/bin/eds-pseudo --help
+      - run: uv venv --python 3.11 sdist-env
+      - run: uv pip install --python sdist-env/bin/python dist/eds_pseudo-*.tar.gz
+      - run: sdist-env/bin/python -c "import eds_pseudo"
+
+  huggingface-install:
+    if: github.event_name == 'workflow_dispatch' && inputs.huggingface_ref != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv venv --python 3.11 hf-env
+      - run: uv pip install --python hf-env/bin/python "$HUGGINGFACE_REF"
+        env:
+          HUGGINGFACE_REF: ${{ inputs.huggingface_ref }}
+      - run: hf-env/bin/python -c "import eds_pseudo_public; nlp = eds_pseudo_public.load(); assert nlp('Contact test') is not None"

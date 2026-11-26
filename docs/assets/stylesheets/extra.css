@@ -149,6 +149,7 @@ body, input {
 .md-typeset table.dataframe {
     background-color: var(--md-default-bg-color);
     border: .05rem solid var(--md-typeset-table-color);
+    border-collapse: collapse;
     border-radius: .1rem;
     display: inline-block;
     font-size: .64rem;
@@ -241,4 +242,24 @@ body, input {
 
 .md-typeset table.dataframe a {
     word-break: normal
+}
+
+/* Results tables keep each cell on one line and scroll when too wide, with a vertical line between column groups
+   (e.g. the models of one metric), which make_results_figures.py writes as <colgroup> elements */
+.md-typeset table.dataframe :is(th,td) {
+    white-space: nowrap;
+}
+
+.md-typeset table.dataframe colgroup + colgroup {
+    border-left: .05rem solid var(--md-typeset-table-color);
+}
+
+/* Drop-downs of the results charts, e.g. "metric : F1" */
+.vega-bind-name {
+    display: inline-block;
+    min-width: 6.5em;
+}
+
+.vega-bind select {
+    margin: .2em 0;
 }

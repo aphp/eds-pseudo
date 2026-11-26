@@ -12,44 +12,32 @@ To train a model, you will need to provide:
 - Ideally, a GPU to accelerate training
 
 In any case, you will need to modify the
-[configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) file to
+[configs/config.yml](https://github.com/aphp/eds-pseudo/blob/main/configs/config.yml) file to
 reflect these changes. This configuration already contains the rule-based components of
-the previous section, feel free to add or remove them as you see fit. The [configs/config.cfg](https://github.com/aphp/eds-pseudo/blob/main/configs/config.cfg) file also contains
-the name of the package model in the `[package]` section (defaults to `eds-pseudo-public`).
+the previous section, feel free to add or remove them as you see fit. The [configs/config.yml](https://github.com/aphp/eds-pseudo/blob/main/configs/config.yml) file also contains
+the name of the package model in the `package` section (defaults to `eds-pseudo-public`).
 
-## DVC
+## Train
 
-We use [DVC](https://dvc.org/) to manage the training pipeline. DVC is a version control
-system for data science and machine learning projects. We recommend you use it too.
-First, import some data (this basically copies the data to `data/dataset`, but in a
-version-controlled fashion):
+Put your data in the `data/prepared` folder (or edit the `vars` paths of the config), or generate the synthetic
+dataset there:
 
 ```{: .shell data-md-color-scheme="slate" }
-dvc import-url url/or/path/to/your/dataset data/dataset
+eds-pseudo prepare-data --config configs/config.yml
 ```
 
-and execute the following command to (re)train the model and package it
+and execute the following commands to (re)train the model and package it
 
 ```{: .shell data-md-color-scheme="slate" }
-dvc repro
+# Trains the model, and outputs it to artifacts/model-last
+python -m edsnlp.train --config configs/config.yml
+
+# Evaluates the model, and outputs the results to artifacts
+eds-pseudo evaluate --config configs/config.yml
+
+# Packages the model
+eds-pseudo package --config configs/config.yml
 ```
-
-??? note "Content of the `dvc.yaml` file"
-
-    The above command runs the
-    [`dvc.yaml`](https://github.com/aphp/eds-pseudo/blob/main/dvc.yaml) config file to
-    sequentially execute :
-
-    ```{: .shell data-md-color-scheme="slate" }
-    # Trains the model, and outputs it to artifacts/model-last
-    python scripts/train.py --config configs/config.cfg
-
-    # Evaluates the model, and outputs the results to artifacts
-    python scripts/evaluate.py --config configs/config.cfg
-
-    # Packages the model
-    python scripts/package.py
-    ```
 
 You should now be able to install and use it:
 

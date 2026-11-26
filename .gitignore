@@ -74,6 +74,7 @@ coverage.xml
 *.jpg
 *.png
 *.html
+!docs/assets/figures/*.html
 *.pickle
 *.joblib
 *.pdf
@@ -82,6 +83,4 @@ data/**/*.jsonl
 # MkDocs output
 site/
 
-# DVC
-.dvc/tmp
-.dvc/cache
+/artifacts/
